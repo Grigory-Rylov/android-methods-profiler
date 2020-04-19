@@ -1,4 +1,11 @@
 # Android Trace Viewer
+Method Trace viewer for `.trace` files like [Android Profiler](https://developer.android.com/studio/profile/android-profiler) but works faster, has convenient control and  highlighting.
+
+Also you can add custom bookmars and generate list of method-calls with showing bookmarks.
+
+For now shows only `main` thread.
+
+Latest version download from (releases) [https://github.com/Grigory-Rylov/android-trace-viewer/releases]
 
 ## Hotkeys
 ### Files
