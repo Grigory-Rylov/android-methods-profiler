@@ -5,7 +5,7 @@ Also you can add custom bookmars and generate list of method-calls with showing 
 
 For now shows only `main` thread.
 
-Latest version download from (releases)[https://github.com/Grigory-Rylov/android-trace-viewer/releases]
+Latest version download from [releases](https://github.com/Grigory-Rylov/android-trace-viewer/releases)
 
 ## Hotkeys
 ### Files
