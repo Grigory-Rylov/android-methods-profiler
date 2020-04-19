@@ -7,22 +7,36 @@
 
 ### Navigation
 *W* - Zoom in
+
 *S* - Zoom out
+
 *A* - Pan left
+
 *D* - Pan right
+
 *Left, Right, Up, Down* (Mouse Drag) -  Pan the view 
+
 *C* - Center screen on selected element
+
 *F* - Fit zoom to current found element (or selected if there is no found elements).
+
 *Z* - Reset zoom to fit screen.
+
 *Q* - Go to previous found element (bookmark)
+
 *E* - Go to next found element (bookmark)
+
 *Ctrl + C* - Copy name of selected element
 
 ### Find / Bookmarks
 *Ctrl + F* - Focus to the Find element field, to find elements press Enter.
+
 *Ctrl + M* - Add Bookmarks instead all found elements.
+
 *M* - Add bookmark on selected element
+
 *Esc* - Exit from search mode. (Hide all found elements)
+
 *Ctrl + R* - Remove current bookmark
 
 ## Bookmarks
