@@ -10,6 +10,7 @@ Latest version download from (releases) [https://github.com/Grigory-Rylov/androi
 ## Hotkeys
 ### Files
 **Ctrl + O** - Open file dialog
+
 **Ctrl + N** - Record new method trace file
 
 ### Navigation
@@ -48,6 +49,8 @@ Latest version download from (releases) [https://github.com/Grigory-Rylov/androi
 
 ### Reporting
 **Ctrl + P** - Generate duration report
+
+For mac uses use **Command** instead **Ctrl**
 
 ## Bookmarks
 Helps to mark some methods in trace as importan event.
