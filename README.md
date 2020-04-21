@@ -3,7 +3,7 @@ Method Trace viewer for `.trace` files like [Android Profiler](https://developer
 
 Also you can add custom bookmars and generate list of method-calls with showing bookmarks.
 
-For now shows only `main` thread.
+For now shows only `main` thread and only thread-time
 
 Latest version download from [releases](https://github.com/Grigory-Rylov/android-trace-viewer/releases)
 
