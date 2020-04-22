@@ -5,6 +5,7 @@ Also you can add custom bookmars and generate list of method-calls with showing 
 
 For now shows only thread-time
 
+## Download
 Latest version download from [releases](https://github.com/Grigory-Rylov/android-trace-viewer/releases)
 
 ## Hotkeys
