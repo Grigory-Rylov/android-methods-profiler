@@ -5,8 +5,12 @@ Also you can add custom bookmars and generate list of method-calls with showing 
 
 For now shows only thread-time
 
+![preview](assets/preview.png)
+
+![find in trace](assets/find.png)
+
 ## Download
-Latest version download from [releases](https://github.com/Grigory-Rylov/android-trace-viewer/releases)
+- [Download latest release](https://github.com/Grigory-Rylov/android-trace-viewer/releases)
 
 ## Hotkeys
 ### Files
@@ -57,10 +61,22 @@ For mac uses use **Command** instead **Ctrl**
 Helps to mark some methods in trace as importan event.
 Bookmarks are saved automatically after you close the Trace Viewer.
 Boormarks are stored in `$HOME/android-profile-viewer/markers` folder.
+The easiest way to add bookmark is to click on the method and press **M** key.
+In the opened dialog enter bookmark name and select color.
+
+![Add bookmarks](assets/add_bookmark.png)
 
 ## New Trace Recording
 After clicking on *New Trace* icon or pressing *Ctrl + N* record new trace dialog will be opened.
 Saved `.trace` files wiil be placed in `$HOME/android-profile-viewer/trace` folder
+
+In the opened dialog package field is reaqired, activity name is optional.
+If you entered activity name then appliction will start after clicking `Start` button.
+If activity field is empty - you need to start application manually, or it can already be running.
+
+Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the moblie phone CPU. For old device, like nexus 5X i prefer 1000 microseconds.
+ 
+![Record new trace](assets/record_new_trace.png)
 
 ## Report generator
 Generates flat list of methods with duration. Can be filtered by duration and/or is current method constructor.
