@@ -72,4 +72,17 @@ Generates flat list of methods with duration. Can be filtered by duration and/or
 - ![#749efa](https://placehold.it/20/749efa?text=+) inflating
 - ![#faa9da](https://placehold.it/20/faa9da?text=+) drawing
 
+Also you can add custom highlighting:
+highlighting mapping placed in `$HOME/android-profile-viewer/colors.json`
+for example:
+```
+[
+  {
+    "filter": "ru.yandex",
+    "color": "FF9595"
+  }
+]
+```
+will highlight all methods of classes started with `ru.yandex`.
 
+`colors.json` will be created automatically with sample highlighting
