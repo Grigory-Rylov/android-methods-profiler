@@ -56,11 +56,11 @@ For mac uses use **Command** instead **Ctrl**
 ## Bookmarks
 Helps to mark some methods in trace as importan event.
 Bookmarks are saved automatically after you close the Trace Viewer.
-Boormarks are stored in *markers* folder.
+Boormarks are stored in `$HOME/android-profile-viewer/markers` folder.
 
 ## New Trace Recording
 After clicking on *New Trace* icon or pressing *Ctrl + N* record new trace dialog will be opened.
-Saved `.trace` files wiil be placed in `trace` folder
+Saved `.trace` files wiil be placed in `$HOME/android-profile-viewer/trace` folder
 
 ## Report generator
 Generates flat list of methods with duration. Can be filtered by duration and/or is current method constructor.
@@ -70,5 +70,6 @@ Generates flat list of methods with duration. Can be filtered by duration and/or
 - ![#96dbcc](https://placehold.it/20/96dbcc?text=+) measuring
 - ![#c989ff](https://placehold.it/20/c989ff?text=+) layouting
 - ![#749efa](https://placehold.it/20/749efa?text=+) inflating
+- ![#faa9da](https://placehold.it/20/faa9da?text=+) drawing
 
 
