@@ -64,6 +64,10 @@ In the opened dialog enter bookmark name and select color.
 ![Add bookmarks](assets/add_bookmark.png)
 
 ## New Trace Recording
+**Important** for trace recording:
+1) Specify `$ANDROID_HOME` env variable
+2) Start this app by `java -jar android-methods-profiler.jar`
+
 After clicking on *New Trace* icon or pressing *Ctrl + N* record new trace dialog will be opened.
 Saved `.trace` files wiil be placed in `$HOME/android-profile-viewer/trace` folder
 
