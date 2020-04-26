@@ -1,8 +1,5 @@
-# Android Trace Viewer
-Method Trace viewer for `.trace` files like [Android Profiler](https://developer.android.com/studio/profile/android-profiler) but works faster, has convenient control and  highlighting.
-
-Also you can add custom bookmars and generate list of method-calls with showing bookmarks.
-
+# Android Methods Profiler
+This is tool for analyzing method trace files `.trace` files like [Android Profiler](https://developer.android.com/studio/profile/android-profiler) but works faster, has convenient control, user bookmarks and custom highlighting.
 For now shows only thread-time
 
 ![preview](assets/preview.png)
@@ -10,7 +7,7 @@ For now shows only thread-time
 ![find in trace](assets/find.png)
 
 ## Download
-- [Download latest release](https://github.com/Grigory-Rylov/android-trace-viewer/releases)
+- [Download latest release](https://github.com/Grigory-Rylov/android-methods-profiler/releases)
 
 ## Hotkeys
 ### Files
@@ -89,7 +86,7 @@ Generates flat list of methods with duration. Can be filtered by duration and/or
 - ![#faa9da](https://placehold.it/20/faa9da?text=+) drawing
 
 Also you can add custom highlighting:
-highlighting mapping placed in `$HOME/android-profile-viewer/colors.json`
+highlighting mapping placed in `$HOME/android-methods-profiler/colors.json`
 for example:
 ```
 [
