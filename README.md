@@ -32,20 +32,24 @@ For now shows only thread-time
 
 **Z** - Reset zoom to fit screen.
 
-**Q** - Go to previous found element (bookmark)
+**Q** - Go to previous found element
 
-**E** - Go to next found element (bookmark)
+**E** - Go to next found element
 
 **Ctrl + C** - Copy name of selected element
 
 ### Find / Bookmarks
-**Ctrl + F** - Focus to the Find element field, to find elements press Enter.
+**Ctrl + F** - Focus to the Find element field, to find elements press **Enter**
+
+**Esc** - Exit from search mode. (Hide all found elements)
 
 **Ctrl + M** - Add Bookmarks instead all found elements.
 
 **M** - Add bookmark on selected element
 
-**Esc** - Exit from search mode. (Hide all found elements)
+**Shift + Q** - Go to previousbookmark
+
+**Shift + E** - Go to next bookmark
 
 **Ctrl + R** - Remove current bookmark
 
