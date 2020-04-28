@@ -1,6 +1,5 @@
 # Android Methods Profiler
 This is tool for analyzing method trace files `.trace` files like [Android Profiler](https://developer.android.com/studio/profile/android-profiler) but works faster, has convenient control, user bookmarks and custom highlighting.
-For now shows only thread-time
 
 ![preview](assets/preview.png)
 
@@ -11,50 +10,50 @@ For now shows only thread-time
 
 ## Hotkeys
 ### Files
-**Ctrl + O** - Open file dialog
+**Ctrl + o** - Open file dialog
 
-**Ctrl + N** - Record new method trace file
+**Ctrl + n** - Record new method trace file
 
 ### Navigation
-**W** - Zoom in
+**w** - Zoom in
 
-**S** - Zoom out
+**s** - Zoom out
 
-**A** - Pan left
+**a** - Pan left
 
-**D** - Pan right
+**d** - Pan right
 
 **Left, Right, Up, Down** (Mouse Drag) -  Pan the view 
 
-**C** - Center screen on selected element
+**c** - Center screen on selected element
 
-**F** - Fit zoom to current found element (or selected if there is no found elements).
+**f** - Fit zoom to current found element (or selected if there is no found elements).
 
-**Z** - Reset zoom to fit screen.
+**z** - Reset zoom to fit screen.
 
-**Q** - Go to previous found element
+**q** - Go to previous found element
 
-**E** - Go to next found element
+**e** - Go to next found element
 
-**Ctrl + C** - Copy name of selected element
+**Ctrl + c** - Copy name of selected element
 
 ### Find / Bookmarks
-**Ctrl + F** - Focus to the Find element field, to find elements press **Enter**
+**Ctrl + f** - Focus to the Find element field, to find elements press **Enter**
 
 **Esc** - Exit from search mode. (Hide all found elements)
 
-**Ctrl + M** - Add Bookmarks instead all found elements.
+**Ctrl + m** - Add Bookmarks instead all found elements.
 
-**M** - Add bookmark on selected element
+**m** - Add bookmark on selected element
 
-**Shift + Q** - Go to previousbookmark
+**Shift + q** - Go to previousbookmark
 
-**Shift + E** - Go to next bookmark
+**Shift + e** - Go to next bookmark
 
-**Ctrl + R** - Remove current bookmark
+**Ctrl + r** - Remove current bookmark
 
 ### Reporting
-**Ctrl + P** - Generate duration report
+**Ctrl + p** - Generate duration report
 
 For mac uses use **Command** instead **Ctrl**
 
@@ -62,7 +61,7 @@ For mac uses use **Command** instead **Ctrl**
 Helps to mark some methods in trace as importan event.
 Bookmarks are saved automatically after you close the Trace Viewer.
 Boormarks are stored in `$HOME/android-profile-viewer/markers` folder.
-The easiest way to add bookmark is to click on the method and press **M** key.
+The easiest way to add bookmark is to click on the method and press **m** key.
 In the opened dialog enter bookmark name and select color.
 
 ![Add bookmarks](assets/add_bookmark.png)
@@ -71,7 +70,7 @@ In the opened dialog enter bookmark name and select color.
 1) Specify `$ANDROID_HOME` env variable
 2) Start this app by `java -jar android-methods-profiler.jar`
 
-After clicking on *New Trace* icon or pressing *Ctrl + N* record new trace dialog will be opened.
+After clicking on *New Trace* icon or pressing *Ctrl + n* record new trace dialog will be opened.
 Saved `.trace` files wiil be placed in `$HOME/android-profile-viewer/trace` folder
 
 In the opened dialog package field is reaqired, activity name is optional.
