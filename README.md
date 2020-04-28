@@ -105,3 +105,6 @@ for example:
 will highlight all methods of classes started with `ru.yandex`.
 
 `colors.json` will be created automatically with sample highlighting
+
+## Settings
+Settings are stored in `$HOME/android-methods-profiler/.android-methods-profiler-settings.json`
