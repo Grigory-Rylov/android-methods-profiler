@@ -42,7 +42,9 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 
 **Esc** - Exit from search mode. (Hide all found elements)
 
-**Ctrl + m** - Add Bookmarks instead all found elements.
+**m** - Add Bookmark from selected element
+
+**Ctrl + m** - Add Bookmark from current found element
 
 **m** - Add bookmark on selected element
 
@@ -77,7 +79,7 @@ In the opened dialog package field is reaqired, activity name is optional.
 If you entered activity name then appliction will start after clicking `Start` button.
 If activity field is empty - you need to start application manually, or it can already be running.
 
-Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the moblie phone CPU. For old device, like nexus 5X i prefer 1000 microseconds.
+Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the moblie phone CPU. For old device, like nexus 5X I prefer 1000 microseconds.
  
 ![Record new trace](assets/record_new_trace.png)
 
