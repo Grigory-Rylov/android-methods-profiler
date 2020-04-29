@@ -37,6 +37,8 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 
 **Ctrl + c** - Copy name of selected element
 
+**Ctrl + '+' / '-'** - Increase / decrease font size
+
 ### Find / Bookmarks
 **Ctrl + f** - Focus to the Find element field, to find elements press **Enter**
 
