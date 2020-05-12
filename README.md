@@ -50,7 +50,7 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 
 **m** - Add bookmark on selected element
 
-**Shift + q** - Go to previousbookmark
+**Shift + q** - Go to previous bookmark
 
 **Shift + e** - Go to next bookmark
 
