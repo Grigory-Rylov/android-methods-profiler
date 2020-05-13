@@ -59,6 +59,8 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 ### Reporting
 **Ctrl + p** - Generate duration report
 
+**Ctrl + s** - Generating selected method stacktrace into clipboard 
+
 For mac uses use **Command** instead **Ctrl**
 
 ## Bookmarks
