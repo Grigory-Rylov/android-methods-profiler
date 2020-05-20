@@ -58,6 +58,7 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 
 **Ctrl + r** - Remove current bookmark
 
+
 ### Reporting
 **Ctrl + p** - Generate duration report
 
@@ -113,6 +114,16 @@ for example:
 will highlight all methods of classes started with `ru.yandex`.
 
 `colors.json` will be created automatically with sample highlighting
+
+## Find class or methods
+To find class or method you should press **Ctrl + f** or manually click to searching field.
+Type class name and/or method name for example *SomeClass.someMethod* and press **Enter**. 
+
+If current thead data contains any matches to the mask "\*.SomeClass.someMethod.\*" then these elements will be highlighted and the focus will be on the first element found.
+
+If you want to find methods that ends with *SomeClass.someMethod* then type *SomeClass.someMethod()* and profiler will find any matches to the mask "\*.SomeClass.someMethod".
+
+If there is no results in current thread, profiler will search it in another threads and ask you to switch to another thread if threre is any results - this can be very useful!
 
 ## Settings
 Settings are stored in `$HOME/android-methods-profiler/.android-methods-profiler-settings.json`
