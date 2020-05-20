@@ -5,6 +5,8 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 
 ![find in trace](assets/find.png)
 
+For Russian speaking developers there is a video guide https://www.youtube.com/watch?v=KgqYPXzLIqQ
+
 ## Download
 - [Download latest release](https://github.com/Grigory-Rylov/android-methods-profiler/releases)
 
