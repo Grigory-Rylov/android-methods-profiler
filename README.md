@@ -37,7 +37,11 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 
 **e** - Go to next found element
 
-**Ctrl + c** - Copy name of selected element
+**Ctrl + c** - Copy full name with method name of selected element
+
+**Ctrl + Shift + c** copy short class name with method name to clipboard, for example for `com.test.Foo.method` will be copied `Foo.method`
+
+**Ctrl + Alt + c** copy short class name without method name to clipboard, for example for `com.test.Foo.method` will be copied `Foo`
 
 **Ctrl + '+' / '-'** - Increase / decrease font size
 
