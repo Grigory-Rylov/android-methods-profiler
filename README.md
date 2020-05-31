@@ -8,6 +8,7 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 For Russian speaking developers there is a video [guide](https://www.youtube.com/watch?v=KgqYPXzLIqQ)
 
 ## Download
+![GitHub All Releases](https://img.shields.io/github/downloads/Grigory-Rylov/android-methods-profiler/total?color=%234caf50&style=for-the-badge)  
 - [Download latest release](https://github.com/Grigory-Rylov/android-methods-profiler/releases)
 
 ## Hotkeys
