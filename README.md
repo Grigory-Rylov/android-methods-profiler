@@ -38,6 +38,8 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 
 **e** - Go to next found element
 
+**Shift + r** - Open screen range dialog. Allows to select left and right screen range
+
 **Ctrl + c** - Copy full name with method name of selected element
 
 **Ctrl + Shift + c** copy short class name with method name to clipboard, for example for `com.test.Foo.method` will be copied `Foo.method`
