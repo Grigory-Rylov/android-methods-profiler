@@ -11,7 +11,7 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 ![GitHub All Releases](https://img.shields.io/github/downloads/Grigory-Rylov/android-methods-profiler/total?color=%234caf50&style=for-the-badge)  
 - [Download latest release](https://github.com/Grigory-Rylov/android-methods-profiler/releases)
 
-## Hotkeys
+## Keymap
 ### Files
 **Ctrl + o** - Open file dialog
 
@@ -76,29 +76,36 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 For mac uses use **Command** instead **Ctrl**
 
 ## Bookmarks
-Helps to mark some methods in trace as importan event.
+Helps to mark some methods in trace.
 Bookmarks are saved automatically after you add new one.
-Boormarks are stored in `$HOME/android-profile-viewer/markers` folder.
+Bookmarks are stored in `$HOME/android-profile-viewer/markers` folder.
 The easiest way to add bookmark is to click on the method and press **m** key.
 In the opened dialog enter bookmark name and select color.
 
-You can share current opened trace file with your bookmarks in single file by `File -> Export trace with bookmarks` or **Ctrl + Shift + e** , then select new file name and send single `*.twb` file to anyone who has AndroidMethodsProfiler v20.06.22.0 or newer.
+You can share current opened trace file with your bookmarks in single 
+file by `File -> Export trace with bookmarks` or **Ctrl + Shift + e** , 
+then select new file name and send single `*.twb` file to anyone 
+who has AndroidMethodsProfiler v20.06.22.0 or newer.
+
 `*.twb`file is zip archive with `.trace` and `.marker` files
 
 ![Add bookmarks](assets/add_bookmark.png)
 
 ## New Trace Recording
-1) Specify `$ANDROID_HOME` env variable
-2) Start this app by `java -jar android-methods-profiler.jar`
+After first launch you will see enter android sdk home dialog, please 
+enter path to Android SDK Home like `$ANDROID_HOME` and it will be stored in settings file
+
+![Add bookmarks](assets/setu.png)
+
 
 After clicking on *New Trace* icon or pressing *Ctrl + n* record new trace dialog will be opened.
-Saved `.trace` files wiil be placed in `$HOME/android-profile-viewer/trace` folder
+Saved `.trace` files will be placed in `$HOME/android-profile-viewer/trace` folder
 
-In the opened dialog package field is reaqired, activity name is optional.
-If you entered activity name then appliction will start after clicking `Start` button.
+In the opened dialog package field is required, activity name is optional.
+If you entered activity name then application will start after clicking `Start` button.
 If activity field is empty - you need to start application manually, or it can already be running.
 
-Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the moblie phone CPU. For old device, like nexus 5X I prefer 1000 microseconds.
+Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the mobile phone CPU. For old device, like nexus 5X I prefer 1000 microseconds.
  
 ![Record new trace](assets/record_new_trace.png)
 
@@ -132,7 +139,7 @@ will highlight all methods of classes started with `ru.yandex`.
 To find class or method you should press **Ctrl + f** or manually click to searching field.
 Type class name and/or method name for example *SomeClass.someMethod* and press **Enter**.  
 
-If current thead data contains any matches to the mask "\*.SomeClass.someMethod.\*" then these elements will be highlighted and the focus will be on the first element found.  
+If current thread data contains any matches to the mask "\*.SomeClass.someMethod.\*" then these elements will be highlighted and the focus will be on the first element found.  
 
 If you want to find methods that ends with *SomeClass.someMethod* then type *SomeClass.someMethod()* and profiler will find any matches to the mask "\*.SomeClass.someMethod".  
 
