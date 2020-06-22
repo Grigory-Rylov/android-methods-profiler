@@ -77,10 +77,13 @@ For mac uses use **Command** instead **Ctrl**
 
 ## Bookmarks
 Helps to mark some methods in trace as importan event.
-Bookmarks are saved automatically after you close the Trace Viewer.
+Bookmarks are saved automatically after you add new one.
 Boormarks are stored in `$HOME/android-profile-viewer/markers` folder.
 The easiest way to add bookmark is to click on the method and press **m** key.
 In the opened dialog enter bookmark name and select color.
+
+You can share current opened trace file with your bookmarks in single file by `File -> Export trace with bookmarks` or **Ctrl + Shift + e** , then select new file name and send single `*.twb` file to anyone who has AndroidMethodsProfiler v20.06.22.0 or newer.
+`*.twb`file is zip archive with `.trace` and `.marker` files
 
 ![Add bookmarks](assets/add_bookmark.png)
 
