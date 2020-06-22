@@ -17,7 +17,7 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 
 **Ctrl + n** - Record new method trace file
 
-**Ctrl + Shift + n** - Export method trace with bookmarks in single file
+**Ctrl + Shift + e** - Export method trace with bookmarks in single file
 
 ### Navigation
 **w** - Zoom in
