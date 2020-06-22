@@ -17,6 +17,8 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 
 **Ctrl + n** - Record new method trace file
 
+**Ctrl + Shift + n** - Export method trace with bookmarks in single file
+
 ### Navigation
 **w** - Zoom in
 
@@ -106,6 +108,7 @@ Generates flat list of methods with duration. Can be filtered by duration and/or
 - ![#c989ff](https://placehold.it/20/c989ff?text=+) layouting
 - ![#749efa](https://placehold.it/20/749efa?text=+) inflating
 - ![#faa9da](https://placehold.it/20/faa9da?text=+) drawing
+- ![#ffa7a3](https://placehold.it/20/ffa7a3?text=+) request layout
 
 Also you can add custom highlighting:
 highlighting mapping placed in `$HOME/android-methods-profiler/colors.json`
