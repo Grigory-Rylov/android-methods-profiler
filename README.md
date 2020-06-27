@@ -95,8 +95,7 @@ who has AndroidMethodsProfiler v20.06.22.0 or newer.
 After first launch you will see enter android sdk home dialog, please 
 enter path to Android SDK Home like `$ANDROID_HOME` and it will be stored in settings file
 
-![Add bookmarks](assets/setup.png)
-
+![Setup Android SDK](assets/setup.png)
 
 After clicking on *New Trace* icon or pressing *Ctrl + n* record new trace dialog will be opened.
 Saved `.trace` files will be placed in `$HOME/android-profile-viewer/trace` folder
@@ -107,6 +106,12 @@ If activity field is empty - you need to start application manually, or it can a
 
 Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the mobile phone CPU. For old device, like nexus 5X I prefer 1000 microseconds.
  
+You can select is two record mode: 
+- **Sample Java Methods** : Captures your app’s call stack at frequent intervals during your app’s Java-based code execution.
+- **Trace Java Methods** : Instruments your app at runtime to record a timestamp at the beginning and end of each method call.
+
+[More information about recording modes](https://developer.android.com/studio/profile/cpu-profiler#configurations)
+
 ![Record new trace](assets/record_new_trace.png)
 
 ## Report generator
