@@ -15,7 +15,11 @@ For Russian speaking developers there is a video [guide](https://www.youtube.com
 ### Files
 **Ctrl + o** - Open file dialog
 
+**Ctrl + Shift + o** - Open file dialog in new window
+
 **Ctrl + n** - Record new method trace file
+
+**Ctrl + Shift + n** - Record new method trace in new window
 
 **Ctrl + Shift + e** - Export method trace with bookmarks in single file
 
@@ -152,3 +156,7 @@ If there is no results in current thread, profiler will search it in another thr
 
 ## Settings
 Settings are stored in `$HOME/android-methods-profiler/.android-methods-profiler-settings.json`
+
+## Troubleshooting
+If you entered activity name in **New trace** dialog and see "Wait for application..." status, but application is started - try to close Android Studio and record again.
+
