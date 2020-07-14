@@ -54,6 +54,8 @@ For Russian speaking developers there is a video [guide](https://youtu.be/epJNlw
 
 **Ctrl + '+' / '-'** - Increase / decrease font size
 
+**Ctrl + i** when selected element - Show information table about selected method and all called methods - tree
+
 ### Find / Bookmarks
 **Ctrl + f** - Focus to the Find element field, to find elements press **Enter**
 
