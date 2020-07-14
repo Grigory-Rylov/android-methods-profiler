@@ -11,6 +11,15 @@ For Russian speaking developers there is a video [guide](https://youtu.be/epJNlw
 ![GitHub All Releases](https://img.shields.io/github/downloads/Grigory-Rylov/android-methods-profiler/total?color=%234caf50&style=for-the-badge)  
 - [Download latest release](https://github.com/Grigory-Rylov/android-methods-profiler/releases)
 
+## Installation
+### Mac OS X
+1. Open DMG file
+2. Drag Android Methods Profiler icon into Applications shurtcut 
+3. Open Applications and right mouse click on **Android Methods Profiler** and select "Open" (only first launch)
+
+### Linux
+Open terminal and execute `sudo dpkg -i android-methods-profiler_{YOUR_VERSION}_all.deb`
+
 ## Keymap
 ### Files
 **Ctrl + o** - Open file dialog
