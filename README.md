@@ -1,4 +1,4 @@
-# Android Methods Profiler
+# Yet Another Methods Profiler for Android (YAMP)
 This is tool for analyzing method trace files `.trace` files like [Android Profiler](https://developer.android.com/studio/profile/android-profiler) but works faster, has convenient control, user bookmarks and custom highlighting.
 
 ![preview](assets/preview.png)
