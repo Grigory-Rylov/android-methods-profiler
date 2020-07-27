@@ -173,3 +173,5 @@ Settings are stored in `$HOME/android-methods-profiler/.android-methods-profiler
 ## Troubleshooting
 If you entered activity name in **New trace** dialog and see "Wait for application..." status, but application is started - try to close Android Studio and record again.
 
+To scale application on hi-res displays on linux, try to edit `/opt/android-methods-profiler/app/android-methods-profiler.cfg` and enter `-Dsun.java2d.uiScale=2` below `[JVMOptions]`
+
