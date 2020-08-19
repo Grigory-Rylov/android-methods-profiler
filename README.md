@@ -1,9 +1,9 @@
 # Yet Another Methods Profiler for Android (YAMP)
 This is tool for analyzing method trace files `.trace` files like [Android Profiler](https://developer.android.com/studio/profile/android-profiler) but works faster, has convenient control, user bookmarks and custom highlighting.
 
-![preview](assets/preview.png)
+![preview](docs/assets/preview.png)
 
-![find in trace](assets/find.png)
+![find in trace](docs/assets/find.png)
 
 For Russian speaking developers there is a video [guide](https://youtu.be/epJNlw6ez-A)
 
@@ -23,7 +23,7 @@ Open terminal and execute `sudo dpkg -i android-methods-profiler_{YOUR_VERSION}_
 To launch type in terminal `andoid-methods-profiler` or `yamp`. Or you can open in menu by pressing Meta
 
 ## Keymap
-Read about keymap [there](KEYMAP.MD)
+Read about keymap [there](docs/KEYMAP.MD)
 
 ## Bookmarks
 Helps to mark some methods in trace.
@@ -39,13 +39,13 @@ who has AndroidMethodsProfiler v20.06.22.0 or newer.
 
 `*.twb`file is zip archive with `.trace` and `.marker` files
 
-![Add bookmarks](assets/add_bookmark.png)
+![Add bookmarks](docs/assets/add_bookmark.png)
 
 ## New Trace Recording
 After first launch you will see **Setup android sdk home** dialog, please 
 enter path to Android SDK Home like `$ANDROID_HOME` and it will be stored in settings file
 
-![Setup Android SDK](assets/setup.png)
+![Setup Android SDK](docs/assets/setup.png)
 
 After clicking on *New Trace* icon or pressing *Ctrl + n* record new trace dialog will be opened.
 Saved `.trace` files will be placed in `$HOME/android-profile-viewer/trace` folder
@@ -62,7 +62,7 @@ You can select two record mode:
 
 [More information about recording modes](https://developer.android.com/studio/profile/cpu-profiler#configurations)
 
-![Record new trace](assets/record_new_trace.png)
+![Record new trace](docs/assets/record_new_trace.png)
 
 ## Report generator
 Generates flat list of methods with duration. Can be filtered by duration and/or is current method constructor.

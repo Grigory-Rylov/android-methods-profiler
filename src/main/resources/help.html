@@ -1,0 +1,140 @@
+<html>
+<body>
+<h3><a id="user-content-files" class="anchor" aria-hidden="true" href="#files">
+</a>Files
+</h3>
+<p><strong>Ctrl + o</strong> - Open file dialog</p>
+<p><strong>Ctrl + Shift + o</strong> - Open file dialog in new window</p>
+<p><strong>Ctrl + n</strong> - Record new method trace file</p>
+<p><strong>Ctrl + Shift + n</strong> - Record new trace file in new window</p>
+<p><strong>Ctrl + Shift + e</strong> - Export method trace with bookmarks in single file</p>
+<h3><a id="user-content-navigation" class="anchor" aria-hidden="true" href="#navigation">
+</a>Navigation
+</h3>
+<p><strong>w</strong> - Zoom in</p>
+<p><strong>s</strong> - Zoom out</p>
+<p><strong>a</strong> - Pan left</p>
+<p><strong>d</strong> - Pan right</p>
+<p><strong>Left, Right, Up, Down</strong> (Mouse Drag) - Pan the view</p>
+<p><strong>c</strong> - Center screen on selected element</p>
+<p><strong>f</strong> - Fit zoom to current found element (or selected if there is no found elements).</p>
+<p><strong>z</strong> - Reset zoom to fit screen.</p>
+<p><strong>q</strong> - Go to previous found element</p>
+<p><strong>e</strong> - Go to next found element</p>
+<p><strong>t</strong> - Switch to thread(cpu) time mode</p>
+<p><strong>g</strong> - Switch to global time mode</p>
+<p><strong>Ctrl + i</strong> - Show children of selected element</p>
+<p><strong>Ctrl + Mouse Click</strong> - Find all methods that were initiated by the creating by Dagger of the current constructor. (Experimental feature)</p>
+<p><strong>Ctrl + Shift + Mouse Click</strong> - Find reason of current object creation by Dagger. (Experimental feature)</p>
+<p><strong>Shift + r</strong> - Open screen range dialog. Allows to select left and right screen range</p>
+<p><strong>Ctrl + c</strong> - Copy full name with method name of selected element</p>
+<p><strong>Ctrl + Shift + c</strong> copy short class name with method name to clipboard, for example for <code>com.test.Foo.method</code>
+    will be copied <code>Foo.method</code></p>
+<p><strong>Ctrl + Alt + c</strong> copy short class name without method name to clipboard, for example for <code>com.test.Foo.method</code>
+    will be copied <code>Foo</code></p>
+<p><strong>Ctrl + '+' / '-'</strong> - Increase / decrease font size</p>
+<h3><a id="user-content-find--bookmarks" class="anchor" aria-hidden="true" href="#find--bookmarks">
+</a>Find / Bookmarks
+</h3>
+<p><strong>Ctrl + f</strong> - Focus to the Find element field, to find elements press <strong>Enter</strong></p>
+<p><strong>Esc</strong> - Exit from search mode. (Hide all found elements)</p>
+<p><strong>m</strong> - Add Bookmark from selected element</p>
+<p><strong>Ctrl + m</strong> - Add Bookmark from current found element</p>
+<p><strong>m</strong> - Add bookmark on selected element</p>
+<p><strong>Shift + q</strong> - Go to previous bookmark</p>
+<p><strong>Shift + e</strong> - Go to next bookmark</p>
+<p><strong>Ctrl + r</strong> - Remove current bookmark</p>
+<p><strong>b</strong> - Show/hide bookmarks</p>
+<h3><a id="user-content-reporting" class="anchor" aria-hidden="true" href="#reporting">
+</a>Reporting
+</h3>
+<p><strong>Ctrl + p</strong> - Generate duration report</p>
+<p><strong>Ctrl + s</strong> - Generating selected method stacktrace into clipboard</p>
+<p>For mac uses use <strong>Command</strong> instead <strong>Ctrl</strong></p>
+<h2><a id="user-content-bookmarks" class="anchor" aria-hidden="true" href="#bookmarks">
+</a>Bookmarks
+</h2>
+<p>Helps to mark some methods in trace as importan event.
+    Bookmarks are saved automatically after you close the Trace Viewer.
+    Boormarks are stored in <code>$HOME/android-profile-viewer/markers</code> folder.
+    The easiest way to add bookmark is to click on the method and press <strong>m</strong> key.
+    In the opened dialog enter bookmark name and select color.</p>
+<h2><a id="user-content-new-trace-recording" class="anchor" aria-hidden="true" href="#new-trace-recording">
+</a>New Trace Recording
+</h2>
+<ol>
+    <li>Specify <code>$ANDROID_HOME</code> env variable</li>
+    <li>Start this app by <code>java -jar android-methods-profiler.jar</code></li>
+</ol>
+<p>After clicking on <em>New Trace</em> icon or pressing <em>Ctrl + n</em> record new trace dialog will be opened.
+    Saved <code>.trace</code> files wiil be placed in <code>$HOME/android-profile-viewer/trace</code> folder</p>
+<p>In the opened dialog package field is reaqired, activity name is optional.
+    If you entered activity name then appliction will start after clicking <code>Start</code> button.
+    If activity field is empty - you need to start application manually, or it can already be running.</p>
+<p>Sampling parameter: The lower the value, the more accurate the report will be, but the greater the load on the moblie
+    phone CPU. For old device, like nexus 5X I prefer 1000 microseconds.</p>
+<p/>
+<h2><a id="user-content-report-generator" class="anchor" aria-hidden="true" href="#report-generator">
+</a>Report generator
+</h2>
+<p>Generates flat list of methods with duration. Can be filtered by duration and/or is current method constructor.</p>
+<h2><a id="user-content-highlighting" class="anchor" aria-hidden="true" href="#highlighting">
+</a>Highlighting:
+</h2>
+<ul>
+    <li><a target="_blank" rel="noopener noreferrer"
+           href="https://camo.githubusercontent.com/9aec3d5208477a5cd495a9249ab17e811fa9589a/68747470733a2f2f706c616365686f6c642e69742f32302f3961633766613f746578743d2b"><img
+            src="https://camo.githubusercontent.com/9aec3d5208477a5cd495a9249ab17e811fa9589a/68747470733a2f2f706c616365686f6c642e69742f32302f3961633766613f746578743d2b"
+            alt="#9ac7fa" data-canonical-src="https://placehold.it/20/9ac7fa?text=+" style="max-width:100%;"></a>
+        Choreographer.doFrame
+    </li>
+    <li><a target="_blank" rel="noopener noreferrer"
+           href="https://camo.githubusercontent.com/62ac305638e7c17b8a5d5c64973166e6de01f0f7/68747470733a2f2f706c616365686f6c642e69742f32302f3936646263633f746578743d2b"><img
+            src="https://camo.githubusercontent.com/62ac305638e7c17b8a5d5c64973166e6de01f0f7/68747470733a2f2f706c616365686f6c642e69742f32302f3936646263633f746578743d2b"
+            alt="#96dbcc" data-canonical-src="https://placehold.it/20/96dbcc?text=+" style="max-width:100%;"></a>
+        measuring
+    </li>
+    <li><a target="_blank" rel="noopener noreferrer"
+           href="https://camo.githubusercontent.com/1d3f98861ef0b927a68c7b7f53549951f40e65bd/68747470733a2f2f706c616365686f6c642e69742f32302f6339383966663f746578743d2b"><img
+            src="https://camo.githubusercontent.com/1d3f98861ef0b927a68c7b7f53549951f40e65bd/68747470733a2f2f706c616365686f6c642e69742f32302f6339383966663f746578743d2b"
+            alt="#c989ff" data-canonical-src="https://placehold.it/20/c989ff?text=+" style="max-width:100%;"></a>
+        layouting
+    </li>
+    <li><a target="_blank" rel="noopener noreferrer"
+           href="https://camo.githubusercontent.com/882d41e8cfba583fbc52afec2ede16057f504d67/68747470733a2f2f706c616365686f6c642e69742f32302f3734396566613f746578743d2b"><img
+            src="https://camo.githubusercontent.com/882d41e8cfba583fbc52afec2ede16057f504d67/68747470733a2f2f706c616365686f6c642e69742f32302f3734396566613f746578743d2b"
+            alt="#749efa" data-canonical-src="https://placehold.it/20/749efa?text=+" style="max-width:100%;"></a>
+        inflating
+    </li>
+    <li><a target="_blank" rel="noopener noreferrer"
+           href="https://camo.githubusercontent.com/5ea46fcdbb44c2d9dd2af3cb44cf7ac8589407ad/68747470733a2f2f706c616365686f6c642e69742f32302f6661613964613f746578743d2b"><img
+            src="https://camo.githubusercontent.com/5ea46fcdbb44c2d9dd2af3cb44cf7ac8589407ad/68747470733a2f2f706c616365686f6c642e69742f32302f6661613964613f746578743d2b"
+            alt="#faa9da" data-canonical-src="https://placehold.it/20/faa9da?text=+" style="max-width:100%;"></a>
+        drawing
+    </li>
+</ul>
+<p>Also you can add custom highlighting:
+    highlighting mapping placed in <code>$HOME/android-methods-profiler/colors.json</code>
+    for example:</p>
+<pre><code>[
+  {
+    "filter": "ru.yandex",
+    "color": "FF9595"
+  }
+]
+</code></pre>
+<p>will highlight all methods of classes started with <code>ru.yandex</code>.</p>
+<p><code>colors.json</code> will be created automatically with sample highlighting</p>
+<h2><a id="user-content-find-class-or-methods" class="anchor" aria-hidden="true" href="#find-class-or-methods">
+</a>Find class or methods
+</h2>
+<p>To find class or method you should press <strong>Ctrl + f</strong> or manually click to searching field.
+    Type class name and/or method name for example <em>SomeClass.someMethod</em> and press <strong>Enter</strong>.</p>
+<p>If current thead data contains any matches to the mask "*.SomeClass.someMethod.*" then these elements will be
+    highlighted and the focus will be on the first element found.</p>
+<p>If you want to find methods that ends with <em>SomeClass.someMethod</em> then type <em>SomeClass.someMethod()</em>
+    and profiler will find any matches to the mask "*.SomeClass.someMethod".</p>
+<p>If there is no results in current thread, profiler will search it in another threads and ask you to switch to another
+    thread if threre is any results - this can be very useful!</p>
+</body>
+</html>
