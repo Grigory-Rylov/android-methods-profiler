@@ -148,12 +148,12 @@ for example:
 ```
 [
   {
-    "filter": "ru.yandex",
+    "filter": "com.example",
     "color": "FF9595"
   }
 ]
 ```
-will highlight all methods of classes started with `ru.yandex`.
+will highlight all methods of classes started with `com.example`.
 
 `colors.json` will be created automatically with sample highlighting
 
