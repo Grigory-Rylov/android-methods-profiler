@@ -1,12 +1,7 @@
 package com.github.grishberg.profiler.chart.flame;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 public class FlameInfoPanel extends JComponent {
@@ -24,11 +19,18 @@ public class FlameInfoPanel extends JComponent {
     private final Color backgroundColor = new Color(47, 47, 47);
     private final Color labelColor = new Color(191, 198, 187);
     private final Font font;
+    private int rectHeight;
+    private int rectWidth;
+    private Rectangle2D classNameRect = new Rectangle2D.Double();
+    private Rectangle2D rangeRect = new Rectangle2D.Double();
+    private Rectangle2D durationRect = new Rectangle2D.Double();
+    private final FontMetrics fontMetrics;
 
     public FlameInfoPanel(JPanel chart) {
         parent = chart;
         hidePanel();
-        font = new Font("TimesRoman", Font.BOLD, textSize);
+        font = new Font("Arial", Font.BOLD, textSize);
+        fontMetrics = getFontMetrics(font);
     }
 
     public void hidePanel() {
@@ -39,18 +41,9 @@ public class FlameInfoPanel extends JComponent {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setFont(font);
-        FontMetrics metrics = g.getFontMetrics(font);
-
-        Rectangle2D classNameRect = metrics.getStringBounds(classNameText, null);
-        Rectangle2D rangeRect = metrics.getStringBounds(rangeText, null);
-        Rectangle2D durationRect = metrics.getStringBounds(durationText, null);
-
-        int rectHeight = PADDING * 2 + (int) classNameRect.getHeight()
-                + (int) rangeRect.getHeight()
-                + (int) durationRect.getHeight()
-                + TEXT_INNER_SPACE * 2 + PADDING / 2;
-        int rectWidth = PADDING + (int) Math.max(durationRect.getWidth(),
-                Math.max(classNameRect.getWidth(), rangeRect.getWidth())) + PADDING;
+        if (rectWidth == 0 || rectHeight == 0) {
+            return;
+        }
 
         g.setColor(backgroundColor);
         g.fillRect(x, y, rectWidth, rectHeight);
@@ -68,15 +61,9 @@ public class FlameInfoPanel extends JComponent {
     }
 
     public void setText(Point point, FlameRectangle selectedData) {
-        setVisible(true);
         Point parentLocation = parent.getLocation();
         int topOffset = parentLocation.y;
         int horizontalOffset = parentLocation.x;
-
-        x = point.x + horizontalOffset + LEFT_PANEL_OFFSET;
-        y = point.y + topOffset + TOP_PANEL_OFFSET;
-
-        classNameText = "(" + selectedData.getCount() + ") " + selectedData.getName();
 
         double start = selectedData.getX();
         double end = selectedData.getMaxX();
@@ -84,6 +71,30 @@ public class FlameInfoPanel extends JComponent {
         rangeText = String.format("%.3f ms - %.3f ms", start, end);
         durationText = String.format("%.3f ms", end - start);
 
+        classNameText = "(" + selectedData.getCount() + ") " + selectedData.getName();
+
+        classNameRect = fontMetrics.getStringBounds(classNameText, null);
+        rangeRect = fontMetrics.getStringBounds(rangeText, null);
+        durationRect = fontMetrics.getStringBounds(durationText, null);
+
+        rectHeight = PADDING * 2 + (int) classNameRect.getHeight()
+                + (int) rangeRect.getHeight()
+                + (int) durationRect.getHeight()
+                + TEXT_INNER_SPACE * 2 + PADDING / 2;
+        rectWidth = PADDING + (int) Math.max(durationRect.getWidth(),
+                Math.max(classNameRect.getWidth(), rangeRect.getWidth())) + PADDING;
+
+        x = point.x + horizontalOffset + LEFT_PANEL_OFFSET;
+        y = point.y + topOffset + TOP_PANEL_OFFSET;
+
+        if (x + rectWidth - horizontalOffset > parent.getWidth()) {
+            x = point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET);
+        }
+
+        if (y + rectHeight - topOffset > parent.getHeight()) {
+            y = point.y + topOffset - rectHeight;
+        }
+        setVisible(true);
         repaint();
     }
 }
