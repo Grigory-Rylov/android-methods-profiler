@@ -107,7 +107,12 @@ internal class DependenciesListDialog(
 
     fun setDependencies(items: List<ProfileData>) {
         lastSelectedItems = items
-        updateItemsList(items)
+        if (onlyConstructorsCheckbox.isSelected) {
+            val filtered = lastSelectedItems.filter { it.name.endsWith(".<init>") }
+            updateItemsList(filtered)
+        } else {
+            updateItemsList(lastSelectedItems)
+        }
     }
 
     private fun updateItemsList(items: List<ProfileData>) {
