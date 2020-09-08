@@ -416,6 +416,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
 
         List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
 
+        // draw rectangles
         for (int i = 0; i < objectsForThread.size(); i++) {
             ProfileRectangle element = objectsForThread.get(i);
 
@@ -432,15 +433,11 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             g.setColor(Color.BLACK);
         }
 
-        @Nullable
-        ProfileRectangle selected = currentSelectedElement >= 0 ? objectsForThread.get(currentSelectedElement) : null;
-
-        calledStacktrace.draw(g, at, fm, currentThreadId, selected, minimumSizeInMs, screenLeft, screenTop, screenRight, screenBottom);
-
         if (settings.getBoolValueOrDefault(Main.SETTINGS_SHOW_BOOKMARKS, true)) {
             drawBookmarks(g, at);
         }
 
+        // draw titles
         for (int i = 0; i < objectsForThread.size(); i++) {
             ProfileRectangle element = objectsForThread.get(i);
 
@@ -456,6 +453,12 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             g.setColor(Color.BLACK);
             drawLabel(g, fm, element.profileData.getName(), bounds, bounds.y + bounds.height - fontTopOffset);
         }
+
+        // draw selections
+        @Nullable
+        ProfileRectangle selected = currentSelectedElement >= 0 ? objectsForThread.get(currentSelectedElement) : null;
+        calledStacktrace.draw(g, at, fm, currentThreadId, selected, minimumSizeInMs, screenLeft, screenTop, screenRight, screenBottom);
+
         // toolbar background.
         g.setColor(toolbarColor);
         g.fillRect(0, 0, getWidth(), TOP_OFFSET);
