@@ -2,27 +2,11 @@ package com.github.grishberg.profiler.ui.dialogs.info
 
 import com.github.grishberg.profiler.analyzer.ProfileData
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Frame
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.datatransfer.StringSelection
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.util.Comparator
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JOptionPane
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTable
-import javax.swing.KeyStroke
-import javax.swing.SortOrder
+import javax.swing.*
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 import javax.swing.table.TableCellRenderer
@@ -37,6 +21,8 @@ internal class DependenciesListDialog(
     private val dependenciesListModel = ElementsModel()
     private val table = JFixedWidthTable(dependenciesListModel)
     private val statusLabel = JLabel()
+    private val onlyConstructorsCheckbox = JCheckBox("Only constructors")
+    private var lastSelectedItems: List<ProfileData> = emptyList()
 
     init {
         val listScroll = JScrollPane(table)
@@ -80,6 +66,7 @@ internal class DependenciesListDialog(
         val buttonsPanel = JPanel().apply {
             add(copyButton)
             add(saveToFileButton)
+            add(onlyConstructorsCheckbox)
         }
 
         val statusPanel = JPanel().apply {
@@ -101,11 +88,29 @@ internal class DependenciesListDialog(
             border = EmptyBorder(8, 8, 8, 8)
         }
 
+        setupConstructorsFilterCheckbox()
+
         contentPane = content
         pack()
     }
 
+    private fun setupConstructorsFilterCheckbox() {
+        onlyConstructorsCheckbox.addItemListener {
+            if (onlyConstructorsCheckbox.isSelected) {
+                val filtered = lastSelectedItems.filter { it.name.endsWith(".<init>") }
+                updateItemsList(filtered)
+            } else {
+                updateItemsList(lastSelectedItems)
+            }
+        }
+    }
+
     fun setDependencies(items: List<ProfileData>) {
+        lastSelectedItems = items
+        updateItemsList(items)
+    }
+
+    private fun updateItemsList(items: List<ProfileData>) {
         dependenciesListModel.setItems(items)
         statusLabel.text = "Items count: ${items.size}"
         repaint()
