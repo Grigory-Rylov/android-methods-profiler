@@ -2,10 +2,12 @@ package com.github.grishberg.profiler.common
 
 import com.github.grishberg.profiler.analyzer.AnalyzerResult
 import com.github.grishberg.profiler.analyzer.TraceAnalyzer
+import com.github.grishberg.profiler.analyzer.converter.DeObfuscatorConverter
 import com.github.grishberg.profiler.chart.BOOKMARK_EXTENSION
 import com.github.grishberg.profiler.chart.Bookmarks
 import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.profiler.ui.Main
+import proguard.retrace.DeObfuscator
 import java.awt.Frame
 import java.io.File
 import java.io.FileInputStream
@@ -31,13 +33,30 @@ class FileSystem(
         add(FileNameExtensionFilter("compressed AS trace files", "zip"))
         add(FileNameExtensionFilter("AS trace with bookmarks", "twb"))
     }
+    val mappingFilters = mutableListOf<FileNameExtensionFilter>().apply {
+        add(FileNameExtensionFilter("text mapping file", "txt"))
+    }
+
     private val tempDirectory = System.getProperty("java.io.tmpdir")
     private val analyzer = TraceAnalyzer(log)
+
+    private var mappingFile: File? = null
+    private var cachedDeobfuscator: DeObfuscator? = null
+
+    fun openMappingFile(file: File) {
+        mappingFile = file
+    }
 
     /**
      * Should run in worker thread.
      */
     fun readFile(file: File): TraceContainer {
+        if (mappingFile != null && cachedDeobfuscator == null) {
+            val deObfuscator = DeObfuscator(mappingFile)
+            analyzer.nameConverter = DeObfuscatorConverter(deObfuscator)
+            cachedDeobfuscator = deObfuscator
+        }
+
         if (file.extension == "trace") {
             return readTraceFile(file)
         }

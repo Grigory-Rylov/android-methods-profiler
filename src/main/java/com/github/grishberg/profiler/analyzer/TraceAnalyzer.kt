@@ -4,6 +4,8 @@ import com.android.tools.perflib.vmtrace.MethodInfo
 import com.android.tools.perflib.vmtrace.TraceAction
 import com.android.tools.perflib.vmtrace.VmTraceHandler
 import com.android.tools.perflib.vmtrace.VmTraceParser
+import com.github.grishberg.profiler.analyzer.converter.NameConverter
+import com.github.grishberg.profiler.analyzer.converter.NoOpNameConverter
 import com.github.grishberg.profiler.common.AppLogger
 import java.io.File
 import java.util.*
@@ -13,9 +15,10 @@ import kotlin.collections.HashMap
 class TraceAnalyzer(
     private val log: AppLogger
 ) {
+    var nameConverter: NameConverter = NoOpNameConverter
 
     fun analyze(traceFile: File): AnalyzerResult {
-        val vmTraceHandler = OnVmTraceHandler(log)
+        val vmTraceHandler = OnVmTraceHandler(log, nameConverter)
         VmTraceParser(traceFile, vmTraceHandler).parse()
 
         for (threadId in vmTraceHandler.threads) {
@@ -83,7 +86,8 @@ class TraceAnalyzer(
     }
 
     internal class OnVmTraceHandler(
-        private val log: AppLogger
+        private val log: AppLogger,
+        private val nameConverter: NameConverter
     ) : VmTraceHandler {
         private var version: Int = -1
 
@@ -197,8 +201,11 @@ class TraceAnalyzer(
                     stacksForThread[methodId] = stack
                 }
                 val parent: ProfileData? = if (parentsStackForThread.isEmpty()) null else parentsStackForThread.peek()
+
+                val convertedClassName = nameConverter.convertClassName(methodInfo.className)
+                val convertedMethodName = nameConverter.convertMethodName(convertedClassName, methodInfo.methodName, methodInfo.signature)
                 val duration = ProfileData(
-                    "${methodInfo.className}.${methodInfo.methodName}",
+                    "${convertedClassName}.${convertedMethodName}",
                     level.getOrDefault(threadId, -1),
                     threadStartTimeInMillisecond = threadTime / 1000.0,
                     globalStartTimeInMillisecond = globalTime / 1000.0,

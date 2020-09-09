@@ -86,6 +86,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     public static final String SETTINGS_THREAD_TIME_MODE = "Main.threadTimeEnabled";
     public static final String SETTINGS_TRACES_FILE_DIALOG_DIRECTORY = "Main.tracesFileDialogDirectory";
+    public static final String SETTINGS_MAPPINGS_FILE_DIALOG_DIRECTORY = "Main.mappingsFileDialogDirectory";
     public static final String SETTINGS_REPORTS_FILE_DIALOG_DIRECTORY = "Main.reportsFileDialogDirectory";
     public static final String SETTINGS_SHOW_BOOKMARKS = "Char.showBookmarks";
     private static final String DEFAULT_FOUND_INFO_MESSAGE = "";
@@ -339,6 +340,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private JMenu createFileMenu() {
         JMenu file = new JMenu("File");
         JMenuItem openFile = new JMenuItem("Open .trace file");
+        JMenuItem openMappingFile = new JMenuItem("Open mapping text file");
         JMenuItem openFileInNewWindow = new JMenuItem("Open .trace file in new window");
         JMenuItem newFile = new JMenuItem("Record new .trace");
         JMenuItem newFileInNewWindow = new JMenuItem("Record new .trace in new Window");
@@ -346,6 +348,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         file.add(openFile);
         file.add(openFileInNewWindow);
+        file.add(openMappingFile);
         file.add(newFile);
         file.add(newFileInNewWindow);
         file.addSeparator();
@@ -353,6 +356,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         openFile.addActionListener(arg0 -> showOpenFileChooser(false));
         openFileInNewWindow.addActionListener(arg0 -> showOpenFileChooser(true));
+        openMappingFile.addActionListener(arg0 -> openMappingFileChooser());
         newFile.addActionListener(arg0 -> showNewTraceDialog(false));
         newFileInNewWindow.addActionListener(arg0 -> showNewTraceDialog(true));
         exportTraceWithBookmarks.addActionListener(arg0 -> exportTraceWithBookmarks());
@@ -604,6 +608,20 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             settings.setStringValue(SETTINGS_TRACES_FILE_DIALOG_DIRECTORY, file.getParent());
             menuHistoryItems.addToFileHistory(file);
             openTraceFile(file);
+        }
+    }
+
+    private void openMappingFileChooser() {
+        hoverInfoPanel.hidePanel();
+        JFileChooser fileChooser = new JFileChooser(settings.getStringValue(SETTINGS_MAPPINGS_FILE_DIALOG_DIRECTORY));
+        fileChooser.setFileFilter(fileSystem.getMappingFilters().get(0));
+
+        int returnVal = fileChooser.showOpenDialog(frame);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            settings.setStringValue(SETTINGS_MAPPINGS_FILE_DIALOG_DIRECTORY, file.getParent());
+            fileSystem.openMappingFile(file);
         }
     }
 
