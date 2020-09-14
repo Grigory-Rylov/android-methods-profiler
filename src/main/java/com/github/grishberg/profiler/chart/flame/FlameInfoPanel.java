@@ -1,7 +1,12 @@
 package com.github.grishberg.profiler.chart.flame;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 
 public class FlameInfoPanel extends JComponent {
@@ -87,7 +92,9 @@ public class FlameInfoPanel extends JComponent {
         x = point.x + horizontalOffset + LEFT_PANEL_OFFSET;
         y = point.y + topOffset + TOP_PANEL_OFFSET;
 
-        if (x + rectWidth - horizontalOffset > parent.getWidth()) {
+        if ((point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET) > 0) ||
+                (x + rectWidth - horizontalOffset > parent.getWidth() &&
+                        (point.x + horizontalOffset) > parent.getWidth() * 0.66)) {
             x = point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET);
         }
 
