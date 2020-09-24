@@ -3,10 +3,7 @@ package com.github.grishberg.profiler.ui;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.analyzer.ProfileData;
 import com.github.grishberg.profiler.analyzer.ThreadItem;
-import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
-import com.github.grishberg.profiler.chart.BookmarksRectangle;
-import com.github.grishberg.profiler.chart.Finder;
-import com.github.grishberg.profiler.chart.ProfilerPanel;
+import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
@@ -15,12 +12,7 @@ import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
 import com.github.grishberg.profiler.common.FileSystem;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
-import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
-import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
-import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog;
-import com.github.grishberg.profiler.ui.dialogs.ReportsGeneratorDialog;
-import com.github.grishberg.profiler.ui.dialogs.ScaleRangeDialog;
-import com.github.grishberg.profiler.ui.dialogs.SetAndroidHomeDialog;
+import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.SampleJavaMethodsDialog;
@@ -34,16 +26,13 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        ProfilerPanel.FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnBookmarkClickListener {
+        ProfilerPanel.FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -212,7 +201,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.getRootPane().setGlassPane(hoverInfoPanel);
 
         chart.setMouseEventListener(this);
-        chart.setBookmarkClickListener(this);
+        chart.setRightClickListener(this);
         chart.setGridEnabled(settings.getBoolValueOrDefault(SETTINGS_GRID, true));
 
         newBookmarkDialog = new NewBookmarkDialog(frame);
@@ -385,7 +374,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return viewMenu;
     }
 
-    private void showFlameChartDialog() {
+    public void showFlameChartDialog() {
         ProfileData selected = chart.getSelected();
 
         flameChartController.showDialog();
@@ -452,6 +441,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     @Override
     public void onMouseClicked(Point point, float x, float y) {
+        selectMethodUnderCursor(x, y);
+    }
+
+    private ProfileData selectMethodUnderCursor(float x, float y) {
         chart.requestFocus();
         @Nullable
         ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
@@ -470,7 +463,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             if (flameChartController.isViewVisible()) {
                 flameChartController.showFlameChart(selectedData);
             }
+            return selectedData;
         }
+        return null;
     }
 
     @Override
@@ -685,9 +680,19 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onBookmarkClicked(int x, int y, BookmarksRectangle bookmark) {
+    public void onBookmarkRightClicked(int x, int y, BookmarksRectangle bookmark) {
         BookmarkPopupMenu menu = new BookmarkPopupMenu(chart, newBookmarkDialog, bookmark);
         menu.show(chart, x, y);
+    }
+
+    @Override
+    public void onMethodRightClicked(Point clickedPoint, Point2D.Float transformed) {
+        ProfileData selected = selectMethodUnderCursor(transformed.x, transformed.y);
+        if (selected == null) {
+            return;
+        }
+        MethodsPopupMenu menu = new MethodsPopupMenu(this, chart, selected);
+        menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 
     private class FindInMethodsAction implements ActionListener {

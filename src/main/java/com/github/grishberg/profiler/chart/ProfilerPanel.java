@@ -8,37 +8,20 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
-import com.github.grishberg.profiler.ui.BookMarkInfo;
-import com.github.grishberg.profiler.ui.Main;
-import com.github.grishberg.profiler.ui.SimpleComponentListener;
-import com.github.grishberg.profiler.ui.TimeFormatter;
-import com.github.grishberg.profiler.ui.ZoomAndPanDelegate;
+import com.github.grishberg.profiler.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate {
     public static final int TOP_OFFSET = 20;
@@ -95,7 +78,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private final Font labelFont;
     private final FontMetrics labelFontMetrics;
     @Nullable
-    private OnBookmarkClickListener bookmarkClickListener;
+    private OnRightClickListener rightClickListener;
 
     public ProfilerPanel(TimeFormatter timeFormatter,
                          MethodsColorImpl methodsColor,
@@ -114,7 +97,19 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         addMouseListener(new SimpleMouseListener() {
             @Override
             public void mouseRightClicked(@NotNull MouseEvent e) {
-                checkBookmarkHeaderClicked(e.getPoint());
+                Point point = e.getPoint();
+                if (checkBookmarkHeaderClicked(point)) {
+                    return;
+                }
+
+                if (rightClickListener != null) {
+                    try {
+                        Point2D.Float transformedPoint = zoomAndPanDelegate.transformPoint(point);
+                        rightClickListener.onMethodRightClicked(point, transformedPoint);
+                    } catch (NoninvertibleTransformException noninvertibleTransformException) {
+                        noninvertibleTransformException.printStackTrace();
+                    }
+                }
             }
         });
         screenSize = getSize();
@@ -142,7 +137,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         calledStacktrace.setDependenciesFoundAction(dependenciesFoundAction);
     }
 
-    private void checkBookmarkHeaderClicked(Point point) {
+    private boolean checkBookmarkHeaderClicked(Point point) {
         AffineTransform transform = zoomAndPanDelegate.getTransform();
         for (int i = bookmarks.size() - 1; i >= 0; i--) {
             BookmarksRectangle bookmark = bookmarks.bookmarkAt(i);
@@ -155,12 +150,13 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             // header background
             Rectangle labelRect = new Rectangle(cx - labelTextWidth / 2 - leftSymbolOffset, 0, labelTextWidth + 2 * leftSymbolOffset, TOP_OFFSET);
             if (labelRect.contains(point)) {
-                if (bookmarkClickListener != null) {
-                    bookmarkClickListener.onBookmarkClicked(point.x, point.y, bookmark);
+                if (rightClickListener != null) {
+                    rightClickListener.onBookmarkRightClicked(point.x, point.y, bookmark);
                 }
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     public void setMouseEventListener(ZoomAndPanDelegate.MouseEventsListener l) {
@@ -195,8 +191,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         zoomAndPanDelegate.setMouseEventsListener(delegate);
     }
 
-    public void setBookmarkClickListener(OnBookmarkClickListener listener) {
-        bookmarkClickListener = listener;
+    public void setRightClickListener(OnRightClickListener listener) {
+        rightClickListener = listener;
     }
 
     /**
@@ -1009,10 +1005,15 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         }
     }
 
-    public interface OnBookmarkClickListener {
+    public interface OnRightClickListener {
         /**
          * Is called when right-clicked on bookmark.
          */
-        void onBookmarkClicked(int x, int y, BookmarksRectangle bookmark);
+        void onBookmarkRightClicked(int x, int y, BookmarksRectangle bookmark);
+
+        /**
+         * Is celled when right-clicked on method.
+         */
+        void onMethodRightClicked(Point clickedPoint, Point2D.Float transformed);
     }
 }
