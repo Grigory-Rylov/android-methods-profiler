@@ -3,6 +3,7 @@ package com.github.grishberg.profiler.chart.flame
 import com.github.grishberg.profiler.chart.ProfilerPanel.TOP_OFFSET
 import com.github.grishberg.profiler.ui.ZoomAndPanDelegate
 import java.awt.Color
+import java.awt.Component
 import java.awt.FontMetrics
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -12,15 +13,14 @@ import java.awt.RenderingHints
 import java.awt.Shape
 import java.awt.geom.AffineTransform
 import java.awt.geom.Rectangle2D
-import javax.swing.JDialog
 import javax.swing.JPanel
 
 private const val MINIMUM_WIDTH_IN_PX = 1.0
 private const val FIT_PADDING = 8
 
 class FlameChartPanel(
-    private val parentDialog: JDialog,
-    private val controller: FlameChartController
+        private val parentDialog: Component,
+        private val controller: FlameChartController
 ) : JPanel(), View {
     private val bgColor = Color(65, 65, 65)
 

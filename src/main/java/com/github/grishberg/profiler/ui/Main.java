@@ -28,35 +28,12 @@ import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.AbstractButton;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.SwingWorker;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Point;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -67,7 +44,6 @@ import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ProfilerPanel.FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnBookmarkClickListener {
-
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -92,7 +68,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private static final String DEFAULT_FOUND_INFO_MESSAGE = "";
     private static final String TITLE = "YAMP v";
     public static final String SETTINGS_GRID = "Main.enableGrid";
-
     private final TimeFormatter timeFormatter = new TimeFormatter();
     private final JFrame frame;
     private final JLabel timeModeLabel;
@@ -117,9 +92,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final DependenciesDialogLogic dependenciesDialog;
     private final JRadioButtonMenuItem globalTimeMenuItem = new JRadioButtonMenuItem("Global time");
     private final JRadioButtonMenuItem threadTimeMenuItem = new JRadioButtonMenuItem("Thread time");
-
     private final FlameChartController flameChartController;
-
     @Nullable
     private TraceContainer resultContainer;
 
@@ -245,7 +218,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         newBookmarkDialog = new NewBookmarkDialog(frame);
         newBookmarkDialog.pack();
 
-
         loadingDialog = new LoadingDialog(frame);
         loadingDialog.pack();
 
@@ -256,7 +228,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         flameChartController = new FlameChartController(methodsColor, settings, log,
                 GlobalScope.INSTANCE, new CoroutinesDispatchersImpl());
-        FlameChartDialog flameChartDialog = new FlameChartDialog(frame, flameChartController);
+        FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
 
         KeyBinder keyBinder = new KeyBinder(chart,
                 selectedClassNameLabel,
@@ -600,7 +572,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
         fileChooser.setFileFilter(fileSystem.getFileFilters().get(0));
 
-
         int returnVal = fileChooser.showOpenDialog(frame);
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -645,7 +616,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 return;
             }
         }
-
 
         methodTraceRecordDialog.setLocationRelativeTo(frame);
         methodTraceRecordDialog.showDialog();
@@ -772,7 +742,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                     threadsComboBox.addItem(thread);
                 }
                 threadsComboBox.setSelectedIndex(0);
-
             } catch (Exception e) {
                 e.printStackTrace();
                 log.e("Parse trace file exception: ", e);

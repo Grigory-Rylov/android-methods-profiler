@@ -2,7 +2,6 @@ package com.github.grishberg.profiler.chart.flame
 
 import com.github.grishberg.profiler.common.SimpleMouseListener
 import com.github.grishberg.profiler.ui.TextUtils
-import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -11,6 +10,8 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.AbstractAction
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -22,10 +23,10 @@ import javax.swing.SwingConstants
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 
+
 class FlameChartDialog(
-    owner: JFrame,
-    private val controller: FlameChartController
-) : CloseByEscapeDialog(owner, "Flame chart", false) {
+        private val controller: FlameChartController
+) : JFrame("Flame chart") {
     private val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
     private val flameChart = FlameChartPanel(this, controller)
     private val inputMap = flameChart.getInputMap(condition)
@@ -100,6 +101,12 @@ class FlameChartDialog(
 
         addKeyMapWithCtrlShift(KeyEvent.VK_C, CopySelectedShortClassNameAction())
         addKeyMapWithCtrlAlt(KeyEvent.VK_C, CopySelectedShortClassNameWithoutMethodAction())
+
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(windowEvent: WindowEvent) {
+                controller.onDialogClosed()
+            }
+        })
     }
 
     private fun selectElement(e: MouseEvent) {
@@ -125,10 +132,6 @@ class FlameChartDialog(
         this.statusNameLabel.horizontalAlignment = SwingConstants.LEFT
         statusPanel.add(statusNameLabel, BorderLayout.LINE_START)
         statusPanel.add(statusTimeLabel, BorderLayout.LINE_END)
-    }
-
-    override fun onDialogClosed() {
-        controller.onDialogClosed()
     }
 
     private fun addKeyMap(keyCode: Int, action: AbstractAction) {
@@ -271,7 +274,7 @@ class FlameChartDialog(
     }
 
     private inner class ChangeFontSizeAction(
-        private val increase: Boolean
+            private val increase: Boolean
     ) : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
             if (increase) {
