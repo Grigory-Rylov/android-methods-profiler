@@ -460,9 +460,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                     formatMicroseconds(end),
                     end - start));
 
-            if (flameChartController.isViewVisible()) {
-                flameChartController.showFlameChart(selectedData);
-            }
             return selectedData;
         }
         return null;
