@@ -29,6 +29,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
@@ -415,12 +416,17 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private JMenu createHelpMenu() {
         JMenu help = new JMenu("Help");
         JMenuItem openKeymap = new JMenuItem("Keymap");
+        JMenuItem homePage = new JMenuItem("Visit YAMP home page");
         help.add(openKeymap);
+        help.add(homePage);
 
         openKeymap.addActionListener(arg0 -> {
             KeymapDialog dialog = new KeymapDialog(frame);
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
+        });
+        homePage.addActionListener(args -> {
+            openWebpage("https://github.com/Grigory-Rylov/android-methods-profiler");
         });
         return help;
     }
@@ -690,6 +696,19 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
         MethodsPopupMenu menu = new MethodsPopupMenu(this, chart, selected);
         menu.show(chart, clickedPoint.x, clickedPoint.y);
+    }
+
+    public static boolean openWebpage(String uri) {
+        Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+        if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+            try {
+                desktop.browse(URI.create(uri));
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
     private class FindInMethodsAction implements ActionListener {
