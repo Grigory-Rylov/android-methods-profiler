@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.flame
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
@@ -65,7 +65,7 @@ internal class FlameChartControllerTest {
     }
 
     private val methodsColor = object : MethodsColor {
-        override fun getColorForMethod(profile: ProfileData) = Color.YELLOW
+        override fun getColorForMethod(profile: ProfileDataImpl) = Color.YELLOW
         override fun getColorForMethod(name: String) = Color.YELLOW
     }
 
@@ -157,14 +157,14 @@ internal class FlameChartControllerTest {
         assertEquals(Rectangle2D.Double(0.0, 0.0, 100.0, 60.0), viewStub.bounds)
     }
 
-    private fun ProfileData.child(childName: String, start: Double, end: Double): ProfileData {
+    private fun ProfileDataImpl.child(childName: String, start: Double, end: Double): ProfileDataImpl {
         val child = profileData(childName, start, end, this.level + 1)
         this.addChild(child)
         return child
     }
 
-    private fun profileData(name: String, start: Double, end: Double, level: Int = 0): ProfileData =
-        ProfileData(
+    private fun profileData(name: String, start: Double, end: Double, level: Int = 0): ProfileDataImpl =
+        ProfileDataImpl(
             name = name, level = level,
             threadStartTimeInMillisecond = start,
             globalStartTimeInMillisecond = start,

@@ -43,7 +43,7 @@ class FlatMethodsReportGenerator(
         }
     }
 
-    private fun findMarkerForElement(profileData: ProfileData): BookmarksRectangle? {
+    private fun findMarkerForElement(profileData: ProfileDataImpl): BookmarksRectangle? {
         for (marker in data.markersData) {
             if (marker.isForElement(profileData)) {
                 return marker

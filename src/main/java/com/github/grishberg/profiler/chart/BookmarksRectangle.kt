@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.colorToHex
 import com.github.grishberg.profiler.common.hexToColor
 import com.github.grishberg.profiler.ui.BookMarkInfo
@@ -61,7 +61,7 @@ class BookmarksRectangle(
         shouldShow = true
     }
 
-    fun isForElement(profileData: ProfileData): Boolean {
+    fun isForElement(profileData: ProfileDataImpl): Boolean {
         return profileData.globalStartTimeInMillisecond == globalTimeTimeStart
                 && profileData.globalEndTimeInMillisecond == globalTimeTimeEnd
                 && profileData.level == level

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui;
 
-import com.github.grishberg.profiler.analyzer.ProfileData;
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -72,7 +72,7 @@ public class InfoPanel extends JComponent {
         g.drawString(durationText, x + PADDING, durationTextY);
     }
 
-    public void setText(Point point, ProfileData selectedData) {
+    public void setText(Point point, ProfileDataImpl selectedData) {
         Point parentLocation = parent.getLocation();
         int topOffset = parentLocation.y;
         int horizontalOffset = parentLocation.x;

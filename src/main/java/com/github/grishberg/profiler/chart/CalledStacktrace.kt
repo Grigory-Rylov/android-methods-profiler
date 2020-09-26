@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import java.awt.FontMetrics
 import java.awt.Graphics2D
@@ -10,7 +10,7 @@ interface DependenciesFoundAction {
     /**
      * Is called when found any constructors that resolved for creating selected object.
      */
-    fun onDependenciesFound(dependencies: List<ProfileData>)
+    fun onDependenciesFound(dependencies: List<ProfileDataImpl>)
 }
 
 /**
@@ -20,9 +20,9 @@ class CalledStacktrace(
     private val renderer: SelectionRenderer,
     private val logger: AppLogger
 ) {
-    private var lastDaggerFactory: ProfileData? = null
-    private var lastSelectedElement: ProfileData? = null
-    private val foundProfileData = mutableListOf<ProfileData>()
+    private var lastDaggerFactory: ProfileDataImpl? = null
+    private var lastSelectedElement: ProfileDataImpl? = null
+    private val foundProfileData = mutableListOf<ProfileDataImpl>()
     private val shouldSkipBaseLangObjects = false
     private val findChildrenStrategy = FindChildrenStrategy()
     private val findDaggerStackTraceStrategy = FindDaggerStackTraceStrategy()
@@ -32,7 +32,7 @@ class CalledStacktrace(
     var dependenciesFoundAction: DependenciesFoundAction? = null
 
     fun findChildren(
-        profileData: ProfileData,
+        profileData: ProfileDataImpl,
         threadId: Int,
         shouldShowDialog: Boolean = true
     ) {
@@ -59,7 +59,7 @@ class CalledStacktrace(
      * Find classes created while [found] element created by dagger.
      */
     fun findDaggerCreationTrace(
-        found: ProfileData,
+        found: ProfileDataImpl,
         threadId: Int,
         shouldShowDialog: Boolean = true
     ) {
@@ -78,7 +78,7 @@ class CalledStacktrace(
         }
     }
 
-    private fun findDaggerFactory(calledChild: ProfileData) {
+    private fun findDaggerFactory(calledChild: ProfileDataImpl) {
         renderer.addCallerRectangle(calledChild)
 
         val parent = calledChild.parent ?: return
@@ -99,14 +99,14 @@ class CalledStacktrace(
         findDaggerFactory(parent)
     }
 
-    private fun isDaggerFactoryMethod(parent: ProfileData) = parent.name.endsWith("Factory.get") ||
+    private fun isDaggerFactoryMethod(parent: ProfileDataImpl) = parent.name.endsWith("Factory.get") ||
             parent.name.contains(".Dagger")
 
     /**
      * Find call trace from [found] until caller.
      */
     fun findDaggerCallerChain(
-        found: ProfileData,
+        found: ProfileDataImpl,
         threadId: Int
     ) {
         addChildrenStrategy = findDaggerCallerMethodStrategy
@@ -120,7 +120,7 @@ class CalledStacktrace(
         findDaggerCallTrace(found.parent, found)
     }
 
-    private fun findDaggerCallTrace(currentParent: ProfileData?, child: ProfileData) {
+    private fun findDaggerCallTrace(currentParent: ProfileDataImpl?, child: ProfileDataImpl) {
         if (currentParent == null) return
         if (!isDaggerMethod(currentParent)) {
             // this is not created by Dagger
@@ -152,7 +152,7 @@ class CalledStacktrace(
         findDaggerCallTrace(parent, currentParent)
     }
 
-    private fun findNextChildUntilConstructor(parent: ProfileData) {
+    private fun findNextChildUntilConstructor(parent: ProfileDataImpl) {
         renderer.addCallerRectangle(parent)
         if (parent.name.endsWith(".<init>")) {
             return
@@ -164,12 +164,12 @@ class CalledStacktrace(
         }
     }
 
-    private fun isDaggerMethod(parent: ProfileData) = parent.name.endsWith("Factory.get") ||
+    private fun isDaggerMethod(parent: ProfileDataImpl) = parent.name.endsWith("Factory.get") ||
             parent.name.endsWith("Factory.newInstance") || parent.name.contains(".Dagger") ||
             parent.name.contains(".provide") ||
             parent.name == "dagger.internal.DoubleCheck.get"
 
-    private fun findNextChild(parent: ProfileData) {
+    private fun findNextChild(parent: ProfileDataImpl) {
         foundProfileData.add(parent)
 
         renderer.addCallTraceItems(parent)
@@ -212,7 +212,7 @@ class CalledStacktrace(
     }
 
     private inner class FindDaggerCallerMethodStrategy : ApplicableChildrenStrategy {
-        override fun shouldAddProfileData(parent: ProfileData): Boolean {
+        override fun shouldAddProfileData(parent: ProfileDataImpl): Boolean {
             return parent.name.endsWith(".<init>")
         }
 
@@ -224,7 +224,7 @@ class CalledStacktrace(
     }
 
     private inner class FindDaggerStackTraceStrategy : ApplicableChildrenStrategy {
-        override fun shouldAddProfileData(parent: ProfileData): Boolean {
+        override fun shouldAddProfileData(parent: ProfileDataImpl): Boolean {
             return parent.name.endsWith(".<init>") && (
                     !shouldSkipBaseLangObjects || (!parent.name.startsWith("java.lang.") &&
                             !parent.name.startsWith("java.util.") &&
@@ -240,7 +240,7 @@ class CalledStacktrace(
     }
 
     private inner class FindChildrenStrategy : ApplicableChildrenStrategy {
-        override fun shouldAddProfileData(parent: ProfileData) = true
+        override fun shouldAddProfileData(parent: ProfileDataImpl) = true
         override fun invalidate() {
             lastSelectedElement?.let {
                 findChildren(it, renderer.currentThreadId, shouldShowDialog = false)
@@ -249,7 +249,7 @@ class CalledStacktrace(
     }
 
     private interface ApplicableChildrenStrategy {
-        fun shouldAddProfileData(parent: ProfileData): Boolean
+        fun shouldAddProfileData(parent: ProfileDataImpl): Boolean
         fun invalidate()
     }
 }

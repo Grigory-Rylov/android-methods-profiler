@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.highlighting
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
@@ -19,7 +19,7 @@ private const val FILTER_KEY = "filter"
 private const val COLOR_IN_HEX_KEY = "color"
 
 interface MethodsColor {
-    fun getColorForMethod(profile: ProfileData): Color
+    fun getColorForMethod(profile: ProfileDataImpl): Color
 
     fun getColorForMethod(name: String): Color
 }
@@ -104,7 +104,7 @@ class MethodsColorImpl(
         }
     }
 
-    override fun getColorForMethod(profile: ProfileData): Color {
+    override fun getColorForMethod(profile: ProfileDataImpl): Color {
         return getColorForMethod(profile.name)
     }
 

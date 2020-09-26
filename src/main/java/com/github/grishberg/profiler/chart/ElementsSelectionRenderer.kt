@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D
@@ -18,10 +18,10 @@ interface SelectionRenderer {
         screenBottom: Double
     )
 
-    fun addCallerRectangle(profileData: ProfileData)
-    fun addCallTraceItems(profileData: ProfileData)
+    fun addCallerRectangle(profileData: ProfileDataImpl)
+    fun addCallTraceItems(profileData: ProfileDataImpl)
     fun clear()
-    fun removeRectanglesUntilCurrent(factoryMethod: ProfileData)
+    fun removeRectanglesUntilCurrent(factoryMethod: ProfileDataImpl)
 }
 
 class ElementsSelectionRenderer(
@@ -108,15 +108,15 @@ class ElementsSelectionRenderer(
         }
     }
 
-    override fun addCallerRectangle(profileData: ProfileData) {
+    override fun addCallerRectangle(profileData: ProfileDataImpl) {
         callerRectangles.add(createProfileRectangle(profileData))
     }
 
-    override fun addCallTraceItems(profileData: ProfileData) {
+    override fun addCallTraceItems(profileData: ProfileDataImpl) {
         callTraceItems.add(createProfileRectangle(profileData))
     }
 
-    private fun createProfileRectangle(parent: ProfileData): ProfileRectangle {
+    private fun createProfileRectangle(parent: ProfileDataImpl): ProfileRectangle {
         val top: Double = dimensionDelegate.calculateTopForLevel(parent.level)
         val left: Double = dimensionDelegate.calculateStartXForTime(parent)
         val right: Double = dimensionDelegate.calculateEndXForTime(parent)
@@ -136,7 +136,7 @@ class ElementsSelectionRenderer(
         callerRectangles.clear()
     }
 
-    override fun removeRectanglesUntilCurrent(factoryMethod: ProfileData) {
+    override fun removeRectanglesUntilCurrent(factoryMethod: ProfileDataImpl) {
         while (callerRectangles.isNotEmpty()) {
             val element = callerRectangles.last()
             callerRectangles.remove(element)

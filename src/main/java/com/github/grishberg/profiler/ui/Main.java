@@ -1,8 +1,8 @@
 package com.github.grishberg.profiler.ui;
 
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.analyzer.ProfileData;
-import com.github.grishberg.profiler.analyzer.ThreadItem;
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
+import com.github.grishberg.profiler.analyzer.ThreadItemImpl;
 import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
@@ -107,16 +107,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JPanel topControls = new JPanel(new BorderLayout(2, 2));
         topControls.setBorder(new EmptyBorder(0, 4, 0, 4));
 
-        threadsComboBox = new JComboBox<ThreadItem>();
+        threadsComboBox = new JComboBox<ThreadItemImpl>();
         threadsComboBox.setToolTipText("Threads switcher");
-        threadsComboBox.setPrototypeDisplayValue(new ThreadItem("XXXXXXXXXXXXXXX", 0));
+        threadsComboBox.setPrototypeDisplayValue(new ThreadItemImpl("XXXXXXXXXXXXXXX", 0));
         threadsComboBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() != ItemEvent.SELECTED) {
                     return;
                 }
-                ThreadItem thread = (ThreadItem) threadsComboBox.getSelectedItem();
+                ThreadItemImpl thread = (ThreadItemImpl) threadsComboBox.getSelectedItem();
                 if (thread == null) {
                     return;
                 }
@@ -178,7 +178,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         dependenciesDialog = new DependenciesDialogLogic(frame, settings, new FocusElementDelegate() {
             @Override
-            public void selectProfileElement(@NotNull ProfileData selectedElement) {
+            public void selectProfileElement(@NotNull ProfileDataImpl selectedElement) {
                 chart.selectProfileData(selectedElement);
             }
         }, log);
@@ -376,7 +376,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public void showFlameChartDialog() {
-        ProfileData selected = chart.getSelected();
+        ProfileDataImpl selected = chart.getSelected();
 
         flameChartController.showDialog();
         if (selected == null) {
@@ -450,10 +450,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         selectMethodUnderCursor(x, y);
     }
 
-    private ProfileData selectMethodUnderCursor(float x, float y) {
+    private ProfileDataImpl selectMethodUnderCursor(float x, float y) {
         chart.requestFocus();
         @Nullable
-        ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
+        ProfileDataImpl selectedData = chart.findDataByPositionAndSelect(x, y);
         if (selectedData != null) {
             boolean isThreadTime = settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false);
 
@@ -475,7 +475,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void onMouseMove(Point point, float x, float y) {
         coordinatesLabel.setText(String.format("pointer: %s", formatMicroseconds(x)));
         @Nullable
-        ProfileData selectedData = chart.findDataByPosition(x, y);
+        ProfileDataImpl selectedData = chart.findDataByPosition(x, y);
         if (selectedData != null) {
             hoverInfoPanel.setText(point, selectedData);
         } else {
@@ -507,7 +507,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void onNotFound(String text, boolean ignoreCase) {
         foundInfo.setText("not found");
 
-        ThreadItem thread = (ThreadItem) threadsComboBox.getSelectedItem();
+        ThreadItemImpl thread = (ThreadItemImpl) threadsComboBox.getSelectedItem();
         if (resultContainer == null || thread == null) {
             return;
         }
@@ -518,13 +518,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
 
         int threadIndex = 0;
-        for (ThreadItem item : resultContainer.getResult().getThreads()) {
+        for (ThreadItemImpl item : resultContainer.getResult().getThreads()) {
             if (item.getThreadId() == result.getThreadId()) {
                 break;
             }
             threadIndex++;
         }
-        ThreadItem foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
+        ThreadItemImpl foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
         if (foundThreadItem == null) {
             return;
         }
@@ -690,7 +690,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     @Override
     public void onMethodRightClicked(Point clickedPoint, Point2D.Float transformed) {
-        ProfileData selected = selectMethodUnderCursor(transformed.x, transformed.y);
+        ProfileDataImpl selected = selectMethodUnderCursor(transformed.x, transformed.y);
         if (selected == null) {
             return;
         }
@@ -759,7 +759,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 chart.openTraceResult(result.traceContainer);
 
                 threadsComboBox.removeAllItems();
-                for (ThreadItem thread : resultContainer.getResult().getThreads()) {
+                for (ThreadItemImpl thread : resultContainer.getResult().getThreads()) {
                     threadsComboBox.addItem(thread);
                 }
                 threadsComboBox.setSelectedIndex(0);

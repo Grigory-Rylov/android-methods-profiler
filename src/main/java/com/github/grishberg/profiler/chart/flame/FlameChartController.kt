@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.flame
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.AppLogger
@@ -56,7 +56,7 @@ class FlameChartController(
     private val selectedElementFillColor = Color(115, 238, 46);
     private val selectedElementEdgesColor = Color(0xE2CF95)
     private var topOffset = 0.0
-    private var selectedElements: List<ProfileData> = emptyList()
+    private var selectedElements: List<ProfileDataImpl> = emptyList()
     var isViewVisible = false
         private set
 
@@ -79,11 +79,11 @@ class FlameChartController(
         isViewVisible = false
     }
 
-    fun showFlameChart(selectedElements: ProfileData) {
+    fun showFlameChart(selectedElements: ProfileDataImpl) {
         showFlameChart(listOf(selectedElements))
     }
 
-    fun showFlameChart(selectedElements: List<ProfileData>) {
+    fun showFlameChart(selectedElements: List<ProfileDataImpl>) {
         this.selectedElements = selectedElements
         coroutineScope.launch(dispatchers.ui) {
             val levelHeight = view?.levelHeight ?: 1.0
@@ -105,7 +105,7 @@ class FlameChartController(
         }
     }
 
-    private suspend fun calculateFlame(levelHeight: Double, selectedElements: List<ProfileData>): Result {
+    private suspend fun calculateFlame(levelHeight: Double, selectedElements: List<ProfileDataImpl>): Result {
         val data = coroutineScope.async(dispatchers.worker) {
             val calculator = FlameCalculator(
                 methodsColor,
@@ -128,7 +128,7 @@ class FlameChartController(
         var topOffset = 0.0
             private set
 
-        fun calculateFlame(rootSource: ProfileData): Result {
+        fun calculateFlame(rootSource: ProfileDataImpl): Result {
             result.clear()
             rootLevel = rootSource.level
 
@@ -157,7 +157,7 @@ class FlameChartController(
             return Result(result, minX, -topOffset, maxX)
         }
 
-        private fun processChildren(rootSources: List<ProfileData>, parentLeft: Double) {
+        private fun processChildren(rootSources: List<ProfileDataImpl>, parentLeft: Double) {
             val children = mutableMapOf<String, ChildHolder>()
             var left = parentLeft
             for (root in rootSources) {
@@ -189,7 +189,7 @@ class FlameChartController(
             }
         }
 
-        private fun calculateStartXForTime(record: ProfileData): Double {
+        private fun calculateStartXForTime(record: ProfileDataImpl): Double {
             return if (isThreadTime) {
                 record.threadStartTimeInMillisecond
             } else {
@@ -197,7 +197,7 @@ class FlameChartController(
             }
         }
 
-        private fun calculateEndXForTime(record: ProfileData): Double {
+        private fun calculateEndXForTime(record: ProfileDataImpl): Double {
             return if (isThreadTime) {
                 record.threadEndTimeInMillisecond
             } else {
@@ -205,7 +205,7 @@ class FlameChartController(
             }
         }
 
-        private fun calculateTopForLevel(record: ProfileData): Double {
+        private fun calculateTopForLevel(record: ProfileDataImpl): Double {
             val top = (rootLevel - record.level) * levelHeight
             if (top < topOffset) {
                 topOffset = top
@@ -270,7 +270,7 @@ class FlameChartController(
 
     data class ChildHolder(
         var totalDuration: Double = 0.0,
-        val children: MutableList<ProfileData> = mutableListOf()
+        val children: MutableList<ProfileDataImpl> = mutableListOf()
     )
 
     private data class Result(

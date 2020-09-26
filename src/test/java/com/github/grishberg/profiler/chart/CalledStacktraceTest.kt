@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import com.nhaarman.mockitokotlin2.mock
 import org.junit.Assert.assertEquals
@@ -10,8 +10,8 @@ import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 
 internal class CalledStacktraceTest {
-    val callers = mutableListOf<ProfileData>()
-    val callTraceItems = mutableListOf<ProfileData>()
+    val callers = mutableListOf<ProfileDataImpl>()
+    val callTraceItems = mutableListOf<ProfileDataImpl>()
     val renderer = object : SelectionRenderer {
         override var currentThreadId: Int = -1
 
@@ -28,11 +28,11 @@ internal class CalledStacktraceTest {
             screenBottom: Double
         ) = Unit
 
-        override fun addCallerRectangle(profileData: ProfileData) {
+        override fun addCallerRectangle(profileData: ProfileDataImpl) {
             callers.add(profileData)
         }
 
-        override fun addCallTraceItems(profileData: ProfileData) {
+        override fun addCallTraceItems(profileData: ProfileDataImpl) {
             callTraceItems.add(profileData)
         }
 
@@ -41,7 +41,7 @@ internal class CalledStacktraceTest {
             callTraceItems.clear()
         }
 
-        override fun removeRectanglesUntilCurrent(factoryMethod: ProfileData) {
+        override fun removeRectanglesUntilCurrent(factoryMethod: ProfileDataImpl) {
             while (callers.isNotEmpty()) {
                 val element = callers.last()
                 callers.remove(element)
@@ -76,10 +76,10 @@ internal class CalledStacktraceTest {
             addChild(caller)
         }
 
-    val dependenciesList = mutableListOf<ProfileData>()
+    val dependenciesList = mutableListOf<ProfileDataImpl>()
     val underTest = CalledStacktrace(renderer, logger).apply {
         dependenciesFoundAction = object : DependenciesFoundAction {
-            override fun onDependenciesFound(dependencies: List<ProfileData>) {
+            override fun onDependenciesFound(dependencies: List<ProfileDataImpl>) {
                 dependenciesList.addAll(dependencies)
             }
         }
@@ -126,11 +126,11 @@ internal class CalledStacktraceTest {
         assertEquals("common.DimensionProvider_Factory.get", callTraceItems.last().name)
     }
 
-    fun ProfileData.child(childName: String): ProfileData {
+    fun ProfileDataImpl.child(childName: String): ProfileDataImpl {
         val child = profileData(childName)
         this.addChild(child)
         return child
     }
 
-    private fun profileData(name: String): ProfileData = ProfileData(name, 0, 0.0, 100.0)
+    private fun profileData(name: String): ProfileDataImpl = ProfileDataImpl(name, 0, 0.0, 100.0)
 }

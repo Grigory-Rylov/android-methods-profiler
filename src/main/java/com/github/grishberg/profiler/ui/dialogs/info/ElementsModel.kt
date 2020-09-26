@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui.dialogs.info
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import javax.swing.table.AbstractTableModel
 
 class ElementsModel : AbstractTableModel() {
@@ -12,7 +12,7 @@ class ElementsModel : AbstractTableModel() {
         Double::class.java,
         Double::class.java
     )
-    private val items = mutableListOf<ProfileData>()
+    private val items = mutableListOf<ProfileDataImpl>()
 
     override fun getRowCount(): Int = items.size
     override fun getColumnCount(): Int = 5
@@ -30,11 +30,11 @@ class ElementsModel : AbstractTableModel() {
         }
     }
 
-    fun setItems(newItems: List<ProfileData>) {
+    fun setItems(newItems: List<ProfileDataImpl>) {
         items.clear()
         items.addAll(newItems)
         fireTableDataChanged()
     }
 
-    fun itemAt(index: Int): ProfileData = items[index]
+    fun itemAt(index: Int): ProfileDataImpl = items[index]
 }

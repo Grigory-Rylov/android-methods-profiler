@@ -17,7 +17,7 @@ class TraceAnalyzer(
 ) {
     var nameConverter: NameConverter = NoOpNameConverter
 
-    fun analyze(traceFile: File): AnalyzerResult {
+    fun analyze(traceFile: File): AnalyzerResultImpl {
         val vmTraceHandler = OnVmTraceHandler(log, nameConverter)
         VmTraceParser(traceFile, vmTraceHandler).parse()
 
@@ -27,11 +27,11 @@ class TraceAnalyzer(
             for (duration in traceDataForThread) {
                 if (duration.threadEndTimeInMillisecond == 0.0) {
                     duration.threadEndTimeInMillisecond =
-                        vmTraceHandler.threadTimeBounds.getOrDefault(threadId.key, ThreadTimeBounds()).maxTime
+                        vmTraceHandler.threadTimeBounds.getOrDefault(threadId.key, ThreadTimeBoundsImpl()).maxTime
                 }
                 if (duration.globalEndTimeInMillisecond == 0.0) {
                     duration.globalEndTimeInMillisecond =
-                        vmTraceHandler.globalTimeBounds.getOrDefault(threadId.key, ThreadTimeBounds()).maxTime
+                        vmTraceHandler.globalTimeBounds.getOrDefault(threadId.key, ThreadTimeBoundsImpl()).maxTime
                 }
             }
 
@@ -40,13 +40,13 @@ class TraceAnalyzer(
             }
         }
 
-        val sortedThreads = ArrayList<ThreadItem>()
+        val sortedThreads = ArrayList<ThreadItemImpl>()
 
         var threadIndex = 0
         for (e in vmTraceHandler.threads) {
             val threadName = if (e.value == null) "Thread-$threadIndex" else e.value!!
             if (e.key != vmTraceHandler.mainThreadId) {
-                sortedThreads.add(ThreadItem(threadName, e.key))
+                sortedThreads.add(ThreadItemImpl(threadName, e.key))
                 threadIndex++
             }
         }
@@ -54,13 +54,13 @@ class TraceAnalyzer(
 
         sortedThreads.add(
             0,
-            ThreadItem(
+            ThreadItemImpl(
                 vmTraceHandler.threads.getOrDefault(vmTraceHandler.mainThreadId, "main")!!,
                 vmTraceHandler.mainThreadId
             )
         )
 
-        return AnalyzerResult(
+        return AnalyzerResultImpl(
             vmTraceHandler.threadTimeBounds,
             vmTraceHandler.globalTimeBounds,
             vmTraceHandler.maxLevel,
@@ -70,7 +70,7 @@ class TraceAnalyzer(
         )
     }
 
-    private fun updateSelfTime(current: ProfileData) {
+    private fun updateSelfTime(current: ProfileDataImpl) {
         if (current.threadSelfTime > 0.0 && current.globalSelfTime > 0.0) {
             return
         }
@@ -99,15 +99,15 @@ class TraceAnalyzer(
         val methodsAndClasses = MethodsAndClasses()
         val methods = mutableMapOf<Long, MethodInfo?>()
 
-        val threadTimeBounds = mutableMapOf<Int, ThreadTimeBounds>()
-        val globalTimeBounds = mutableMapOf<Int, ThreadTimeBounds>()
+        val threadTimeBounds = mutableMapOf<Int, ThreadTimeBoundsImpl>()
+        val globalTimeBounds = mutableMapOf<Int, ThreadTimeBoundsImpl>()
         var mainThreadId = -1
         var maxLevel = 0
 
-        val traceData = mutableMapOf<Int, MutableList<ProfileData>>()
-        val methodsStacksForThread = mutableMapOf<Int, MutableMap<Long, Stack<ProfileData>>>()
+        val traceData = mutableMapOf<Int, MutableList<ProfileDataImpl>>()
+        val methodsStacksForThread = mutableMapOf<Int, MutableMap<Long, Stack<ProfileDataImpl>>>()
         val level = mutableMapOf<Int, Int>()
-        val parents = mutableMapOf<Int, Stack<ProfileData>>()
+        val parents = mutableMapOf<Int, Stack<ProfileDataImpl>>()
         private var startTimeUs: Long = -1
 
         override fun setVersion(version: Int) {
@@ -146,8 +146,8 @@ class TraceAnalyzer(
             val methodInfo = methods[methodId]!!
             val thread = threads[threadId]
 
-            val threadTimeBoundsForThread = threadTimeBounds.getOrPut(threadId) { ThreadTimeBounds() }
-            val globalTimeBoundsForThread = globalTimeBounds.getOrPut(threadId) { ThreadTimeBounds() }
+            val threadTimeBoundsForThread = threadTimeBounds.getOrPut(threadId) { ThreadTimeBoundsImpl() }
+            val globalTimeBoundsForThread = globalTimeBounds.getOrPut(threadId) { ThreadTimeBoundsImpl() }
 
             if (level[threadId] == null) {
                 level[threadId] = 0
@@ -189,22 +189,22 @@ class TraceAnalyzer(
                     parents[threadId] = parentsStackForThread
                 }
 
-                var stacksForThread: MutableMap<Long, Stack<ProfileData>>? = methodsStacksForThread[threadId]
+                var stacksForThread: MutableMap<Long, Stack<ProfileDataImpl>>? = methodsStacksForThread[threadId]
                 if (stacksForThread == null) {
                     stacksForThread = HashMap()
                     methodsStacksForThread[threadId] = stacksForThread
                 }
 
-                var stack: Stack<ProfileData>? = stacksForThread[methodId]
+                var stack: Stack<ProfileDataImpl>? = stacksForThread[methodId]
                 if (stack == null) {
                     stack = Stack()
                     stacksForThread[methodId] = stack
                 }
-                val parent: ProfileData? = if (parentsStackForThread.isEmpty()) null else parentsStackForThread.peek()
+                val parent: ProfileDataImpl? = if (parentsStackForThread.isEmpty()) null else parentsStackForThread.peek()
 
                 val convertedClassName = nameConverter.convertClassName(methodInfo.className)
                 val convertedMethodName = nameConverter.convertMethodName(convertedClassName, methodInfo.methodName, methodInfo.signature)
-                val duration = ProfileData(
+                val duration = ProfileDataImpl(
                     "${convertedClassName}.${convertedMethodName}",
                     level.getOrDefault(threadId, -1),
                     threadStartTimeInMillisecond = threadTime / 1000.0,

@@ -1,13 +1,13 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.analyzer.AnalyzerResult
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 
 class Finder(
-    private val analyzerResult: AnalyzerResult
+    private val analyzerResult: AnalyzerResultImpl
 ) {
     fun findInThread(textToFind: String, ignoreCase: Boolean, exceptThreadId: Int = -1): FindResult {
-        for (currentData in analyzerResult.data) {
+        for (currentData in analyzerResult.mutableData) {
             val threadId = currentData.key
             if (exceptThreadId == threadId) {
                 continue
@@ -48,5 +48,5 @@ class Finder(
         return targetString
     }
 
-    data class FindResult(val foundResult: List<ProfileData>, val threadId: Int)
+    data class FindResult(val foundResult: List<ProfileDataImpl>, val threadId: Int)
 }

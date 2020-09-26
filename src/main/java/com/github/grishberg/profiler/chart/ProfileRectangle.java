@@ -1,18 +1,18 @@
 package com.github.grishberg.profiler.chart;
 
-import com.github.grishberg.profiler.analyzer.ProfileData;
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
 
 import java.awt.geom.Rectangle2D;
 
 public class ProfileRectangle extends Rectangle2D.Double {
-    public final ProfileData profileData;
+    public final ProfileDataImpl profileData;
     public boolean isFoundElement;
 
     public ProfileRectangle(double startThreadTime,
                             double y,
                             double threadDuration,
                             double h,
-                            ProfileData profileData) {
+                            ProfileDataImpl profileData) {
         super(startThreadTime, y, threadDuration, h);
         this.profileData = profileData;
     }

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui.dialogs.info
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.*
 import java.awt.datatransfer.StringSelection
@@ -22,7 +22,7 @@ internal class DependenciesListDialog(
     private val table = JFixedWidthTable(dependenciesListModel)
     private val statusLabel = JLabel()
     private val onlyConstructorsCheckbox = JCheckBox("Only constructors")
-    private var lastSelectedItems: List<ProfileData> = emptyList()
+    private var lastSelectedItems: List<ProfileDataImpl> = emptyList()
 
     init {
         val listScroll = JScrollPane(table)
@@ -105,7 +105,7 @@ internal class DependenciesListDialog(
         }
     }
 
-    fun setDependencies(items: List<ProfileData>) {
+    fun setDependencies(items: List<ProfileDataImpl>) {
         lastSelectedItems = items
         if (onlyConstructorsCheckbox.isSelected) {
             val filtered = lastSelectedItems.filter { it.name.endsWith(".<init>") }
@@ -115,7 +115,7 @@ internal class DependenciesListDialog(
         }
     }
 
-    private fun updateItemsList(items: List<ProfileData>) {
+    private fun updateItemsList(items: List<ProfileDataImpl>) {
         dependenciesListModel.setItems(items)
         statusLabel.text = "Items count: ${items.size}"
         repaint()

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.analyzer.ProfileData
+import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.ui.Main
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -13,7 +13,7 @@ import javax.swing.JPopupMenu
 class MethodsPopupMenu(
     private val main: Main,
     private val chart: ProfilerPanel,
-    private val selectedMethod: ProfileData
+    private val selectedMethod: ProfileDataImpl
 ) : JPopupMenu() {
     private val flameChartMenuItem = JMenuItem("Flame Chart")
     private val copyNameMenuItem = JMenuItem("Copy name")
