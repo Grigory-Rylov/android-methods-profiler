@@ -1,14 +1,9 @@
 package com.github.grishberg.profiler.ui;
 
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
+import com.github.grishberg.android.profiler.core.ProfileData;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 public class InfoPanel extends JComponent {
@@ -72,7 +67,7 @@ public class InfoPanel extends JComponent {
         g.drawString(durationText, x + PADDING, durationTextY);
     }
 
-    public void setText(Point point, ProfileDataImpl selectedData) {
+    public void setText(Point point, ProfileData selectedData) {
         Point parentLocation = parent.getLocation();
         int topOffset = parentLocation.y;
         int horizontalOffset = parentLocation.x;

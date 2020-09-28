@@ -12,8 +12,7 @@ data class ProfileDataImpl(
     override var globalEndTimeInMillisecond: Double = 0.0,
     override var threadSelfTime: Double = 0.0,
     override var globalSelfTime: Double = 0.0,
-    override var parent: ProfileDataImpl? = null,
-    var color: Color? = null
+    override var parent: ProfileDataImpl? = null
 ): ProfileData {
     private val _children = mutableListOf<ProfileDataImpl>()
     override val children: List<ProfileDataImpl> = _children

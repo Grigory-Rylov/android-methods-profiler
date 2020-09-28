@@ -1,7 +1,8 @@
 package com.github.grishberg.profiler.ui;
 
+import com.github.grishberg.android.profiler.core.ProfileData;
+import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
 import com.github.grishberg.profiler.analyzer.ThreadItemImpl;
 import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
@@ -12,6 +13,7 @@ import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
 import com.github.grishberg.profiler.common.FileSystem;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
+import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
@@ -83,6 +85,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JRadioButtonMenuItem globalTimeMenuItem = new JRadioButtonMenuItem("Global time");
     private final JRadioButtonMenuItem threadTimeMenuItem = new JRadioButtonMenuItem("Thread time");
     private final FlameChartController flameChartController;
+    private final PluginsFacade pluginsFacade;
     @Nullable
     private TraceContainer resultContainer;
 
@@ -116,12 +119,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 if (e.getStateChange() != ItemEvent.SELECTED) {
                     return;
                 }
-                ThreadItemImpl thread = (ThreadItemImpl) threadsComboBox.getSelectedItem();
+                ThreadItem thread = (ThreadItem) threadsComboBox.getSelectedItem();
                 if (thread == null) {
                     return;
                 }
                 chart.switchThread(thread.getThreadId());
                 chart.requestFocus();
+                pluginsFacade.setCurrentThread(thread);
             }
         });
         topControls.add(threadsComboBox, BorderLayout.LINE_START);
@@ -176,12 +180,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         ui.add(controls, BorderLayout.PAGE_START);
 
-        dependenciesDialog = new DependenciesDialogLogic(frame, settings, new FocusElementDelegate() {
+        FocusElementDelegate focusElementDelegate = new FocusElementDelegate() {
             @Override
-            public void selectProfileElement(@NotNull ProfileDataImpl selectedElement) {
+            public void selectProfileElement(@NotNull ProfileData selectedElement) {
                 chart.selectProfileData(selectedElement);
             }
-        }, log);
+        };
+        dependenciesDialog = new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
 
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
         chart = new ProfilerPanel(timeFormatter, methodsColor, this, settings, log, dependenciesDialog);
@@ -216,10 +221,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         scaleRangeDialog = new ScaleRangeDialog(frame);
 
+        CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
         flameChartController = new FlameChartController(methodsColor, settings, log,
-                GlobalScope.INSTANCE, new CoroutinesDispatchersImpl());
+                GlobalScope.INSTANCE, coroutinesDispatchers);
         FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
 
+        pluginsFacade = new PluginsFacade(frame, focusElementDelegate, settings);
         KeyBinder keyBinder = new KeyBinder(chart,
                 selectedClassNameLabel,
                 findClassText,
@@ -295,6 +302,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menuBar.add(fileMenu);
         menuBar.add(createViewMenu());
         menuBar.add(createSettingsMenu());
+        pluginsFacade.createPluginsMenu(menuBar);
         menuBar.add(createHelpMenu());
         frame.setJMenuBar(menuBar);
     }
@@ -376,7 +384,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public void showFlameChartDialog() {
-        ProfileDataImpl selected = chart.getSelected();
+        ProfileData selected = chart.getSelected();
 
         flameChartController.showDialog();
         if (selected == null) {
@@ -450,10 +458,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         selectMethodUnderCursor(x, y);
     }
 
-    private ProfileDataImpl selectMethodUnderCursor(float x, float y) {
+    private ProfileData selectMethodUnderCursor(float x, float y) {
         chart.requestFocus();
         @Nullable
-        ProfileDataImpl selectedData = chart.findDataByPositionAndSelect(x, y);
+        ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
         if (selectedData != null) {
             boolean isThreadTime = settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false);
 
@@ -475,7 +483,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void onMouseMove(Point point, float x, float y) {
         coordinatesLabel.setText(String.format("pointer: %s", formatMicroseconds(x)));
         @Nullable
-        ProfileDataImpl selectedData = chart.findDataByPosition(x, y);
+        ProfileData selectedData = chart.findDataByPosition(x, y);
         if (selectedData != null) {
             hoverInfoPanel.setText(point, selectedData);
         } else {
@@ -690,7 +698,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     @Override
     public void onMethodRightClicked(Point clickedPoint, Point2D.Float transformed) {
-        ProfileDataImpl selected = selectMethodUnderCursor(transformed.x, transformed.y);
+        ProfileData selected = selectMethodUnderCursor(transformed.x, transformed.y);
         if (selected == null) {
             return;
         }
@@ -757,12 +765,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 resultContainer = result.traceContainer;
                 frame.setTitle(TITLE + getClass().getPackage().getImplementationVersion() + " " + ": " + traceFile.getName());
                 chart.openTraceResult(result.traceContainer);
+                pluginsFacade.setCurrentTraceProfiler(result.traceContainer.getResult());
 
                 threadsComboBox.removeAllItems();
-                for (ThreadItemImpl thread : resultContainer.getResult().getThreads()) {
+                for (ThreadItem thread : resultContainer.getResult().getThreads()) {
                     threadsComboBox.addItem(thread);
                 }
                 threadsComboBox.setSelectedIndex(0);
+                pluginsFacade.setCurrentThread((ThreadItem) threadsComboBox.getItemAt(0));
             } catch (Exception e) {
                 e.printStackTrace();
                 log.e("Parse trace file exception: ", e);

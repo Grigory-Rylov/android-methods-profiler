@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.chart;
 
+import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.common.AppLogger;
@@ -273,19 +273,19 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     private void rebuildData(List<ProfileRectangle> objectsForThread) {
-        List<ProfileDataImpl> newData = result.getMutableData().get(currentThreadId);
+        List<ProfileData> newData = result.getData().get(currentThreadId);
         if (newData == null) {
             newData = Collections.emptyList();
         }
 
-        for (ProfileDataImpl record : newData) {
+        for (ProfileData record : newData) {
             ProfileRectangle rectangle = createProfileRectangle(record);
             objectsForThread.add(rectangle);
         }
     }
 
     @NotNull
-    private ProfileRectangle createProfileRectangle(ProfileDataImpl record) {
+    private ProfileRectangle createProfileRectangle(ProfileData record) {
         double top = calculateTopForLevel(record.getLevel());
         double left = calculateStartXForTime(record);
         double right = calculateEndXForTime(record);
@@ -307,7 +307,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         }
 
         for (ProfileRectangle rectangle : objectsForThread) {
-            ProfileDataImpl record = rectangle.profileData;
+            ProfileData record = rectangle.profileData;
             double top = calculateTopForLevel(record.getLevel());
             double left = calculateStartXForTime(record);
             double right = calculateEndXForTime(record);
@@ -543,7 +543,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
 
     private ElementColor getColorProfileData(ProfileRectangle element, List<ProfileRectangle> objects) {
         boolean isSelectedElement = currentSelectedElement >= 0 && element == objects.get(currentSelectedElement);
-        ProfileDataImpl profile = element.profileData;
+        ProfileData profile = element.profileData;
 
         if (isSearchingInProgress) {
             if (element.isFoundElement) {
@@ -558,7 +558,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
                 if (isSelectedElement) {
                     return new ElementColor(selectionColor, edgesColor);
                 }
-                Color color = getColorForMethod(profile);
+                Color color = getColorForMethod(element);
                 return new ElementColor(darker(color), edgesColor);
             }
         }
@@ -567,7 +567,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             return new ElementColor(selectionColor, edgesColor);
         }
 
-        Color color = getColorForMethod(profile);
+        Color color = getColorForMethod(element);
         return new ElementColor(color, edgesColor);
     }
 
@@ -579,7 +579,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     @NotNull
-    private Color getColorForMethod(ProfileDataImpl profile) {
+    private Color getColorForMethod(ProfileRectangle profile) {
         Color color = profile.getColor();
         if (color == null) {
             color = methodsColor.getColorForMethod(profile);
@@ -589,7 +589,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     @Override
-    public double calculateStartXForTime(@NotNull ProfileDataImpl record) {
+    public double calculateStartXForTime(@NotNull ProfileData record) {
         if (isThreadTime) {
             return record.getThreadStartTimeInMillisecond();
         } else {
@@ -598,7 +598,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     @Override
-    public double calculateEndXForTime(@NotNull ProfileDataImpl record) {
+    public double calculateEndXForTime(@NotNull ProfileData record) {
         if (isThreadTime) {
             return record.getThreadEndTimeInMillisecond();
         } else {
@@ -621,7 +621,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         return fontTopOffset;
     }
 
-    public ProfileDataImpl findDataByPositionAndSelect(float x, float y) {
+    public ProfileData findDataByPositionAndSelect(float x, float y) {
         calledStacktrace.removeElements();
         currentSelectedElement = findElementIndexByXY(x, y);
         if (currentSelectedElement < 0) {
@@ -639,7 +639,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             return;
         }
 
-        ProfileDataImpl found = objects.get(currentThreadId).get(foundElement).profileData;
+        ProfileData found = objects.get(currentThreadId).get(foundElement).profileData;
         calledStacktrace.findDaggerCreationTrace(found, currentThreadId, true);
         repaint();
     }
@@ -650,12 +650,12 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             return;
         }
 
-        ProfileDataImpl found = objects.get(currentThreadId).get(foundElement).profileData;
+        ProfileData found = objects.get(currentThreadId).get(foundElement).profileData;
         calledStacktrace.findDaggerCallerChain(found, currentThreadId);
         repaint();
     }
 
-    public ProfileDataImpl findDataByPosition(float x, float y) {
+    public ProfileData findDataByPosition(float x, float y) {
         int pos = findElementIndexByXY(x, y);
         if (pos < 0) {
             return null;
@@ -781,10 +781,10 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     /**
-     * @return selected {@link ProfileDataImpl} or null, if there is no any selection.
+     * @return selected {@link ProfileData} or null, if there is no any selection.
      */
     @Nullable
-    public ProfileDataImpl getSelected() {
+    public ProfileData getSelected() {
         if (currentSelectedElement < 0) {
             return null;
         }
@@ -870,7 +870,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private String createStackTrace(ProfileRectangle selected) {
         StringBuilder sb = new StringBuilder(selected.profileData.getName());
 
-        ProfileDataImpl parent = selected.profileData.getParent();
+        ProfileData parent = selected.profileData.getParent();
         while (parent != null) {
             sb.append("\n");
             sb.append(parent.getName());
@@ -950,7 +950,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     /**
      * Select element and focus.
      */
-    public void selectProfileData(ProfileDataImpl selectedElement) {
+    public void selectProfileData(ProfileData selectedElement) {
         ProfileRectangle selectedRectangle = createProfileRectangle(selectedElement);
         List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
         currentSelectedElement = objectsForThread.indexOf(selectedRectangle);
