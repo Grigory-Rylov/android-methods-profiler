@@ -1,18 +1,20 @@
 package com.github.grishberg.profiler.chart;
 
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl;
+import com.github.grishberg.android.profiler.core.ProfileData;
 
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 public class ProfileRectangle extends Rectangle2D.Double {
-    public final ProfileDataImpl profileData;
+    public final ProfileData profileData;
     public boolean isFoundElement;
+    private Color color = null;
 
     public ProfileRectangle(double startThreadTime,
                             double y,
                             double threadDuration,
                             double h,
-                            ProfileDataImpl profileData) {
+                            ProfileData profileData) {
         super(startThreadTime, y, threadDuration, h);
         this.profileData = profileData;
     }
@@ -38,6 +40,14 @@ public class ProfileRectangle extends Rectangle2D.Double {
             return false;
         }
         return true;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color newColor) {
+        color = newColor;
     }
 
     @Override

@@ -1,17 +1,19 @@
 package com.github.grishberg.profiler.ui.dialogs.info
 
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl
+import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.common.CyclicTableRowSorter
+import com.github.grishberg.profiler.common.DoubleRenderer
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Frame
+import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.*
-import java.util.Comparator
+import java.util.*
 import javax.swing.*
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
-import javax.swing.table.TableCellRenderer
-import javax.swing.table.TableModel
-import javax.swing.table.TableRowSorter
 
 
 internal class DependenciesListDialog(
@@ -22,7 +24,7 @@ internal class DependenciesListDialog(
     private val table = JFixedWidthTable(dependenciesListModel)
     private val statusLabel = JLabel()
     private val onlyConstructorsCheckbox = JCheckBox("Only constructors")
-    private var lastSelectedItems: List<ProfileDataImpl> = emptyList()
+    private var lastSelectedItems: List<ProfileData> = emptyList()
 
     init {
         val listScroll = JScrollPane(table)
@@ -105,7 +107,7 @@ internal class DependenciesListDialog(
         }
     }
 
-    fun setDependencies(items: List<ProfileDataImpl>) {
+    fun setDependencies(items: List<ProfileData>) {
         lastSelectedItems = items
         if (onlyConstructorsCheckbox.isSelected) {
             val filtered = lastSelectedItems.filter { it.name.endsWith(".<init>") }
@@ -115,32 +117,10 @@ internal class DependenciesListDialog(
         }
     }
 
-    private fun updateItemsList(items: List<ProfileDataImpl>) {
+    private fun updateItemsList(items: List<ProfileData>) {
         dependenciesListModel.setItems(items)
         statusLabel.text = "Items count: ${items.size}"
         repaint()
-    }
-
-    private class DoubleRenderer : JLabel(), TableCellRenderer {
-        init {
-            isOpaque = true
-        }
-
-        override fun getTableCellRendererComponent(
-            table: JTable?,
-            value: Any?,
-            isSelected: Boolean,
-            hasFocus: Boolean,
-            row: Int,
-            column: Int
-        ): Component {
-            if (value !is Double) {
-                return this
-            }
-
-            text = "%.3f".format(value)
-            return this
-        }
     }
 
     private inner class CopyAction : ActionListener {
@@ -180,20 +160,6 @@ internal class DependenciesListDialog(
             val stringSelection = StringSelection(sbf.toString())
             val clipboard = Toolkit.getDefaultToolkit().systemClipboard
             clipboard.setContents(stringSelection, null)
-        }
-    }
-
-    class CyclicTableRowSorter(model: TableModel) : TableRowSorter<TableModel>(model) {
-
-        override fun toggleSortOrder(column: Int) {
-            val sortKeys: List<SortKey?> = getSortKeys()
-            if (sortKeys.isNotEmpty()) {
-                if (sortKeys[0]?.sortOrder === SortOrder.DESCENDING) {
-                    setSortKeys(null)
-                    return
-                }
-            }
-            super.toggleSortOrder(column)
         }
     }
 }

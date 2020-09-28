@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.ui.dialogs.info
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.chart.DependenciesFoundAction
 import com.github.grishberg.profiler.common.AppLogger
@@ -24,13 +25,13 @@ class DependenciesDialogLogic(
     private val logger: AppLogger
 ) : DependenciesFoundAction {
     private val dialog = DependenciesListDialog(owner, this)
-    private var dependencies: List<ProfileDataImpl>? = null
+    private var dependencies: List<ProfileData>? = null
 
-    fun onProfileDataSelected(profileData: ProfileDataImpl) {
+    fun onProfileDataSelected(profileData: ProfileData) {
         focusElementDelegate.selectProfileElement(profileData)
     }
 
-    override fun onDependenciesFound(dependencies: List<ProfileDataImpl>) {
+    override fun onDependenciesFound(dependencies: List<ProfileData>) {
         this.dependencies = dependencies
         dialog.setDependencies(dependencies)
         dialog.isVisible = true
@@ -63,7 +64,7 @@ class DependenciesDialogLogic(
         }
     }
 
-    private fun generate(file: File, data: List<ProfileDataImpl>) {
+    private fun generate(file: File, data: List<ProfileData>) {
         logger.d("$TAG: generating data: methods size = ${data.size}")
         val fos = FileOutputStream(file)
 

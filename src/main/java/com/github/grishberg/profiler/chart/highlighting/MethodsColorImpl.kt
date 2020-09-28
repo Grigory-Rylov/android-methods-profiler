@@ -1,17 +1,11 @@
 package com.github.grishberg.profiler.chart.highlighting
 
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl
+import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.common.AppLogger
 import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
 import java.awt.Color
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.FileReader
-import java.io.IOException
-import java.io.OutputStreamWriter
+import java.io.*
 
 private const val TAG = "CustomColorsRepository"
 private const val COLORS_FILE_NAME = "colors.json"
@@ -19,7 +13,7 @@ private const val FILTER_KEY = "filter"
 private const val COLOR_IN_HEX_KEY = "color"
 
 interface MethodsColor {
-    fun getColorForMethod(profile: ProfileDataImpl): Color
+    fun getColorForMethod(profile: ProfileRectangle): Color
 
     fun getColorForMethod(name: String): Color
 }
@@ -104,8 +98,8 @@ class MethodsColorImpl(
         }
     }
 
-    override fun getColorForMethod(profile: ProfileDataImpl): Color {
-        return getColorForMethod(profile.name)
+    override fun getColorForMethod(profile: ProfileRectangle): Color {
+        return getColorForMethod(profile.profileData.name)
     }
 
     override fun getColorForMethod(name: String): Color {

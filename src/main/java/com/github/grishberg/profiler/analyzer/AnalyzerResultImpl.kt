@@ -7,7 +7,7 @@ data class AnalyzerResultImpl(
     override val threadTimeBounds: Map<Int, ThreadTimeBoundsImpl>,
     override val globalTimeBounds: Map<Int, ThreadTimeBoundsImpl>,
     override val maxLevel: Int,
-    val mutableData: MutableMap<Int, MutableList<ProfileDataImpl>>,
+    internal val mutableData: MutableMap<Int, MutableList<ProfileDataImpl>>,
     override val threads: List<ThreadItemImpl>,
     override val mainThreadId: Int
 ) : AnalyzerResult {

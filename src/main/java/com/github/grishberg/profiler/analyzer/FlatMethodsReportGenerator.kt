@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.analyzer
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.BookmarksRectangle
 import com.github.grishberg.profiler.chart.ProfilerPanel
 import java.io.BufferedWriter
@@ -43,7 +44,7 @@ class FlatMethodsReportGenerator(
         }
     }
 
-    private fun findMarkerForElement(profileData: ProfileDataImpl): BookmarksRectangle? {
+    private fun findMarkerForElement(profileData: ProfileData): BookmarksRectangle? {
         for (marker in data.markersData) {
             if (marker.isForElement(profileData)) {
                 return marker
