@@ -185,6 +185,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             public void selectProfileElement(@NotNull ProfileData selectedElement) {
                 chart.selectProfileData(selectedElement);
             }
+
+            @Override
+            public void focusProfileElement(@NotNull ProfileData selectedElement) {
+                chart.selectProfileData(selectedElement);
+                chart.fitSelectedElement();
+            }
         };
         dependenciesDialog = new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
 
@@ -226,7 +232,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 GlobalScope.INSTANCE, coroutinesDispatchers);
         FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
 
-        pluginsFacade = new PluginsFacade(frame, focusElementDelegate, settings);
+        pluginsFacade = new PluginsFacade(frame, focusElementDelegate, settings, log,
+                GlobalScope.INSTANCE, coroutinesDispatchers);
         KeyBinder keyBinder = new KeyBinder(chart,
                 selectedClassNameLabel,
                 findClassText,

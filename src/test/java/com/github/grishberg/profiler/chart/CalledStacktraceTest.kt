@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.chart
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import com.nhaarman.mockitokotlin2.mock
@@ -10,8 +11,8 @@ import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 
 internal class CalledStacktraceTest {
-    val callers = mutableListOf<ProfileDataImpl>()
-    val callTraceItems = mutableListOf<ProfileDataImpl>()
+    val callers = mutableListOf<ProfileData>()
+    val callTraceItems = mutableListOf<ProfileData>()
     val renderer = object : SelectionRenderer {
         override var currentThreadId: Int = -1
 
@@ -28,11 +29,11 @@ internal class CalledStacktraceTest {
             screenBottom: Double
         ) = Unit
 
-        override fun addCallerRectangle(profileData: ProfileDataImpl) {
+        override fun addCallerRectangle(profileData: ProfileData) {
             callers.add(profileData)
         }
 
-        override fun addCallTraceItems(profileData: ProfileDataImpl) {
+        override fun addCallTraceItems(profileData: ProfileData) {
             callTraceItems.add(profileData)
         }
 
@@ -41,7 +42,7 @@ internal class CalledStacktraceTest {
             callTraceItems.clear()
         }
 
-        override fun removeRectanglesUntilCurrent(factoryMethod: ProfileDataImpl) {
+        override fun removeRectanglesUntilCurrent(factoryMethod: ProfileData) {
             while (callers.isNotEmpty()) {
                 val element = callers.last()
                 callers.remove(element)
@@ -76,10 +77,10 @@ internal class CalledStacktraceTest {
             addChild(caller)
         }
 
-    val dependenciesList = mutableListOf<ProfileDataImpl>()
+    val dependenciesList = mutableListOf<ProfileData>()
     val underTest = CalledStacktrace(renderer, logger).apply {
         dependenciesFoundAction = object : DependenciesFoundAction {
-            override fun onDependenciesFound(dependencies: List<ProfileDataImpl>) {
+            override fun onDependenciesFound(dependencies: List<ProfileData>) {
                 dependenciesList.addAll(dependencies)
             }
         }

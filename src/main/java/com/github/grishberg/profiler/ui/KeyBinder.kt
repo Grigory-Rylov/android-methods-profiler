@@ -41,7 +41,9 @@ class KeyBinder(
         addKeyMap(KeyEvent.VK_UP, UpAction())
         addKeyMap(KeyEvent.VK_DOWN, DownAction())
 
-        addKeyMap(KeyEvent.VK_E, EAction())
+        val focusNextAction = EAction()
+        addKeyMap(KeyEvent.VK_E, focusNextAction)
+        addKeyMap(KeyEvent.VK_ENTER, focusNextAction)
         addKeyMap(KeyEvent.VK_Q, QAction())
         addKeyMap(KeyEvent.VK_ESCAPE, RemoveSelectionAction())
 
