@@ -4,4 +4,5 @@ import com.github.grishberg.android.profiler.core.ProfileData
 
 interface FocusElementDelegate {
     fun selectProfileElement(selectedElement: ProfileData)
+    fun focusProfileElement(selectedElement: ProfileData)
 }

@@ -1,6 +1,8 @@
 package com.github.grishberg.profiler.chart.flame
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
+import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
@@ -65,7 +67,7 @@ internal class FlameChartControllerTest {
     }
 
     private val methodsColor = object : MethodsColor {
-        override fun getColorForMethod(profile: ProfileDataImpl) = Color.YELLOW
+        override fun getColorForMethod(profile: ProfileRectangle) = Color.YELLOW
         override fun getColorForMethod(name: String) = Color.YELLOW
     }
 
