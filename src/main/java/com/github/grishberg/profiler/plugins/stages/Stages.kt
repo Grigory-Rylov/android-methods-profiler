@@ -15,33 +15,23 @@ import java.lang.reflect.Type
  * Each stage has methods, when this methods are called necessary times, current stage is started.
  */
 class Stages(
-    private val stagesList: List<Stage>,
+    private val stagesState: StagesState,
     // method name : Stage
-    private val methodStages: Map<String, Stage>,
+    private val methodStages: Map<String, Stage?>,
     private val packages: List<String>
 ) {
-    var currentStage: Stage? = null
-        private set
+    val currentStage: Stage?
+        get() = stagesState.currentStage
 
-    private var nextStageIndex: Int = 0
+    fun init() {
+        stagesState.initialState()
+    }
 
     /**
      * Sets current stage by given method.
      */
     fun updateCurrentStage(method: ProfileData) {
-        if (nextStageIndex >= stagesList.size) {
-            return
-        }
-        val current = stagesList[nextStageIndex]
-        current.onMethodCalled(method)
-
-        if (current.isStarted) {
-            currentStage = current
-            nextStageIndex++
-        }
-        if (current.methods.isEmpty()) {
-            updateCurrentStage(method)
-        }
+        stagesState.updateCurrentStage(method.name)
     }
 
     fun getMethodsStage(method: ProfileData): Stage? {
@@ -52,19 +42,13 @@ class Stages(
         return isMethodAvailable(method, packages)
     }
 
-    fun shouldMethodStageBeLaterThenCurrent(methodStage: Stage?): Boolean {
-        if (methodStage == null) {
-            return false
-        }
-        val current = currentStage ?: return false
-        val currentPosition = stagesList.indexOf(current)
-        val methodStagePosition = stagesList.indexOf(methodStage)
-        return methodStagePosition > currentPosition
-    }
+    fun shouldMethodStageBeLaterThenCurrent(methodStage: Stage?): Boolean =
+        stagesState.shouldMethodStageBeLaterThenCurrent(methodStage)
+
 
     private data class StagesModel(
         val stages: List<Stage>,
-        val methodStages: Map<String, List<String>>,
+        val methods: List<String>,
         val packages: List<String>
     )
 
@@ -79,24 +63,21 @@ class Stages(
                 val reader = JsonReader(fileReader)
                 val stagesModel: StagesModel = gson.fromJson(reader, listType)
 
-                val result = mutableMapOf<String, Stage>()
+                val methodsStagesMapping = mutableMapOf<String, Stage?>()
 
-                for (entry in stagesModel.methodStages.entries) {
-                    // find stage by name
-                    val stage = stagesModel.stages.firstOrNull { it.name == entry.key }
-                    stage?.let {
-                        for (method in entry.value) {
-                            result[method] = it
-                        }
-                    }
+                val stagesState = StagesState(stagesModel.stages)
+
+                for (method in stagesModel.methods) {
+                    stagesState.updateCurrentStage(method)
+                    methodsStagesMapping[method] = stagesState.currentStage
                 }
-                return Stages(stagesModel.stages, result, stagesModel.packages)
+                return Stages(StagesState(stagesModel.stages), methodsStagesMapping, stagesModel.packages)
             } catch (e: FileNotFoundException) {
                 logger.d("$TAG: there is no bookmarks file.")
             } catch (e: Exception) {
                 logger.e("$TAG: Cant load stages", e)
             }
-            return Stages(emptyList(), emptyMap(), emptyList())
+            return Stages(StagesState(emptyList()), emptyMap(), emptyList())
         }
 
         fun saveToFile(
@@ -117,9 +98,7 @@ class Stages(
                     Stage("stage3", listOf(MethodWithIndex("moo")))
                 )
                 val methodsList = generateMethodList(input, thread, packages)
-                val methodsByStages = mutableMapOf<String, List<String>>()
-                methodsByStages["stage1"] = methodsList
-                gson.toJson(StagesModel(stages, methodsByStages, packages), bufferedWriter)
+                gson.toJson(StagesModel(stages, methodsList, packages), bufferedWriter)
                 bufferedWriter.close()
             } catch (e: FileNotFoundException) {
                 logger.e("${TAG}: save bookmarks error", e)

@@ -67,11 +67,9 @@ class StageAnalyzerDialog(
             dialogListener?.copyToClipboard()
         }
 
-
         exportToFileButton.addActionListener {
             dialogListener?.saveToFile()
         }
-
 
         val openStagesFileButton = JButton("Open stages file").apply {
             addActionListener {
@@ -88,7 +86,6 @@ class StageAnalyzerDialog(
         startButton.addActionListener {
             dialogListener?.startAnalyze()
         }
-
 
         val buttonsPanel = JPanel().apply {
             add(openStagesFileButton)

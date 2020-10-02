@@ -1,5 +1,7 @@
 package com.github.grishberg.profiler.ui.dialogs
 
+import java.awt.Component
+import java.awt.Dialog
 import java.awt.Frame
 import java.awt.event.ActionEvent
 import java.awt.event.WindowAdapter
@@ -10,9 +12,11 @@ import javax.swing.*
 /**
  * Dialog closed by ESCAPE key.
  */
-open class CloseByEscapeDialog(
-    owner: Frame, title: String, modal: Boolean
-) : JDialog(owner, title, modal) {
+open class CloseByEscapeDialog : JDialog {
+
+    constructor(owner: Frame, title: String, modal: Boolean) : super(owner, title, modal)
+    constructor(parent: Dialog, title: String, modal: Boolean) : super(parent, title, modal)
+
     init {
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(we: WindowEvent) {
@@ -20,6 +24,11 @@ open class CloseByEscapeDialog(
                 isVisible = false
             }
         })
+    }
+
+    fun show(parent: Component) {
+        setLocationRelativeTo(parent)
+        isVisible = true
     }
 
     override fun createRootPane(): JRootPane {

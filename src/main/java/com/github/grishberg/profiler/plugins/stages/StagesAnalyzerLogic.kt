@@ -53,17 +53,17 @@ class StagesAnalyzerLogic(
     override fun startAnalyze() {
         ui.showProgress()
         val selectedStages = stageFile ?: return
-        val stages = Stages.loadFromJson(selectedStages, logger)
-        val analyzer = StagesAnalyzer(stages)
 
         coroutineScope.launch {
+            val stages = Stages.loadFromJson(selectedStages, logger)
+            val analyzer = StagesAnalyzer(stages)
             val result = coroutineScope.async(dispatchers.worker) {
                 analyzer.analyze(input, thread)
             }.await()
 
             cachedResult.clear()
             cachedResult.addAll(result)
-            ui.showResult(result)
+            ui.showResult(cachedResult)
             ui.enableCopyAndExportButtons()
         }
     }
@@ -82,8 +82,8 @@ class StagesAnalyzerLogic(
     }
 
     override fun onGenerateStagesPressed() {
-        val generateStagesDialog = GenerateStagesDialog(owner, input, thread, logger)
-        generateStagesDialog.isVisible = true
+        val generateStagesDialog = GenerateStagesDialog(ui, input, thread, logger)
+        generateStagesDialog.show(ui.contentPane)
     }
 
     override fun saveToFile() {

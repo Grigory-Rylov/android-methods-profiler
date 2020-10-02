@@ -5,7 +5,7 @@ import com.github.grishberg.android.profiler.core.ThreadItem
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.BorderLayout
-import java.awt.Frame
+import java.awt.Dialog
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -20,17 +20,18 @@ import javax.swing.event.ListSelectionListener
 import javax.swing.filechooser.FileNameExtensionFilter
 
 
-private const val addString = "Add"
-private const val removeString = "Remove"
+private const val addString = "+"
+private const val removeString = "-"
 
 class GenerateStagesDialog(
-    owner: Frame,
+    owner: Dialog,
     input: AnalyzerResult,
     thread: ThreadItem,
     logger: AppLogger
 ) : CloseByEscapeDialog(owner, "Packages filter", true), ListSelectionListener {
-    private val packageTextField = JTextField(20)
-    private val generateButton = JButton("Generate stages template")
+    private val packageTextField =
+        JTextField(20).apply { toolTipText = "Enter package prefix to filter from trace methods" }
+    private val generateButton = JButton("Save")
     private val addButton = JButton(addString)
     private val removeButton = JButton(removeString)
 
@@ -75,14 +76,13 @@ class GenerateStagesDialog(
         add(buttonPane, BorderLayout.PAGE_END)
 
         generateButton.addActionListener {
-            saveStagesTemplate(owner, input, thread, logger)
+            saveStagesTemplate(input, thread, logger)
         }
         pack()
         requestFocus()
     }
 
     private fun saveStagesTemplate(
-        owner: Frame,
         input: AnalyzerResult,
         thread: ThreadItem,
         logger: AppLogger
@@ -92,7 +92,7 @@ class GenerateStagesDialog(
         val filter = FileNameExtensionFilter("Stages json", "json")
         fileChooser.fileFilter = filter
 
-        val userSelection = fileChooser.showSaveDialog(owner)
+        val userSelection = fileChooser.showSaveDialog(this)
 
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             var fileToSave = fileChooser.selectedFile
@@ -201,14 +201,8 @@ class GenerateStagesDialog(
 
     //This method is required by ListSelectionListener.
     override fun valueChanged(e: ListSelectionEvent) {
-        if (e.valueIsAdjusting == false) {
-            if (list.selectedIndex == -1) {
-                //No selection, disable fire button.
-                removeButton.setEnabled(false)
-            } else {
-                //Selection, enable the fire button.
-                removeButton.setEnabled(true)
-            }
+        if (!e.valueIsAdjusting) {
+            removeButton.isEnabled = list.selectedIndex != -1
         }
     }
 }

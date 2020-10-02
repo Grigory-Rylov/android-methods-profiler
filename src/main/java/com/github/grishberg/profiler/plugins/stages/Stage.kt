@@ -1,24 +1,40 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.ProfileData
-
 /**
  * @param name - method name
  * @param index - index of called method [name]
  */
-data class MethodWithIndex(val name: String, val index: Int = 0)
+data class MethodWithIndex(
+    val name: String,
+    val index: Int? = null
+) {
+    fun getMethodIndex(): Int {
+        return index ?: 0
+    }
+}
 
+/**
+ * Represents Application running stage.
+ * Starts after [methods].
+ */
 class Stage(
     val name: String,
     val methods: List<MethodWithIndex>
 ) {
+    @Transient
     var isStarted = false
         private set
 
+    @Transient
     private var index: Int = 0
+
+    @Transient
     private val methodsCount = IntArray(methods.size) { 0 }
 
-    fun onMethodCalled(profileData: ProfileData) {
+    /**
+     * Process method [methodName] call and change state to started if needed.
+     */
+    fun onMethodCalled(methodName: String) {
         if (methods.isEmpty()) {
             isStarted = true
         }
@@ -26,9 +42,9 @@ class Stage(
             return
         }
 
-        if (profileData.name == methods[index].name) {
+        if (methodName == methods[index].name) {
             methodsCount[index]++
-            if (methodsCount[index] > methods[index].index) {
+            if (methodsCount[index] > methods[index].getMethodIndex()) {
                 index++
             }
         }

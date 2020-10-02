@@ -10,6 +10,7 @@ class StagesAnalyzer(
     fun analyze(input: AnalyzerResult, thread: ThreadItem): List<WrongStage> {
         val result = mutableListOf<WrongStage>()
         val traceForThread = input.data[thread.threadId] ?: return emptyList()
+        stages.init()
 
         for (method in traceForThread) {
             stages.updateCurrentStage(method)
