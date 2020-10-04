@@ -12,8 +12,10 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.*
 import javax.swing.*
+import javax.swing.BoxLayout
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
+
 
 interface DialogListener {
     fun onProfileDataSelected(method: ProfileData)
@@ -22,10 +24,12 @@ interface DialogListener {
     fun openStagesFile()
     fun startAnalyze()
     fun onGenerateStagesPressed()
+    fun onSaveStagesClicked()
 }
 
 class StageAnalyzerDialog(
-    owner: Frame
+    owner: Frame,
+    private val parentComponent: JComponent
 ) : CloseByEscapeDialog(owner, "Stage analyzer", false) {
 
     private val model = MethodsWithStageModel()
@@ -33,6 +37,8 @@ class StageAnalyzerDialog(
     private val startButton = JButton("Analyze").apply { isEnabled = false }
     private val exportToFileButton = JButton("Export to file").apply { isEnabled = false }
     private val copyButton = JButton("Copy").apply { isEnabled = false }
+    private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
+
     private val statusLabel = JLabel()
     var dialogListener: DialogListener? = null
 
@@ -87,13 +93,27 @@ class StageAnalyzerDialog(
             dialogListener?.startAnalyze()
         }
 
-        val buttonsPanel = JPanel().apply {
-            add(openStagesFileButton)
+        saveStagesButton.addActionListener {
+            dialogListener?.onSaveStagesClicked()
+        }
+
+        val verticalContainer = JPanel()
+        verticalContainer.layout = BoxLayout(verticalContainer, BoxLayout.Y_AXIS)
+
+        val actionButtons = JPanel().apply {
             add(startButton)
             add(copyButton)
             add(exportToFileButton)
+        }
+
+        val fileButtonsPanel = JPanel().apply {
+            add(openStagesFileButton)
+            add(saveStagesButton)
             add(generateStagesFromTraceButton)
         }
+
+        verticalContainer.add(actionButtons)
+        verticalContainer.add(fileButtonsPanel)
 
         val statusPanel = JPanel().apply {
             layout = BorderLayout()
@@ -103,7 +123,7 @@ class StageAnalyzerDialog(
 
         val bottomPanel = JPanel().apply {
             layout = BorderLayout()
-            add(buttonsPanel, BorderLayout.CENTER)
+            add(verticalContainer, BorderLayout.CENTER)
             add(statusPanel, BorderLayout.SOUTH)
         }
         val content = JPanel().apply {
@@ -116,7 +136,15 @@ class StageAnalyzerDialog(
 
         contentPane = content
         pack()
-        isVisible = false
+    }
+
+    fun showDialog() {
+        setLocationRelativeTo(parent)
+        isVisible = true
+    }
+
+    fun enableSaveStagesButton() {
+        saveStagesButton.isEnabled = true
     }
 
     fun enableStartButton() {

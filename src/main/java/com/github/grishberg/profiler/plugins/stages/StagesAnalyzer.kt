@@ -1,18 +1,17 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.android.profiler.core.ThreadItem
 
 class StagesAnalyzer(
     private val stages: Stages
 ) {
 
-    fun analyze(input: AnalyzerResult, thread: ThreadItem): List<WrongStage> {
+    fun analyze(methods: List<ProfileData>): List<WrongStage> {
         val result = mutableListOf<WrongStage>()
-        val traceForThread = input.data[thread.threadId] ?: return emptyList()
         stages.init()
 
-        for (method in traceForThread) {
+        for (method in methods) {
             stages.updateCurrentStage(method)
 
             if (!stages.isMethodAvailable(method)) {

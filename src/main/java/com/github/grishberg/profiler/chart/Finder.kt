@@ -1,10 +1,10 @@
 package com.github.grishberg.profiler.chart
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl
 
 class Finder(
-    private val analyzerResult: AnalyzerResultImpl
+    private val analyzerResult: AnalyzerResult
 ) {
     fun findInThread(textToFind: String, ignoreCase: Boolean, exceptThreadId: Int = -1): FindResult {
         for (currentData in analyzerResult.data) {

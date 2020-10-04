@@ -1,8 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.android.profiler.core.ThreadItem
 import com.github.grishberg.profiler.common.AppLogger
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -22,6 +20,9 @@ class Stages(
 ) {
     val currentStage: Stage?
         get() = stagesState.currentStage
+
+    val stagesList: List<Stage>
+        get() = stagesState.stagesList
 
     fun init() {
         stagesState.initialState()
@@ -80,10 +81,24 @@ class Stages(
             return Stages(StagesState(emptyList()), emptyMap(), emptyList())
         }
 
-        fun saveToFile(
+        fun createFromStagesListAndMethods(
+            methods: List<ProfileData>,
+            stagesList: List<Stage>,
+            logger: AppLogger
+        ): Stages {
+            val stagesState = StagesState(stagesList)
+            val methodsStagesMapping = mutableMapOf<String, Stage?>()
+
+            for (method in methods) {
+                stagesState.updateCurrentStage(method.name)
+                methodsStagesMapping[method.name] = stagesState.currentStage
+            }
+            return Stages(StagesState(stagesList), methodsStagesMapping, emptyList())
+        }
+
+        fun saveTemplateToFile(
             fileToSave: File,
-            input: AnalyzerResult,
-            thread: ThreadItem,
+            input: List<ProfileData>,
             packages: List<String>,
             logger: AppLogger
         ) {
@@ -97,7 +112,7 @@ class Stages(
                     Stage("stage2", listOf(MethodWithIndex("boo"))),
                     Stage("stage3", listOf(MethodWithIndex("moo")))
                 )
-                val methodsList = generateMethodList(input, thread, packages)
+                val methodsList = generateMethodList(input, packages)
                 gson.toJson(StagesModel(stages, methodsList, packages), bufferedWriter)
                 bufferedWriter.close()
             } catch (e: FileNotFoundException) {
@@ -115,14 +130,43 @@ class Stages(
             }
         }
 
+        fun saveToFile(
+            fileToSave: File,
+            input: List<ProfileData>,
+            stages: List<Stage>,
+            packages: List<String>,
+            logger: AppLogger
+        ) {
+            var outputStream: FileOutputStream? = null
+            try {
+                outputStream = FileOutputStream(fileToSave)
+                val bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream, "UTF-8"))
+
+                val methodsList = generateMethodList(input, packages)
+                gson.toJson(StagesModel(stages, methodsList, packages), bufferedWriter)
+                bufferedWriter.close()
+            } catch (e: FileNotFoundException) {
+                logger.e("${TAG}: save bookmarks error", e)
+            } catch (e: IOException) {
+                logger.e("${TAG}: save bookmarks error", e)
+            } finally {
+                if (outputStream != null) {
+                    try {
+                        outputStream.flush()
+                        outputStream.close()
+                    } catch (e: IOException) {
+                    }
+                }
+            }
+        }
+
+
         private fun generateMethodList(
-            input: AnalyzerResult,
-            thread: ThreadItem,
+            input: List<ProfileData>,
             packages: List<String>
         ): List<String> {
             val result = mutableListOf<String>()
-            val methodsForThread = input.data[thread.threadId] ?: emptyList()
-            for (method in methodsForThread) {
+            for (method in input) {
                 if (isMethodAvailable(method, packages)) {
                     result.add(method.name)
                 }
@@ -131,11 +175,22 @@ class Stages(
         }
 
         private fun isMethodAvailable(method: ProfileData, packages: List<String>): Boolean {
+            if (isExcludedPackagePrefix(method)) return false
+
             if (packages.isEmpty()) {
                 return true
             }
 
             for (pkg in packages) {
+                if (method.name.startsWith(pkg)) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        private fun isExcludedPackagePrefix(method: ProfileData): Boolean {
+            for (pkg in IgnoredMethods.exceptions) {
                 if (method.name.startsWith(pkg)) {
                     return true
                 }

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.common
 
-import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl
+import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.profiler.analyzer.TraceAnalyzer
 import com.github.grishberg.profiler.analyzer.converter.DeObfuscatorConverter
 import com.github.grishberg.profiler.chart.BOOKMARK_EXTENSION
@@ -21,7 +21,7 @@ import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
 
-data class TraceContainer(val traceFile: File, val result: AnalyzerResultImpl, val bookmarks: Bookmarks)
+data class TraceContainer(val traceFile: File, val result: AnalyzerResult, val bookmarks: Bookmarks)
 
 class FileSystem(
     private val parentFrame: Frame,

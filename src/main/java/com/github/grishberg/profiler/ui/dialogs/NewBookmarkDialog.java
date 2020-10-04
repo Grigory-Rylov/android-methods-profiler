@@ -4,11 +4,7 @@ import com.github.grishberg.profiler.chart.BookmarksRectangle;
 import com.github.grishberg.profiler.ui.BookMarkInfo;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JColorChooser;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -50,7 +46,6 @@ public class NewBookmarkDialog extends CloseByEscapeDialog implements ChangeList
             }
         });
         setContentPane(content);
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         addComponentListener(new ComponentAdapter() {
             public void componentShown(ComponentEvent ce) {
@@ -96,7 +91,8 @@ public class NewBookmarkDialog extends CloseByEscapeDialog implements ChangeList
         bookmarkName.setEnabled(false);
     }
 
-    public void showNewBookmarkDialog() {
+    public void showNewBookmarkDialog(JComponent relativeTo) {
+        setLocationRelativeTo(relativeTo);
         setVisible(true);
     }
 

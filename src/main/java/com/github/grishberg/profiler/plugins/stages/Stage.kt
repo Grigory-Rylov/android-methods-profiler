@@ -1,5 +1,7 @@
 package com.github.grishberg.profiler.plugins.stages
 
+import java.awt.Color
+
 /**
  * @param name - method name
  * @param index - index of called method [name]
@@ -19,38 +21,9 @@ data class MethodWithIndex(
  */
 class Stage(
     val name: String,
-    val methods: List<MethodWithIndex>
+    val methods: List<MethodWithIndex>,
+    val color: String? = null
 ) {
-    @Transient
-    var isStarted = false
-        private set
-
-    @Transient
-    private var index: Int = 0
-
-    @Transient
-    private val methodsCount = IntArray(methods.size) { 0 }
-
-    /**
-     * Process method [methodName] call and change state to started if needed.
-     */
-    fun onMethodCalled(methodName: String) {
-        if (methods.isEmpty()) {
-            isStarted = true
-        }
-        if (isStarted) {
-            return
-        }
-
-        if (methodName == methods[index].name) {
-            methodsCount[index]++
-            if (methodsCount[index] > methods[index].getMethodIndex()) {
-                index++
-            }
-        }
-        isStarted = index >= methods.size
-    }
-
     override fun equals(other: Any?): Boolean {
         if (other is Stage) {
             return name == other.name

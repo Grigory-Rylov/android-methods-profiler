@@ -8,6 +8,7 @@ import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
+import com.github.grishberg.profiler.chart.stages.StagesFacade;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
 import com.github.grishberg.profiler.common.FileSystem;
@@ -86,6 +87,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JRadioButtonMenuItem threadTimeMenuItem = new JRadioButtonMenuItem("Thread time");
     private final FlameChartController flameChartController;
     private final PluginsFacade pluginsFacade;
+    private final StagesFacade stagesFacade;
+
     @Nullable
     private TraceContainer resultContainer;
 
@@ -194,8 +197,18 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         };
         dependenciesDialog = new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
 
+        GlobalScope coroutineScope = GlobalScope.INSTANCE;
+        CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
+        stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
-        chart = new ProfilerPanel(timeFormatter, methodsColor, this, settings, log, dependenciesDialog);
+        chart = new ProfilerPanel(
+                timeFormatter,
+                methodsColor,
+                this,
+                settings,
+                log,
+                dependenciesDialog,
+                stagesFacade);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -227,13 +240,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         scaleRangeDialog = new ScaleRangeDialog(frame);
 
-        CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
         flameChartController = new FlameChartController(methodsColor, settings, log,
-                GlobalScope.INSTANCE, coroutinesDispatchers);
+                coroutineScope, coroutinesDispatchers);
         FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
 
-        pluginsFacade = new PluginsFacade(frame, focusElementDelegate, settings, log,
-                GlobalScope.INSTANCE, coroutinesDispatchers);
+        pluginsFacade = new PluginsFacade(frame, chart,
+                stagesFacade,
+                focusElementDelegate, settings, log,
+                coroutineScope, coroutinesDispatchers,
+                stagesFacade::setStages);
         KeyBinder keyBinder = new KeyBinder(chart,
                 selectedClassNameLabel,
                 findClassText,
@@ -533,13 +548,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
 
         int threadIndex = 0;
-        for (ThreadItemImpl item : resultContainer.getResult().getThreads()) {
+        for (ThreadItem item : resultContainer.getResult().getThreads()) {
             if (item.getThreadId() == result.getThreadId()) {
                 break;
             }
             threadIndex++;
         }
-        ThreadItemImpl foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
+        ThreadItem foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
         if (foundThreadItem == null) {
             return;
         }
@@ -709,7 +724,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (selected == null) {
             return;
         }
-        MethodsPopupMenu menu = new MethodsPopupMenu(this, chart, selected);
+        MethodsPopupMenu menu = new MethodsPopupMenu(this, frame, chart, selected, stagesFacade);
         menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 

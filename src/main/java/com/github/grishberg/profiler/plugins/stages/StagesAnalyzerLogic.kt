@@ -1,8 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.android.profiler.core.ThreadItem
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
@@ -13,27 +11,35 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.io.*
 import javax.swing.JFileChooser
-import javax.swing.JFrame
 import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
+typealias StagesProvider = () -> Stages
+
+interface StagesLoadedAction {
+    fun onStagesLoaded(stagesList: List<Stage>)
+}
 
 class StagesAnalyzerLogic(
-    private val owner: JFrame,
     private val ui: StageAnalyzerDialog,
-    private val logger: AppLogger,
-    private val input: AnalyzerResult,
-    private val thread: ThreadItem,
+    private val methods: List<ProfileData>,
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
-    private val dispatchers: CoroutinesDispatchers
+    private val dispatchers: CoroutinesDispatchers,
+    private val stagesList: List<Stage>,
+    private val logger: AppLogger,
+    private val stagesLoadedAction: StagesLoadedAction? = null
 ) : DialogListener {
     private var stageFile: File? = null
     private val cachedResult = mutableListOf<WrongStage>()
 
     init {
         ui.dialogListener = this
-        ui.isVisible = true
+        if (stagesList.isNotEmpty()) {
+            ui.enableSaveStagesButton()
+            ui.enableStartButton()
+        }
+        ui.showDialog()
     }
 
     override fun copyToClipboard() {
@@ -52,13 +58,28 @@ class StagesAnalyzerLogic(
 
     override fun startAnalyze() {
         ui.showProgress()
-        val selectedStages = stageFile ?: return
+        val selectedStages = stageFile
+        val stagesProvider: StagesProvider
+        if (selectedStages == null && stagesList.isEmpty()) {
+            return
+        }
+        if (selectedStages != null) {
+            stagesProvider = { Stages.loadFromJson(selectedStages, logger) }
+        } else {
+            stagesProvider = { Stages.createFromStagesListAndMethods(methods, stagesList, logger) }
+        }
 
         coroutineScope.launch {
-            val stages = Stages.loadFromJson(selectedStages, logger)
+            val stages = coroutineScope.async(dispatchers.worker) {
+                stagesProvider.invoke()
+            }.await()
+
+            stagesLoadedAction?.onStagesLoaded(stages.stagesList)
+
             val analyzer = StagesAnalyzer(stages)
+
             val result = coroutineScope.async(dispatchers.worker) {
-                analyzer.analyze(input, thread)
+                analyzer.analyze(methods)
             }.await()
 
             cachedResult.clear()
@@ -82,8 +103,25 @@ class StagesAnalyzerLogic(
     }
 
     override fun onGenerateStagesPressed() {
-        val generateStagesDialog = GenerateStagesDialog(ui, input, thread, logger)
+        val generateStagesDialog = GenerateStagesDialog(ui, methods, logger)
         generateStagesDialog.show(ui.contentPane)
+    }
+
+    override fun onSaveStagesClicked() {
+        val fileChooser = JFileChooser()
+        fileChooser.dialogTitle = "Specify a file to save stages"
+        val filter = FileNameExtensionFilter("Stages json", "json")
+        fileChooser.fileFilter = filter
+
+        val userSelection = fileChooser.showSaveDialog(ui)
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            var fileToSave = fileChooser.selectedFile
+            if (fileToSave.extension.toLowerCase() != "json") {
+                fileToSave = File(fileToSave.absolutePath + ".json")
+            }
+            Stages.saveToFile(fileToSave, methods, stagesList, emptyList(), logger)
+        }
     }
 
     override fun saveToFile() {

@@ -1,7 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.BorderLayout
@@ -25,8 +24,7 @@ private const val removeString = "-"
 
 class GenerateStagesDialog(
     owner: Dialog,
-    input: AnalyzerResult,
-    thread: ThreadItem,
+    methods: List<ProfileData>,
     logger: AppLogger
 ) : CloseByEscapeDialog(owner, "Packages filter", true), ListSelectionListener {
     private val packageTextField =
@@ -76,15 +74,14 @@ class GenerateStagesDialog(
         add(buttonPane, BorderLayout.PAGE_END)
 
         generateButton.addActionListener {
-            saveStagesTemplate(input, thread, logger)
+            saveStagesTemplate(methods, logger)
         }
         pack()
         requestFocus()
     }
 
     private fun saveStagesTemplate(
-        input: AnalyzerResult,
-        thread: ThreadItem,
+        input: List<ProfileData>,
         logger: AppLogger
     ) {
         val fileChooser = JFileChooser()
@@ -99,7 +96,7 @@ class GenerateStagesDialog(
             if (fileToSave.extension.toLowerCase() != "json") {
                 fileToSave = File(fileToSave.absolutePath + ".json")
             }
-            Stages.saveToFile(fileToSave, input, thread, Collections.list(listModel.elements()), logger)
+            Stages.saveTemplateToFile(fileToSave, input, Collections.list(listModel.elements()), logger)
             isVisible = false
         }
     }
