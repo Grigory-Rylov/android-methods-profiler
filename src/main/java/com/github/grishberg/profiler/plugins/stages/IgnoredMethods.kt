@@ -12,11 +12,14 @@ class IgnoredMethods {
             "androidx.",
             "dalvik.",
             "com.android.",
+            "com.androidx.",
+            "com.google",
             "libcore.",
             "sun.",
             "kotlin.",
             "kotlinx.",
-            "dagger.internal"
+            "dagger.internal",
+            "org.json"
         )
     }
 }

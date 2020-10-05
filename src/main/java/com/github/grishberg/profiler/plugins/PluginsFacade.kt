@@ -15,7 +15,6 @@ import javax.swing.*
 
 class PluginsFacade(
     private val frame: JFrame,
-    private val parentComponent: JComponent,
     private val stagesFacade: StagesFacade,
     private val focusElementDelegate: FocusElementDelegate,
     settings: SettingsRepository,
@@ -49,7 +48,7 @@ class PluginsFacade(
         }
         val methods = currentTraceProfiler?.data?.get(currentThread?.threadId) ?: return
 
-        val ui = StageAnalyzerDialog(frame, parentComponent)
+        val ui = StageAnalyzerDialog(frame)
         StagesAnalyzerLogic(
             ui,
             methods,

@@ -91,7 +91,7 @@ class StagesAnalyzerLogic(
             cachedResult.clear()
             cachedResult.addAll(result)
             ui.showResult(cachedResult)
-            ui.enableCopyAndExportButtons()
+            ui.enableExportButtons()
         }
     }
 
@@ -103,14 +103,12 @@ class StagesAnalyzerLogic(
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             stageFile = fileChooser.selectedFile
+            stageFile?.let {
+                ui.updateTitle("Stage file: ${it.name}")
+            }
             ui.enableStartButton()
             startAnalyze()
         }
-    }
-
-    override fun onGenerateStagesPressed() {
-        val generateStagesDialog = GenerateStagesDialog(ui, methods, logger)
-        generateStagesDialog.show(ui.contentPane)
     }
 
     override fun onSaveStagesClicked() {

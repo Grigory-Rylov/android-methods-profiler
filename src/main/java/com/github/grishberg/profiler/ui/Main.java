@@ -244,7 +244,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 coroutineScope, coroutinesDispatchers);
         FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
 
-        pluginsFacade = new PluginsFacade(frame, chart,
+        pluginsFacade = new PluginsFacade(frame,
                 stagesFacade,
                 focusElementDelegate, settings, log,
                 coroutineScope, coroutinesDispatchers,

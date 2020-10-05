@@ -45,12 +45,16 @@ class StagesFacade(
     var storedStages: Stages? = null
         private set
     private var isThreadTimeMode = false
+    private var isStagesManuallyCreated = false
 
     /**
      * Is called when user opened new trace.
      */
     fun onOpenNewTrace() {
         if (stagesList.isEmpty()) {
+            return
+        }
+        if (!isStagesManuallyCreated) {
             return
         }
         // create Stages object
@@ -62,6 +66,7 @@ class StagesFacade(
                 storedStages = result
             }
         }
+        isStagesManuallyCreated = false
     }
 
     fun setStages(stagesList: List<Stage>) {
@@ -80,11 +85,13 @@ class StagesFacade(
     }
 
     fun createStage(method: ProfileData, title: String, color: Color) {
+        isStagesManuallyCreated = true
         stages.add(Stage(title, listOf(MethodWithIndex(method.name)), color.toHex()))
         calculateStagesBounds()
     }
 
     fun editStage(targetStage: Stage, newTitle: String, newColor: Color) {
+        isStagesManuallyCreated = true
         val index = stages.indexOf(targetStage)
         if (index < 0) {
             return

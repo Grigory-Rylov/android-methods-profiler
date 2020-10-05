@@ -54,7 +54,8 @@ class Stages(
     )
 
     companion object {
-
+        private const val REGEX_PATTERN = "([a-z]+\\d+)"
+        private val regex = Regex(REGEX_PATTERN)
         private const val EMPTY_STAGE_NAME = "unknown"
         private const val TAG = "Stages"
         private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
@@ -159,6 +160,11 @@ class Stages(
         private fun isMethodAvailable(method: ProfileData, packages: List<String>): Boolean {
             if (isExcludedPackagePrefix(method)) return false
 
+            if (method.name.contains("$")) {
+                if (isMethodWithLambdaInName(method.name.toLowerCase())) {
+                    return false
+                }
+            }
             if (packages.isEmpty()) {
                 return true
             }
@@ -169,6 +175,14 @@ class Stages(
                 }
             }
             return false
+        }
+
+        private fun isMethodWithLambdaInName(name: String): Boolean {
+            val pos = name.lastIndexOf('$')
+            if (pos < 0) {
+                return false
+            }
+            return regex.containsMatchIn(name.substring(pos + 1))
         }
 
         private fun isExcludedPackagePrefix(method: ProfileData): Boolean {

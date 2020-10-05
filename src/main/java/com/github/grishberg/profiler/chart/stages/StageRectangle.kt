@@ -18,7 +18,7 @@ class StageRectangle(
     val headerColor: Color
 ) : Rectangle2D.Double() {
 
-    var headerTitleColor = Color.WHITE
+    var headerTitleColor = titleColor()
         private set
 
     init {
@@ -55,7 +55,7 @@ class StageRectangle(
     }
 
     companion object {
-        private val DEFAULT_ALPHA = 180
+        private val DEFAULT_ALPHA = 200
         private val DEFAULT_COLOR = Color(0x8c6057)
 
         fun fromMethodRectangle(

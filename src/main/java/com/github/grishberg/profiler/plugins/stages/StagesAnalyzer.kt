@@ -19,11 +19,11 @@ class StagesAnalyzer(
 
             val methodStage = stages.getMethodsStage(method)
             if (stages.shouldMethodStageBeLaterThenCurrent(methodStage)) {
-                if (methodStage != null) {
-                    result.add(WrongStage(method, stages.currentStage, methodStage))
-                } else {
-                    result.add(WrongStage(method, stages.currentStage, methodStage))
-                }
+                result.add(WrongStage(method, stages.currentStage, methodStage))
+            }
+            if (methodStage == null) {
+                // method without stage, maybe new
+                result.add(WrongStage(method, stages.currentStage, null))
             }
         }
         return result
