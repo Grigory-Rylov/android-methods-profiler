@@ -222,6 +222,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void openTraceResult(TraceContainer trace) {
+        stagesFacade.onOpenNewTrace();
+
         scale = new Grid(settings, TOP_OFFSET, timeFormatter, labelFont, labelFontMetrics);
 
         this.result = trace.getResult();

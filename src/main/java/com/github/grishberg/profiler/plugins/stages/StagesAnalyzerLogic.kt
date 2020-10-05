@@ -27,6 +27,7 @@ class StagesAnalyzerLogic(
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
     private val stagesList: List<Stage>,
+    private val stages: Stages?,
     private val logger: AppLogger,
     private val stagesLoadedAction: StagesLoadedAction? = null
 ) : DialogListener {
@@ -37,6 +38,8 @@ class StagesAnalyzerLogic(
         ui.dialogListener = this
         if (stagesList.isNotEmpty()) {
             ui.enableSaveStagesButton()
+        }
+        if (stages != null) {
             ui.enableStartButton()
         }
         ui.showDialog()
@@ -58,15 +61,16 @@ class StagesAnalyzerLogic(
 
     override fun startAnalyze() {
         ui.showProgress()
-        val selectedStages = stageFile
+        val selectedStagesFile = stageFile
         val stagesProvider: StagesProvider
-        if (selectedStages == null && stagesList.isEmpty()) {
+        if (selectedStagesFile == null && stages == null) {
             return
         }
-        if (selectedStages != null) {
-            stagesProvider = { Stages.loadFromJson(selectedStages, logger) }
+
+        stagesProvider = if (selectedStagesFile != null) {
+            { Stages.loadFromJson(selectedStagesFile, logger) }
         } else {
-            stagesProvider = { Stages.createFromStagesListAndMethods(methods, stagesList, logger) }
+            { stages!! }
         }
 
         coroutineScope.launch {
@@ -74,7 +78,9 @@ class StagesAnalyzerLogic(
                 stagesProvider.invoke()
             }.await()
 
-            stagesLoadedAction?.onStagesLoaded(stages.stagesList)
+            if (selectedStagesFile != null) {
+                stagesLoadedAction?.onStagesLoaded(stages.stagesList)
+            }
 
             val analyzer = StagesAnalyzer(stages)
 

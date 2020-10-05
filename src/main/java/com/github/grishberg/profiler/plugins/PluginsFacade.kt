@@ -57,6 +57,7 @@ class PluginsFacade(
             coroutineScope,
             dispatchers,
             stagesFacade.stagesList,
+            stagesFacade.storedStages,
             logger,
             stagesLoadedAction
         )

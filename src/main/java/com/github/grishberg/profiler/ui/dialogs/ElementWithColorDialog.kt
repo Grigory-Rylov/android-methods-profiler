@@ -47,7 +47,9 @@ class ElementWithColorDialog : CloseByEscapeDialog, ChangeListener {
         }
         content.add(name, BorderLayout.PAGE_START)
         colorChooser = JColorChooser(selectedColor)
-        colorChooser.selectionModel.addChangeListener(this)
+        colorChooser.selectionModel.addChangeListener {
+            selectedColor = colorChooser.color
+        }
         content.add(colorChooser, BorderLayout.CENTER)
 
         val okButton = JButton("OK")

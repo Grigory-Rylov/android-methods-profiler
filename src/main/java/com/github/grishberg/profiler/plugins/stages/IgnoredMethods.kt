@@ -15,6 +15,7 @@ class IgnoredMethods {
             "libcore.",
             "sun.",
             "kotlin.",
+            "kotlinx.",
             "dagger.internal"
         )
     }

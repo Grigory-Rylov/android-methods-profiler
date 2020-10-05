@@ -9,10 +9,12 @@ import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.toHex
 import com.github.grishberg.profiler.plugins.stages.MethodWithIndex
 import com.github.grishberg.profiler.plugins.stages.Stage
+import com.github.grishberg.profiler.plugins.stages.Stages
 import com.github.grishberg.profiler.plugins.stages.StagesState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D
@@ -34,12 +36,32 @@ class StagesFacade(
     private var methodsRectangles: List<ProfileRectangle>? = null
     var repaintDelegate: RepaintDelegate? = null
     var height = -1.0
+
+    // For storing stages into file
     val stagesList: List<Stage>
         get() = stages
+
+    // For analyze another opened trace file.
+    var storedStages: Stages? = null
+        private set
     private var isThreadTimeMode = false
 
-    fun clear() {
-        stages.clear()
+    /**
+     * Is called when user opened new trace.
+     */
+    fun onOpenNewTrace() {
+        if (stagesList.isEmpty()) {
+            return
+        }
+        // create Stages object
+        methodsRectangles?.let {
+            coroutineScope.launch {
+                val result = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
+                    Stages.createFromStagesListAndMethods(MethodsListIterator(it), stagesList, log)
+                }
+                storedStages = result
+            }
+        }
     }
 
     fun setStages(stagesList: List<Stage>) {
@@ -158,4 +180,15 @@ class StagesFacade(
         stages.remove(stageForMethod)
         calculateStagesBounds()
     }
+
+    class MethodsListIterator(
+        methodsList: List<ProfileRectangle>
+    ) : Iterator<ProfileData> {
+        private val innerIterator = methodsList.iterator()
+
+        override fun hasNext(): Boolean = innerIterator.hasNext()
+
+        override fun next(): ProfileData = innerIterator.next().profileData
+    }
+
 }

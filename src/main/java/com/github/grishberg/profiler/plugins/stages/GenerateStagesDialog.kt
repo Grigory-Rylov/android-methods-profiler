@@ -8,15 +8,12 @@ import java.awt.Dialog
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.io.File
-import java.util.*
 import javax.swing.*
 import javax.swing.BoxLayout
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
-import javax.swing.filechooser.FileNameExtensionFilter
 
 
 private const val addString = "+"
@@ -29,7 +26,6 @@ class GenerateStagesDialog(
 ) : CloseByEscapeDialog(owner, "Packages filter", true), ListSelectionListener {
     private val packageTextField =
         JTextField(20).apply { toolTipText = "Enter package prefix to filter from trace methods" }
-    private val generateButton = JButton("Save")
     private val addButton = JButton(addString)
     private val removeButton = JButton(removeString)
 
@@ -67,38 +63,13 @@ class GenerateStagesDialog(
         buttonPane.add(JSeparator(SwingConstants.VERTICAL))
         buttonPane.add(Box.createHorizontalStrut(5))
         buttonPane.add(addButton)
-        buttonPane.add(generateButton)
         buttonPane.border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
 
         add(listScrollPane, BorderLayout.CENTER)
         add(buttonPane, BorderLayout.PAGE_END)
 
-        generateButton.addActionListener {
-            saveStagesTemplate(methods, logger)
-        }
         pack()
         requestFocus()
-    }
-
-    private fun saveStagesTemplate(
-        input: List<ProfileData>,
-        logger: AppLogger
-    ) {
-        val fileChooser = JFileChooser()
-        fileChooser.dialogTitle = "Specify a file to save stages"
-        val filter = FileNameExtensionFilter("Stages json", "json")
-        fileChooser.fileFilter = filter
-
-        val userSelection = fileChooser.showSaveDialog(this)
-
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            var fileToSave = fileChooser.selectedFile
-            if (fileToSave.extension.toLowerCase() != "json") {
-                fileToSave = File(fileToSave.absolutePath + ".json")
-            }
-            Stages.saveTemplateToFile(fileToSave, input, Collections.list(listModel.elements()), logger)
-            isVisible = false
-        }
     }
 
     private inner class RemoveListener : ActionListener {

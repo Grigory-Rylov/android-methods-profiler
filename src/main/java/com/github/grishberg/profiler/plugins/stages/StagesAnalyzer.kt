@@ -1,7 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages
 
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.android.profiler.core.ThreadItem
 
 class StagesAnalyzer(
     private val stages: Stages
