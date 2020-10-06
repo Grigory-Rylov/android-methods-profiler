@@ -15,13 +15,14 @@ import javax.swing.*
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 
+
 interface DialogListener {
     fun onProfileDataSelected(method: ProfileData)
     fun copyToClipboard()
-    fun saveToFile()
+    fun onExportReportToFileClicked()
     fun openStagesFile()
     fun startAnalyze()
-    fun onGenerateStagesPressed()
+    fun onSaveStagesClicked()
 }
 
 class StageAnalyzerDialog(
@@ -31,8 +32,9 @@ class StageAnalyzerDialog(
     private val model = MethodsWithStageModel()
     private val table = JFixedWidthTable(model)
     private val startButton = JButton("Analyze").apply { isEnabled = false }
-    private val exportToFileButton = JButton("Export to file").apply { isEnabled = false }
-    private val copyButton = JButton("Copy").apply { isEnabled = false }
+    private val exportToFileButton = JButton("Export report to file").apply { isEnabled = false }
+    private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
+
     private val statusLabel = JLabel()
     var dialogListener: DialogListener? = null
 
@@ -63,12 +65,8 @@ class StageAnalyzerDialog(
         })
         table.setDefaultRenderer(Double::class.java, DoubleRenderer())
 
-        copyButton.addActionListener {
-            dialogListener?.copyToClipboard()
-        }
-
         exportToFileButton.addActionListener {
-            dialogListener?.saveToFile()
+            dialogListener?.onExportReportToFileClicked()
         }
 
         val openStagesFileButton = JButton("Open stages file").apply {
@@ -77,22 +75,20 @@ class StageAnalyzerDialog(
             }
         }
 
-        val generateStagesFromTraceButton = JButton("Generate empty stages file").apply {
-            addActionListener {
-                dialogListener?.onGenerateStagesPressed()
-            }
-        }
-
         startButton.addActionListener {
             dialogListener?.startAnalyze()
         }
 
-        val buttonsPanel = JPanel().apply {
-            add(openStagesFileButton)
+        saveStagesButton.addActionListener {
+            dialogListener?.onSaveStagesClicked()
+        }
+
+        val actionButtons = JPanel().apply {
             add(startButton)
-            add(copyButton)
             add(exportToFileButton)
-            add(generateStagesFromTraceButton)
+            add(Box.createHorizontalStrut(5))
+            add(openStagesFileButton)
+            add(saveStagesButton)
         }
 
         val statusPanel = JPanel().apply {
@@ -103,7 +99,7 @@ class StageAnalyzerDialog(
 
         val bottomPanel = JPanel().apply {
             layout = BorderLayout()
-            add(buttonsPanel, BorderLayout.CENTER)
+            add(actionButtons, BorderLayout.CENTER)
             add(statusPanel, BorderLayout.SOUTH)
         }
         val content = JPanel().apply {
@@ -116,25 +112,38 @@ class StageAnalyzerDialog(
 
         contentPane = content
         pack()
-        isVisible = false
+    }
+
+    fun updateTitle(title: String) {
+        setTitle(title)
+    }
+
+    fun showDialog() {
+        setLocationRelativeTo(parent)
+        isVisible = true
+    }
+
+    fun enableSaveStagesButton() {
+        saveStagesButton.isEnabled = true
     }
 
     fun enableStartButton() {
         startButton.isEnabled = true
     }
 
-    fun enableCopyAndExportButtons() {
-        copyButton.isEnabled = true
+    fun enableExportButtons() {
         exportToFileButton.isEnabled = true
     }
 
     fun showResult(result: List<WrongStage>) {
         table.isEnabled = true
         model.setItems(result)
+        startButton.isEnabled = true
     }
 
     fun showProgress() {
         table.isEnabled = false
+        startButton.isEnabled = false
     }
 
     private inner class CopyAction : ActionListener {

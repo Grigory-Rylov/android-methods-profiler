@@ -1,7 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.BorderLayout
@@ -9,15 +8,12 @@ import java.awt.Dialog
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.io.File
-import java.util.*
 import javax.swing.*
 import javax.swing.BoxLayout
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
-import javax.swing.filechooser.FileNameExtensionFilter
 
 
 private const val addString = "+"
@@ -25,13 +21,11 @@ private const val removeString = "-"
 
 class GenerateStagesDialog(
     owner: Dialog,
-    input: AnalyzerResult,
-    thread: ThreadItem,
+    methods: List<ProfileData>,
     logger: AppLogger
 ) : CloseByEscapeDialog(owner, "Packages filter", true), ListSelectionListener {
     private val packageTextField =
         JTextField(20).apply { toolTipText = "Enter package prefix to filter from trace methods" }
-    private val generateButton = JButton("Save")
     private val addButton = JButton(addString)
     private val removeButton = JButton(removeString)
 
@@ -69,39 +63,13 @@ class GenerateStagesDialog(
         buttonPane.add(JSeparator(SwingConstants.VERTICAL))
         buttonPane.add(Box.createHorizontalStrut(5))
         buttonPane.add(addButton)
-        buttonPane.add(generateButton)
         buttonPane.border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
 
         add(listScrollPane, BorderLayout.CENTER)
         add(buttonPane, BorderLayout.PAGE_END)
 
-        generateButton.addActionListener {
-            saveStagesTemplate(input, thread, logger)
-        }
         pack()
         requestFocus()
-    }
-
-    private fun saveStagesTemplate(
-        input: AnalyzerResult,
-        thread: ThreadItem,
-        logger: AppLogger
-    ) {
-        val fileChooser = JFileChooser()
-        fileChooser.dialogTitle = "Specify a file to save stages"
-        val filter = FileNameExtensionFilter("Stages json", "json")
-        fileChooser.fileFilter = filter
-
-        val userSelection = fileChooser.showSaveDialog(this)
-
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            var fileToSave = fileChooser.selectedFile
-            if (fileToSave.extension.toLowerCase() != "json") {
-                fileToSave = File(fileToSave.absolutePath + ".json")
-            }
-            Stages.saveToFile(fileToSave, input, thread, Collections.list(listModel.elements()), logger)
-            isVisible = false
-        }
     }
 
     private inner class RemoveListener : ActionListener {

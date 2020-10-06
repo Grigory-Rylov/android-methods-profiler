@@ -1,9 +1,11 @@
 package com.github.grishberg.profiler.chart;
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult;
 import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
+import com.github.grishberg.profiler.chart.stages.StagesFacade;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
@@ -23,12 +25,12 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
 
-public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate {
+public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
     public static final int TOP_OFFSET = 20;
     public static final String SETTINGS_FONT_NAME = "Chart.fontName";
     public static final String SETTINGS_CELL_FONT_SIZE = "Chart.cellsFontSize";
     public static final int DEFAULT_CELL_FONT_SIZE = 12;
-    private static final int MARKER_LABEL_TEXT_MIN_WIDTH = 20;
+    public static final int MARKER_LABEL_TEXT_MIN_WIDTH = 20;
     private static final int FIT_PADDING = 80;
     private static final int SCALE_FONT_SIZE = 13;
     private static final double NOT_FOUND_ITEM_DARKEN_FACTOR = 0.5;
@@ -39,7 +41,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
 
     private Bookmarks bookmarks;
     private int currentThreadId = -1;
-    private AnalyzerResultImpl result = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0);
+    private AnalyzerResult result = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0);
     private final Map<Integer, List<ProfileRectangle>> objects = new HashMap<>();
 
     private int levelHeight = 20;
@@ -73,6 +75,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private Grid scale;
     private final SettingsRepository settings;
     private final AppLogger logger;
+    private StagesFacade stagesFacade;
     private boolean isThreadTime;
     private String fontName;
     private final Font labelFont;
@@ -85,14 +88,18 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
                          FoundInfoListener foundInfoListener,
                          SettingsRepository settings,
                          AppLogger logger,
-                         DependenciesFoundAction dependenciesFoundAction) {
+                         DependenciesFoundAction dependenciesFoundAction,
+                         StagesFacade stagesFacade) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
         this.settings = settings;
         this.logger = logger;
+        this.stagesFacade = stagesFacade;
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         bookmarks = new Bookmarks(settings, logger);
+        stagesFacade.setRepaintDelegate(this);
+        stagesFacade.setLabelPaintDelegate(this);
 
         addMouseListener(new SimpleMouseListener() {
             @Override
@@ -212,9 +219,12 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         updateBounds(currentThreadId);
         updateData();
         repaint();
+        stagesFacade.onThreadModeSwitched(isThreadTime);
     }
 
     public void openTraceResult(TraceContainer trace) {
+        stagesFacade.onOpenNewTrace();
+
         scale = new Grid(settings, TOP_OFFSET, timeFormatter, labelFont, labelFontMetrics);
 
         this.result = trace.getResult();
@@ -261,6 +271,11 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
 
         rebuildData(objectsForThread);
         repaint();
+
+        stagesFacade.onThreadSwitched(objectsForThread,
+                threadId == result.getMainThreadId(),
+                isThreadTime,
+                TOP_OFFSET);
     }
 
     private void updateBounds(int threadId) {
@@ -492,6 +507,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     private void drawToolbar(Graphics2D g, AffineTransform at, FontMetrics fm) {
+        stagesFacade.drawStages(g, at, fm);
 
         Iterator<BookmarksRectangle> iterator = bookmarks.iterator();
         while (iterator.hasNext()) {

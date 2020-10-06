@@ -1,10 +1,9 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.android.profiler.core.ThreadItem
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
+import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -13,27 +12,41 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.io.*
 import javax.swing.JFileChooser
-import javax.swing.JFrame
 import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
+private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
+
+typealias StagesProvider = () -> Stages
+
+interface StagesLoadedAction {
+    fun onStagesLoaded(stagesList: List<Stage>)
+}
 
 class StagesAnalyzerLogic(
-    private val owner: JFrame,
     private val ui: StageAnalyzerDialog,
-    private val logger: AppLogger,
-    private val input: AnalyzerResult,
-    private val thread: ThreadItem,
+    private val settings: SettingsRepository,
+    private val methods: List<ProfileData>,
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
-    private val dispatchers: CoroutinesDispatchers
+    private val dispatchers: CoroutinesDispatchers,
+    private val stagesList: List<Stage>,
+    private val stages: Stages?,
+    private val logger: AppLogger,
+    private val stagesLoadedAction: StagesLoadedAction? = null
 ) : DialogListener {
     private var stageFile: File? = null
     private val cachedResult = mutableListOf<WrongStage>()
 
     init {
         ui.dialogListener = this
-        ui.isVisible = true
+        if (stagesList.isNotEmpty()) {
+            ui.enableSaveStagesButton()
+        }
+        if (stages != null) {
+            ui.enableStartButton()
+        }
+        ui.showDialog()
     }
 
     override fun copyToClipboard() {
@@ -52,41 +65,76 @@ class StagesAnalyzerLogic(
 
     override fun startAnalyze() {
         ui.showProgress()
-        val selectedStages = stageFile ?: return
+        val selectedStagesFile = stageFile
+        val stagesProvider: StagesProvider
+        if (selectedStagesFile == null && stages == null) {
+            return
+        }
+
+        stagesProvider = if (selectedStagesFile != null) {
+            { Stages.loadFromJson(selectedStagesFile, logger) }
+        } else {
+            { stages!! }
+        }
 
         coroutineScope.launch {
-            val stages = Stages.loadFromJson(selectedStages, logger)
+            val stages = coroutineScope.async(dispatchers.worker) {
+                stagesProvider.invoke()
+            }.await()
+
+            if (selectedStagesFile != null) {
+                stagesLoadedAction?.onStagesLoaded(stages.stagesList)
+            }
+
             val analyzer = StagesAnalyzer(stages)
+
             val result = coroutineScope.async(dispatchers.worker) {
-                analyzer.analyze(input, thread)
+                analyzer.analyze(methods)
             }.await()
 
             cachedResult.clear()
             cachedResult.addAll(result)
             ui.showResult(cachedResult)
-            ui.enableCopyAndExportButtons()
+            ui.enableExportButtons()
         }
     }
 
     override fun openStagesFile() {
-        val fileChooser = JFileChooser()
+        val fileChooser = JFileChooser(settings.getStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR))
         fileChooser.fileFilter = FileNameExtensionFilter("Stage file, json", "json")
 
         val returnVal: Int = fileChooser.showOpenDialog(ui)
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             stageFile = fileChooser.selectedFile
+            stageFile?.let {
+                ui.updateTitle("Stage file: ${it.name}")
+                settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, it.parent)
+            }
             ui.enableStartButton()
             startAnalyze()
         }
     }
 
-    override fun onGenerateStagesPressed() {
-        val generateStagesDialog = GenerateStagesDialog(ui, input, thread, logger)
-        generateStagesDialog.show(ui.contentPane)
+    override fun onSaveStagesClicked() {
+        val fileChooser = JFileChooser(settings.getStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR))
+        fileChooser.dialogTitle = "Specify a file to save stages"
+        val filter = FileNameExtensionFilter("Stages json", "json")
+        fileChooser.fileFilter = filter
+
+        val userSelection = fileChooser.showSaveDialog(ui)
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            var fileToSave = fileChooser.selectedFile
+            if (fileToSave.extension.toLowerCase() != "json") {
+                fileToSave = File(fileToSave.absolutePath + ".json")
+            }
+            settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, fileToSave.parent)
+            Stages.saveToFile(fileToSave, methods, stagesList, emptyList(), logger)
+        }
     }
 
-    override fun saveToFile() {
+    override fun onExportReportToFileClicked() {
         val fileChooser = JFileChooser()
         fileChooser.dialogTitle = "Specify a file to save"
         val filter = FileNameExtensionFilter("Text files", "txt")

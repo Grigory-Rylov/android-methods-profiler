@@ -27,10 +27,6 @@
 
 **z** - Reset zoom to fit screen.
 
-**q** - Go to previous found element
-
-**e** - Go to next found element
-
 **Shift + r** - Open screen range dialog. Allows to select left and right screen range
 
 **Ctrl + c** - Copy full name with method name of selected element
@@ -45,6 +41,10 @@
 
 ### Find / Bookmarks
 **Ctrl + f** - Focus to the Find element field, to find elements press **Enter**
+
+**q** - Go to previous found element
+
+**e / Enter** - Go to next found element
 
 **Esc** - Exit from search mode. (Hide all found elements)
 

@@ -8,17 +8,14 @@ import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
-import com.github.grishberg.profiler.common.AppLogger;
-import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
-import com.github.grishberg.profiler.common.FileSystem;
-import com.github.grishberg.profiler.common.TraceContainer;
+import com.github.grishberg.profiler.chart.stages.StagesFacade;
+import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.SampleJavaMethodsDialog;
-import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +74,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JComboBox threadsComboBox;
     private final JCheckBoxMenuItem showBookmarks;
     private final AppLogger log;
+    private FramesManager framesManager;
     private final SettingsRepository settings;
     private final JMenu fileMenu;
     private final MenuHistoryItems menuHistoryItems;
@@ -86,15 +84,20 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JRadioButtonMenuItem threadTimeMenuItem = new JRadioButtonMenuItem("Thread time");
     private final FlameChartController flameChartController;
     private final PluginsFacade pluginsFacade;
+    private final StagesFacade stagesFacade;
+
     @Nullable
     private TraceContainer resultContainer;
 
     public Main(StartMode startMode,
                 SettingsRepository settings,
-                AppLogger log) {
+                AppLogger log,
+                FramesManager framesManager) {
         this.settings = settings;
         this.log = log;
+        this.framesManager = framesManager;
         frame = new JFrame(TITLE + getClass().getPackage().getImplementationVersion());
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         fileSystem = new FileSystem(frame, settings, log);
 
         URL icon = ClassLoader.getSystemResource("images/icon.png");
@@ -194,8 +197,18 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         };
         dependenciesDialog = new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
 
+        MainScope coroutineScope = new MainScope();
+        CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
+        stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
-        chart = new ProfilerPanel(timeFormatter, methodsColor, this, settings, log, dependenciesDialog);
+        chart = new ProfilerPanel(
+                timeFormatter,
+                methodsColor,
+                this,
+                settings,
+                log,
+                dependenciesDialog,
+                stagesFacade);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -227,13 +240,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         scaleRangeDialog = new ScaleRangeDialog(frame);
 
-        CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
         flameChartController = new FlameChartController(methodsColor, settings, log,
-                GlobalScope.INSTANCE, coroutinesDispatchers);
+                coroutineScope, coroutinesDispatchers);
         FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
 
-        pluginsFacade = new PluginsFacade(frame, focusElementDelegate, settings, log,
-                GlobalScope.INSTANCE, coroutinesDispatchers);
+        pluginsFacade = new PluginsFacade(frame,
+                stagesFacade,
+                focusElementDelegate, settings, log,
+                coroutineScope, coroutinesDispatchers,
+                stagesFacade::setStages);
         KeyBinder keyBinder = new KeyBinder(chart,
                 selectedClassNameLabel,
                 findClassText,
@@ -256,6 +271,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (startMode == StartMode.RECORD_NEW_TRACE) {
             showNewTraceDialog(false);
         }
+
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                coroutineScope.destroy();
+                framesManager.onFrameClosed();
+            }
+        });
     }
 
     private String timeModeAsString() {
@@ -533,13 +556,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
 
         int threadIndex = 0;
-        for (ThreadItemImpl item : resultContainer.getResult().getThreads()) {
+        for (ThreadItem item : resultContainer.getResult().getThreads()) {
             if (item.getThreadId() == result.getThreadId()) {
                 break;
             }
             threadIndex++;
         }
-        ThreadItemImpl foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
+        ThreadItem foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
         if (foundThreadItem == null) {
             return;
         }
@@ -574,7 +597,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     @Override
     public void showOpenFileChooser(boolean inNewWindow) {
         if (inNewWindow) {
-            new Main(StartMode.OPEN_TRACE_FILE, settings, log);
+            framesManager.createMainFrame(StartMode.OPEN_TRACE_FILE, settings, log);
             return;
         }
 
@@ -612,7 +635,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     @Override
     public void showNewTraceDialog(boolean inNewWindow) {
         if (inNewWindow) {
-            new Main(StartMode.RECORD_NEW_TRACE, settings, log);
+            framesManager.createMainFrame(StartMode.RECORD_NEW_TRACE, settings, log);
             return;
         }
 
@@ -709,7 +732,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (selected == null) {
             return;
         }
-        MethodsPopupMenu menu = new MethodsPopupMenu(this, chart, selected);
+        MethodsPopupMenu menu = new MethodsPopupMenu(this, frame, chart, selected, stagesFacade);
         menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 

@@ -234,8 +234,7 @@ class KeyBinder(
     private inner class AddBookmarkAction : SmartAction() {
         override fun actionPerformed() {
             newBookmarkDialog.clearAndHide()
-            newBookmarkDialog.setLocationRelativeTo(profilerView)
-            newBookmarkDialog.showNewBookmarkDialog()
+            newBookmarkDialog.showNewBookmarkDialog(profilerView)
             val result = newBookmarkDialog.bookMarkInfo
             if (result != null) {
                 profilerView.addBookmarkAtSelectedElement(result)
