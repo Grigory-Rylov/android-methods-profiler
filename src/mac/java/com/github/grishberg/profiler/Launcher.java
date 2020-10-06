@@ -4,16 +4,15 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
+import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.File;
 import java.util.List;
 
-import static com.github.grishberg.profiler.ui.Main.APP_FILES_DIR_NAME;
-import static com.github.grishberg.profiler.ui.Main.SETTINGS_ANDROID_HOME;
-import static com.github.grishberg.profiler.ui.Main.SETTINGS_SHOW_BOOKMARKS;
+import static com.github.grishberg.profiler.ui.Main.*;
 
 public class Launcher {
     @Nullable
@@ -21,6 +20,7 @@ public class Launcher {
     private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
     private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
     private static boolean sMainWidowStarted = false;
+    private static final FramesManager sFramesManager = new FramesManager();
 
     static {
         initDefaultSettings(settings, log);
@@ -34,7 +34,7 @@ public class Launcher {
     }
 
     public static void main(String[] args) {
-        Main app = new Main(Main.StartMode.DEFAULT, settings, log);
+        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
         sMainWidowStarted = true;
         if (sPendingFile != null) {
             app.openTraceFile(sPendingFile);
@@ -63,7 +63,7 @@ public class Launcher {
                     log.d("setupMacOpenFileHandler: pending file: " + file.getPath());
                     return;
                 }
-                Main newWindow = new Main(Main.StartMode.DEFAULT, settings, log);
+                Main newWindow = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
                 newWindow.openTraceFile(file);
             }
         });

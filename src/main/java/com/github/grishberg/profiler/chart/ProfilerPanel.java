@@ -99,6 +99,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         bookmarks = new Bookmarks(settings, logger);
         stagesFacade.setRepaintDelegate(this);
+        stagesFacade.setLabelPaintDelegate(this);
 
         addMouseListener(new SimpleMouseListener() {
             @Override

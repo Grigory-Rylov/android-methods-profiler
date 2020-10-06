@@ -1,6 +1,7 @@
 package com.github.grishberg.profiler.chart.stages
 
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.chart.ChartPaintDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.chart.RepaintDelegate
@@ -19,6 +20,7 @@ import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
+import javax.swing.JMenuItem
 import kotlin.math.max
 
 private const val TAG = "StagesFacade"
@@ -31,10 +33,17 @@ class StagesFacade(
     private val dispatchers: CoroutinesDispatchers,
     private val log: AppLogger
 ) {
+    val clearStagesMenuItem = JMenuItem("Clear stages").apply {
+        isEnabled = false
+        addActionListener {
+            clearStages()
+        }
+    }
     private val stages = mutableListOf<Stage>()
     private val stagesRectangles = mutableListOf<StageRectangle>()
     private var methodsRectangles: List<ProfileRectangle>? = null
     var repaintDelegate: RepaintDelegate? = null
+    var labelPaintDelegate: ChartPaintDelegate? = null
     var height = -1.0
 
     // For storing stages into file
@@ -69,7 +78,16 @@ class StagesFacade(
         isStagesManuallyCreated = false
     }
 
+    private fun clearStages() {
+        stages.clear()
+        storedStages = null
+        stagesRectangles.clear()
+        repaintDelegate?.repaint()
+        clearStagesMenuItem.isEnabled = false
+    }
+
     fun setStages(stagesList: List<Stage>) {
+        clearStagesMenuItem.isEnabled = true
         stages.clear()
         stages.addAll(stagesList)
         calculateStagesBounds()
@@ -85,6 +103,7 @@ class StagesFacade(
     }
 
     fun createStage(method: ProfileData, title: String, color: Color) {
+        clearStagesMenuItem.isEnabled = true
         isStagesManuallyCreated = true
         stages.add(Stage(title, listOf(MethodWithIndex(method.name)), color.toHex()))
         calculateStagesBounds()
@@ -167,9 +186,9 @@ class StagesFacade(
         for (stageRectangle in stagesRectangles) {
             val transformedShape = at.createTransformedShape(stageRectangle)
             val rect = transformedShape.bounds
+            val name = stageRectangle.stage.name
 
             val cx = rect.x + rect.width / 2
-            val name = stageRectangle.stage.name
             val labelTextWidth = max(fm.stringWidth(name), ProfilerPanel.MARKER_LABEL_TEXT_MIN_WIDTH)
 
             // header background
@@ -178,7 +197,11 @@ class StagesFacade(
 
             g.color = stageRectangle.headerTitleColor
             if (name.isNotEmpty()) {
-                g.drawString(name, cx - labelTextWidth / 2, fm.height)
+                if (labelTextWidth <= rect.width) {
+                    g.drawString(name, cx - labelTextWidth / 2, fm.height)
+                } else {
+                    labelPaintDelegate?.drawLabel(g, fm, name, rect, fm.height)
+                }
             }
         }
     }

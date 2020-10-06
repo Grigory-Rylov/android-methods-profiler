@@ -17,7 +17,7 @@ class PluginsFacade(
     private val frame: JFrame,
     private val stagesFacade: StagesFacade,
     private val focusElementDelegate: FocusElementDelegate,
-    settings: SettingsRepository,
+    private val settings: SettingsRepository,
     private val logger: AppLogger,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
@@ -25,6 +25,7 @@ class PluginsFacade(
 ) {
     var currentThread: ThreadItem? = null
     var currentTraceProfiler: AnalyzerResult? = null
+
 
     fun createPluginsMenu(menuBar: JMenuBar) {
         val tools = JMenu("Tools")
@@ -34,6 +35,8 @@ class PluginsFacade(
         stageAnalyzer.addActionListener {
             runStageAnalyzer()
         }
+
+        tools.add(stagesFacade.clearStagesMenuItem)
     }
 
     private fun runStageAnalyzer() {
@@ -51,6 +54,7 @@ class PluginsFacade(
         val ui = StageAnalyzerDialog(frame)
         StagesAnalyzerLogic(
             ui,
+            settings,
             methods,
             focusElementDelegate,
             coroutineScope,

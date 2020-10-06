@@ -19,7 +19,7 @@ import javax.swing.border.EmptyBorder
 interface DialogListener {
     fun onProfileDataSelected(method: ProfileData)
     fun copyToClipboard()
-    fun saveToFile()
+    fun onExportReportToFileClicked()
     fun openStagesFile()
     fun startAnalyze()
     fun onSaveStagesClicked()
@@ -32,7 +32,7 @@ class StageAnalyzerDialog(
     private val model = MethodsWithStageModel()
     private val table = JFixedWidthTable(model)
     private val startButton = JButton("Analyze").apply { isEnabled = false }
-    private val exportToFileButton = JButton("Export to file").apply { isEnabled = false }
+    private val exportToFileButton = JButton("Export report to file").apply { isEnabled = false }
     private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
 
     private val statusLabel = JLabel()
@@ -66,7 +66,7 @@ class StageAnalyzerDialog(
         table.setDefaultRenderer(Double::class.java, DoubleRenderer())
 
         exportToFileButton.addActionListener {
-            dialogListener?.saveToFile()
+            dialogListener?.onExportReportToFileClicked()
         }
 
         val openStagesFileButton = JButton("Open stages file").apply {

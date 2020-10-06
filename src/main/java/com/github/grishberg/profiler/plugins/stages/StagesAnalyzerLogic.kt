@@ -3,6 +3,7 @@ package com.github.grishberg.profiler.plugins.stages
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
+import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -14,6 +15,8 @@ import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
+private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
+
 typealias StagesProvider = () -> Stages
 
 interface StagesLoadedAction {
@@ -22,6 +25,7 @@ interface StagesLoadedAction {
 
 class StagesAnalyzerLogic(
     private val ui: StageAnalyzerDialog,
+    private val settings: SettingsRepository,
     private val methods: List<ProfileData>,
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
@@ -96,7 +100,7 @@ class StagesAnalyzerLogic(
     }
 
     override fun openStagesFile() {
-        val fileChooser = JFileChooser()
+        val fileChooser = JFileChooser(settings.getStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR))
         fileChooser.fileFilter = FileNameExtensionFilter("Stage file, json", "json")
 
         val returnVal: Int = fileChooser.showOpenDialog(ui)
@@ -105,6 +109,7 @@ class StagesAnalyzerLogic(
             stageFile = fileChooser.selectedFile
             stageFile?.let {
                 ui.updateTitle("Stage file: ${it.name}")
+                settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, it.parent)
             }
             ui.enableStartButton()
             startAnalyze()
@@ -112,7 +117,7 @@ class StagesAnalyzerLogic(
     }
 
     override fun onSaveStagesClicked() {
-        val fileChooser = JFileChooser()
+        val fileChooser = JFileChooser(settings.getStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR))
         fileChooser.dialogTitle = "Specify a file to save stages"
         val filter = FileNameExtensionFilter("Stages json", "json")
         fileChooser.fileFilter = filter
@@ -124,11 +129,12 @@ class StagesAnalyzerLogic(
             if (fileToSave.extension.toLowerCase() != "json") {
                 fileToSave = File(fileToSave.absolutePath + ".json")
             }
+            settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, fileToSave.parent)
             Stages.saveToFile(fileToSave, methods, stagesList, emptyList(), logger)
         }
     }
 
-    override fun saveToFile() {
+    override fun onExportReportToFileClicked() {
         val fileChooser = JFileChooser()
         fileChooser.dialogTitle = "Specify a file to save"
         val filter = FileNameExtensionFilter("Text files", "txt")

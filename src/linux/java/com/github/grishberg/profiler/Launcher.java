@@ -4,26 +4,25 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
+import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 
-import java.awt.Desktop;
 import java.io.File;
-import java.util.List;
 
-import static com.github.grishberg.profiler.ui.Main.APP_FILES_DIR_NAME;
-import static com.github.grishberg.profiler.ui.Main.SETTINGS_ANDROID_HOME;
-import static com.github.grishberg.profiler.ui.Main.SETTINGS_SHOW_BOOKMARKS;
+import static com.github.grishberg.profiler.ui.Main.*;
 
 /**
  * Launcher without mac os x specific files
  */
 public class Launcher {
+    private static final FramesManager sFramesManager = new FramesManager();
+
     public static void main(String[] args) {
         SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
         JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
         initDefaultSettings(settings, log);
 
-        Main app = new Main(Main.StartMode.DEFAULT, settings, log);
+        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
 
         if (args.length > 0) {
             File f = new File(args[0]);
