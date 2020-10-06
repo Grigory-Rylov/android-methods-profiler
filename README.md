@@ -20,7 +20,7 @@ For Russian speaking developers there is a video [guide](https://youtu.be/epJNlw
 ### Linux
 Open terminal and execute `sudo dpkg -i android-methods-profiler_{YOUR_VERSION}_all.deb`
 
-If some older files cannot be overwritten, try `sudo dpkg -i --force-overwrite android-methods-profiler__{YOUR_VERSION}_all.deb`
+If some older files cannot be overwritten, try `sudo dpkg -i --force-overwrite android-methods-profiler_{YOUR_VERSION}_all.deb`
 
 To launch type in terminal `andoid-methods-profiler` or `yamp`. Or you can open in menu by pressing Meta
 
