@@ -37,7 +37,7 @@ private const val WAIT_FOR_RESULT_TIMEOUT_SETTINGS = "$SETTINGS_ROOT.waitForResu
 private const val DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT = 120
 private const val DEFAULT_WAIT_FOR_RESULT_TIMEOUT = 20
 
-interface SampleJavaMethodsDialogView {
+interface JavaMethodsRecorderDialogView {
     var packageName: String
     var activityName: String
     var fileNamePrefix: String
@@ -57,7 +57,7 @@ interface SampleJavaMethodsDialogView {
 }
 
 class SampleJavaMethodsDialogLogic(
-    private val view: SampleJavaMethodsDialogView,
+    private val view: JavaMethodsRecorderDialogView,
     private val settings: SettingsRepository,
     private val logger: AppLogger,
     private val recorderFactory: MethodTraceRecorderFactory = MethodTraceRecorderFactoryImpl(logger, settings)

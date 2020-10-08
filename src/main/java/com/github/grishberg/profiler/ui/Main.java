@@ -15,7 +15,7 @@ import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
-import com.github.grishberg.profiler.ui.dialogs.recorder.SampleJavaMethodsDialog;
+import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +69,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JLabel foundInfo;
     private final NewBookmarkDialog newBookmarkDialog;
     private final LoadingDialog loadingDialog;
-    private final SampleJavaMethodsDialog methodTraceRecordDialog;
+    private final JavaMethodsRecorderDialog methodTraceRecordDialog;
     private final ScaleRangeDialog scaleRangeDialog;
     private final JComboBox threadsComboBox;
     private final JCheckBoxMenuItem showBookmarks;
@@ -235,7 +235,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         loadingDialog = new LoadingDialog(frame);
         loadingDialog.pack();
 
-        methodTraceRecordDialog = new SampleJavaMethodsDialog(frame, settings, log);
+        methodTraceRecordDialog = new JavaMethodsRecorderDialog(frame, settings, log);
         methodTraceRecordDialog.pack();
 
         scaleRangeDialog = new ScaleRangeDialog(frame);

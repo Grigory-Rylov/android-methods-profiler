@@ -25,19 +25,19 @@ import javax.swing.WindowConstants
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 
-private const val TAG = "SampleJavaMethodsDialog"
+private const val TAG = "JavaMethodsRecorderDialog"
 private const val TEXT_PADDING = 8
 private const val TITLE = "Record new trace"
 private const val FIELD_LENGTH = 30
 
-class SampleJavaMethodsDialog(
+class JavaMethodsRecorderDialog(
     owner: Frame,
     private val settings: SettingsRepository,
     private val logger: AppLogger
 ) : CloseByEscapeDialog(
     owner,
     TITLE, true
-), SampleJavaMethodsDialogView {
+), JavaMethodsRecorderDialogView {
     private val packageNameField: JTextField
     private val activityNameField: JTextField
     private val fileNamePrefixField: JTextField
