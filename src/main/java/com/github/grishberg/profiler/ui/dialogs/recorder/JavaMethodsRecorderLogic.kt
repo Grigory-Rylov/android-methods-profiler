@@ -7,18 +7,12 @@ import com.github.grishberg.tracerecorder.MethodTraceRecorder
 import com.github.grishberg.tracerecorder.RecordMode
 import com.github.grishberg.tracerecorder.SystraceRecord
 import com.github.grishberg.tracerecorder.exceptions.AppTimeoutException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.swing.Swing
 import java.awt.Color
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Timer
-import java.util.TimerTask
+import java.util.*
 import javax.swing.SwingUtilities
 
 private const val TRACE_FOLDER = "trace"
@@ -54,6 +48,8 @@ interface JavaMethodsRecorderDialogView {
     fun inProgressState()
     fun closeDialog()
     fun enableStopButton(enabled: Boolean)
+    fun enableSampling()
+    fun disableSampling()
 }
 
 class SampleJavaMethodsDialogLogic(
@@ -65,6 +61,14 @@ class SampleJavaMethodsDialogLogic(
     val waitForApplicationColor = Color(0xD2691A)
 
     var selectedMode: RecordMode = RecordMode.METHOD_TRACES
+        set(value) {
+            field = value
+            if (selectedMode == RecordMode.METHOD_SAMPLE) {
+                view.enableSampling()
+            } else {
+                view.disableSampling()
+            }
+        }
     var traceFile: File? = null
         private set
 

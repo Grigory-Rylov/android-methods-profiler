@@ -6,24 +6,14 @@ import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.profiler.ui.LabeledGridBuilder
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import com.github.grishberg.tracerecorder.RecordMode
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.FlowLayout
-import java.awt.Frame
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
-import javax.swing.JButton
-import javax.swing.JComboBox
-import javax.swing.JLabel
-import javax.swing.JOptionPane
-import javax.swing.JPanel
-import javax.swing.JTextField
-import javax.swing.SwingUtilities
-import javax.swing.WindowConstants
+import javax.swing.*
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
+import javax.swing.border.EtchedBorder
 
 private const val TAG = "JavaMethodsRecorderDialog"
 private const val TEXT_PADDING = 8
@@ -41,7 +31,8 @@ class JavaMethodsRecorderDialog(
     private val packageNameField: JTextField
     private val activityNameField: JTextField
     private val fileNamePrefixField: JTextField
-    private val remoteDeviceAddressField: JTextField
+    private val remoteDeviceAddressField: JTextField = JTextField(20)
+    private val showPanelCheckbox = JCheckBox("Connect to remote device")
     private val statusLabel: JLabel
     private val startButton: JButton
     private val stopButton: JButton
@@ -91,6 +82,7 @@ class JavaMethodsRecorderDialog(
         get() = remoteDeviceAddressField.text.trim()
         set(value) {
             remoteDeviceAddressField.text = value
+            showPanelCheckbox.isSelected = value.isNotEmpty()
         }
 
     init {
@@ -107,10 +99,6 @@ class JavaMethodsRecorderDialog(
 
         fileNamePrefixField = JTextField(FIELD_LENGTH)
         fileNamePrefixField.toolTipText = "Adds file name prefix. Optional."
-
-        remoteDeviceAddressField = JTextField(FIELD_LENGTH)
-        remoteDeviceAddressField.toolTipText = "Remote device address. Optional. If not empty - will try to connect " +
-                "to remote device"
 
         val content = panelBuilder.content
 
@@ -143,7 +131,6 @@ class JavaMethodsRecorderDialog(
             }
 
             logic.selectedMode = recordModeComBox.selectedItem as RecordMode
-            samplingField.isEnabled = logic.selectedMode == RecordMode.METHOD_SAMPLE
         }
 
         samplingField.addActionListener {
@@ -170,7 +157,7 @@ class JavaMethodsRecorderDialog(
         panelBuilder.addLabeledComponent("file name prefix: ", fileNamePrefixField)
         panelBuilder.addLabeledComponent("recording mode: ", recordModeComBox)
         panelBuilder.addLabeledComponent("buffer size (Mb): ", profilerBufferSizeField)
-        panelBuilder.addLabeledComponent("Remote device address: ", remoteDeviceAddressField)
+        panelBuilder.addSingleComponent(buildRemoteDevicePanel())
         panelBuilder.addSingleComponent(buttons)
 
         additionalPanel.add(samplingField, BorderLayout.CENTER)
@@ -189,6 +176,28 @@ class JavaMethodsRecorderDialog(
         contentPane = contentPanel
         defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
         pack()
+    }
+
+    private fun buildRemoteDevicePanel(): JPanel {
+        val panel = JPanel()
+        panel.layout = BorderLayout()
+        remoteDeviceAddressField.toolTipText = "Remote device address. Optional. If not empty - will try to connect " +
+                "to remote device"
+
+        panel.add(showPanelCheckbox, BorderLayout.NORTH)
+
+        val remoteDeviceHiddenPanel = JPanel()
+        remoteDeviceHiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+        remoteDeviceHiddenPanel.isVisible = false
+        remoteDeviceHiddenPanel.add(Label("IP address:"))
+        remoteDeviceHiddenPanel.add(remoteDeviceAddressField)
+
+        showPanelCheckbox.addChangeListener {
+            remoteDeviceHiddenPanel.isVisible = showPanelCheckbox.isSelected
+            pack()
+        }
+        panel.add(remoteDeviceHiddenPanel, BorderLayout.SOUTH)
+        return panel
     }
 
     override fun onDialogClosed() {
@@ -217,6 +226,14 @@ class JavaMethodsRecorderDialog(
 
     override fun enableStopButton(enabled: Boolean) {
         stopButton.isEnabled = enabled
+    }
+
+    override fun enableSampling() {
+        samplingField.isEnabled = true
+    }
+
+    override fun disableSampling() {
+        samplingField.isEnabled = false
     }
 
     override fun setStatusTextAndColor(text: String, color: Color) {
