@@ -143,7 +143,9 @@ class JavaMethodsRecorderDialog(
             }
 
             logic.selectedMode = recordModeComBox.selectedItem as RecordMode
+            samplingField.isEnabled = logic.selectedMode == RecordMode.METHOD_SAMPLE
         }
+
         samplingField.addActionListener {
             logic.onStartPressed()
         }
@@ -236,6 +238,8 @@ class JavaMethodsRecorderDialog(
         SwingUtilities.invokeLater {
             stopButton.isEnabled = false
             startButton.isEnabled = true
+            recordModeComBox.isEnabled = true
+            fileNamePrefixField.isEnabled = true
             packageNameField.isEnabled = true
             packageNameField.requestFocus()
             activityNameField.isEnabled = true
@@ -253,7 +257,9 @@ class JavaMethodsRecorderDialog(
     override fun inProgressState() {
         stopButton.isEnabled = true
         startButton.isEnabled = false
+        fileNamePrefixField.isEnabled = false
         packageNameField.isEnabled = false
         activityNameField.isEnabled = false
+        recordModeComBox.isEditable = false
     }
 }
