@@ -6,10 +6,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 internal class StagesTest {
-    val initStage = Stage("Stage1", listOf())
-    val stage2 = Stage("Stage2", listOf(MethodWithIndex("a1"), MethodWithIndex("a2"), MethodWithIndex("a3")))
-    val stage3 = Stage("Stage3", listOf(MethodWithIndex("b1")))
-    val stage4 = Stage("Stage4", listOf(MethodWithIndex("c1"), MethodWithIndex("c2")))
+    val initStage = MethodRelatedStage("Stage1", listOf())
+    val stage2 = MethodRelatedStage("Stage2", listOf(MethodWithIndex("a1"), MethodWithIndex("a2"), MethodWithIndex("a3")))
+    val stage3 = MethodRelatedStage("Stage3", listOf(MethodWithIndex("b1")))
+    val stage4 = MethodRelatedStage("Stage4", listOf(MethodWithIndex("c1"), MethodWithIndex("c2")))
 
     @Test
     fun `stages test`() {
@@ -69,7 +69,7 @@ internal class StagesTest {
 
     @Test
     fun `stage with second method call`() {
-        val stage2 = Stage("Stage2", listOf(MethodWithIndex("a1", 1)))
+        val stage2 = MethodRelatedStage("Stage2", listOf(MethodWithIndex("a1", 1)))
         val underTest = Stages(StagesState(listOf(initStage, stage2)), emptyMap(), emptyList())
 
         val methods = listOf(
@@ -84,7 +84,7 @@ internal class StagesTest {
 
     @Test
     fun `initialStage with second method call not given`() {
-        val stage2 = Stage("Stage2", listOf(MethodWithIndex("a1", 1)))
+        val stage2 = MethodRelatedStage("Stage2", listOf(MethodWithIndex("a1", 1)))
         val underTest = Stages(StagesState(listOf(initStage, stage2)), emptyMap(), emptyList())
 
         val methods = listOf(

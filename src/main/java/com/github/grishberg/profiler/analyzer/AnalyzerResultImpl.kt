@@ -9,7 +9,8 @@ data class AnalyzerResultImpl(
     override val maxLevel: Int,
     internal val mutableData: MutableMap<Int, MutableList<ProfileDataImpl>>,
     override val threads: List<ThreadItemImpl>,
-    override val mainThreadId: Int
+    override val mainThreadId: Int,
+    override val startTimeUs: Long = -1,
 ) : AnalyzerResult {
     override val data: Map<Int, List<ProfileData>>
         get() = mutableData

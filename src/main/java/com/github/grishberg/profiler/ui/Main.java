@@ -9,6 +9,7 @@ import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.chart.stages.StagesFacade;
+import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
@@ -16,6 +17,8 @@ import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog;
+import com.github.grishberg.profiler.ui.dialogs.recorder.RecordedResult;
+import com.github.grishberg.tracerecorder.SystraceRecord;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +33,8 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ProfilerPanel.FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
@@ -85,6 +90,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final FlameChartController flameChartController;
     private final PluginsFacade pluginsFacade;
     private final StagesFacade stagesFacade;
+    private final SystraceStagesFacade systraceStagesFacade;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -200,6 +206,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         MainScope coroutineScope = new MainScope();
         CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
+        systraceStagesFacade = new SystraceStagesFacade(log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
         chart = new ProfilerPanel(
                 timeFormatter,
@@ -208,7 +215,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 settings,
                 log,
                 dependenciesDialog,
-                stagesFacade);
+                stagesFacade,
+                systraceStagesFacade);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -222,8 +230,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         frame.setVisible(true);
 
         hoverInfoPanel = new InfoPanel(chart);
-        hoverInfoPanel.changeTimeMode(settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false));
+        boolean isThreadTime = settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false);
+        hoverInfoPanel.changeTimeMode(isThreadTime);
         chart.getRootPane().setGlassPane(hoverInfoPanel);
+        systraceStagesFacade.onThreadModeSwitched(isThreadTime);
 
         chart.setMouseEventListener(this);
         chart.setRightClickListener(this);
@@ -474,6 +484,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         globalTimeMenuItem.setSelected(!isThreadTime);
         settings.setBoolValue(SETTINGS_THREAD_TIME_MODE, isThreadTime);
         chart.switchTimeMode(isThreadTime);
+        systraceStagesFacade.onThreadModeSwitched(isThreadTime);
         hoverInfoPanel.changeTimeMode(isThreadTime);
         timeModeLabel.setText(timeModeAsString());
         updateSelectedElementValues();
@@ -655,15 +666,19 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         methodTraceRecordDialog.setLocationRelativeTo(frame);
         methodTraceRecordDialog.showDialog();
-        File file = methodTraceRecordDialog.getTraceFile();
-        if (file != null) {
-            menuHistoryItems.addToFileHistory(file);
-            openTraceFile(file);
+        RecordedResult result = methodTraceRecordDialog.getResult();
+        if (result != null) {
+            menuHistoryItems.addToFileHistory(result.getRecorderTraceFile());
+            openTraceFile(result.getRecorderTraceFile(), result.getSystraces());
         }
     }
 
     public void openTraceFile(File file) {
-        new ParseWorker(file).execute();
+        openTraceFile(file, Collections.emptyList());
+    }
+
+    public void openTraceFile(File file, List<SystraceRecord> systraceRecords) {
+        new ParseWorker(file, systraceRecords).execute();
         showProgressDialog(file);
     }
 
@@ -763,9 +778,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private class ParseWorker extends SwingWorker<WorkerResult, WorkerResult> {
         private final File traceFile;
+        private List<SystraceRecord> systraceRecords;
 
-        private ParseWorker(File traceFile) {
+        private ParseWorker(File traceFile, List<SystraceRecord> systraceRecords) {
             this.traceFile = traceFile;
+            this.systraceRecords = systraceRecords;
         }
 
         @Override
@@ -795,6 +812,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 resultContainer = result.traceContainer;
                 frame.setTitle(TITLE + getClass().getPackage().getImplementationVersion() + " " + ": " + traceFile.getName());
                 chart.openTraceResult(result.traceContainer);
+                if (!systraceRecords.isEmpty()) {
+                    systraceStagesFacade.setSystraceStages(result.traceContainer.getResult(), systraceRecords);
+                }
                 pluginsFacade.setCurrentTraceProfiler(result.traceContainer.getResult());
 
                 threadsComboBox.removeAllItems();

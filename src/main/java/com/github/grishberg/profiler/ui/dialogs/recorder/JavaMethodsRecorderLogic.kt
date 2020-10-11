@@ -39,6 +39,8 @@ interface JavaMethodsRecorderDialogView {
     var recordMode: RecordMode
     var profilerBufferSizeInMb: Int
     var remoteDeviceAddress: String
+    var isSystraceStageEnabled: Boolean
+    var systraceStagePrefix: String?
 
     fun showErrorDialog(message: String, title: String = "Method trace recording error")
     fun showInfoDialog(message: String)
@@ -52,14 +54,12 @@ interface JavaMethodsRecorderDialogView {
     fun disableSampling()
 }
 
-class SampleJavaMethodsDialogLogic(
+class JavaMethodsDialogLogic(
     private val view: JavaMethodsRecorderDialogView,
     private val settings: SettingsRepository,
     private val logger: AppLogger,
     private val recorderFactory: MethodTraceRecorderFactory = MethodTraceRecorderFactoryImpl(logger, settings)
 ) : MethodTraceEventListener {
-    val waitForApplicationColor = Color(0xD2691A)
-
     var selectedMode: RecordMode = RecordMode.METHOD_TRACES
         set(value) {
             field = value
@@ -69,19 +69,14 @@ class SampleJavaMethodsDialogLogic(
                 view.disableSampling()
             }
         }
-    var traceFile: File? = null
+
+    var result: RecordedResult? = null
         private set
 
     private var job: Job? = null
     private var methodTraceRecorder: MethodTraceRecorder = MethodTraceRecorderStub()
 
-    private val idle = Idle()
-    private val recording = Recording()
-    private val waitForApp = WaitingForApplication()
-    private val waitForResult = WaitForRecordingResult()
-    private val waitForDevice = WaitForDevice()
-    private val pendingRecording = PendingRecording()
-    private var state: State = idle
+    private var state: State = Idle(this, view, settings, logger)
 
     private var currentPackageName: String = ""
     private var currentActivityName: String? = null
@@ -104,15 +99,11 @@ class SampleJavaMethodsDialogLogic(
     }
 
     fun onDialogShown() {
-        traceFile = null
+        result = null
+
         prepareFolder()
         logger.d("$TAG: show dialog")
-        try {
-            methodTraceRecorder = recorderFactory.create(this)
-            logger.d("$TAG recorder created $methodTraceRecorder")
-        } catch (e: Throwable) {
-            logger.e("create recorder: ", e)
-        }
+        idleState()
     }
 
     fun onDialogClosed() {
@@ -126,7 +117,7 @@ class SampleJavaMethodsDialogLogic(
     }
 
     fun onStartPressed() {
-        state.onStartPressed()
+        state.onStartPressed(recorderFactory)
     }
 
     override fun fail(throwable: Throwable) {
@@ -148,18 +139,15 @@ class SampleJavaMethodsDialogLogic(
     }
 
     override fun onStartedRecording() {
-        view.setStatusTextAndColor("Recording...", Color.RED)
-        state = recording
+        state.onStartedRecording()
     }
 
     override fun onStartWaitingForApplication() {
-        view.setStatusTextAndColor("Waiting for application...", waitForApplicationColor)
-        state = waitForApp
+        state.onStartWaitingForApplication()
     }
 
     override fun onStartWaitingForDevice() {
-        view.setStatusTextAndColor("Wait for device...", Color.DARK_GRAY)
-        state = waitForDevice
+        state.onStartWaitingForDevice()
     }
 
     override fun onSystraceReceived(values: List<SystraceRecord>) {
@@ -167,6 +155,7 @@ class SampleJavaMethodsDialogLogic(
         for (record in values) {
             logger.d("${record.name} - ${String.format("%.06f", record.endTime - record.startTime)}")
         }
+        state.onSystraceReceived(values)
     }
 
     private fun createFileName(): String {
@@ -189,8 +178,21 @@ class SampleJavaMethodsDialogLogic(
         }
     }
 
-    private inner class Idle : State {
-        override fun onStartPressed() {
+    private fun changeState(newState: State) {
+        state = newState
+    }
+
+    private fun idleState() {
+        state = Idle(this, view, settings, logger)
+    }
+
+    private class Idle(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger
+    ) : State {
+        override fun onStartPressed(methodTraceRecorderFactory: MethodTraceRecorderFactory) {
             val pkgName = view.packageName
             val activity: String? = if (view.activityName.isEmpty()) null else view.activityName
             val remoteAddress: String? = if (view.remoteDeviceAddress.isEmpty()) null else view.remoteDeviceAddress
@@ -203,21 +205,21 @@ class SampleJavaMethodsDialogLogic(
             val bufferSizeInMb = view.profilerBufferSizeInMb
             val fileNamePrefix = view.fileNamePrefix
 
-            logger.d("$TAG: start recording pkg=$pkgName, activity=$activity, mode=$selectedMode")
+            logger.d("$TAG: start recording pkg=$pkgName, activity=$activity, mode=${stateMachine.selectedMode}")
             settings.setStringValue(PKG_NAME_SETTINGS, pkgName)
             settings.setStringValue(ACTIVITY_NAME_SETTINGS, view.activityName)
             settings.setIntValue(SAMPLING_NAME_SETTINGS, sampling)
             settings.setStringValue(FILE_NAME_PREFIX_SETTINGS, fileNamePrefix)
-            settings.setBoolValue(RECORD_MODE_SAMPLE_SETTINGS, selectedMode == RecordMode.METHOD_SAMPLE)
+            settings.setBoolValue(RECORD_MODE_SAMPLE_SETTINGS, stateMachine.selectedMode == RecordMode.METHOD_SAMPLE)
             settings.setIntValue(PROFILER_BUFFER_SIZE_SETTINGS, bufferSizeInMb)
             settings.setStringValue(REMOTE_DEVICE_ADDRESS_SETTINGS, view.remoteDeviceAddress)
             view.inProgressState()
-            val fileName = createFileName()
+            val fileName = stateMachine.createFileName()
 
             val errorHandler = CoroutineExceptionHandler { _, throwable ->
                 GlobalScope.launch(Dispatchers.Swing) {
                     logger.e("$TAG failed while starting recording", throwable)
-                    state.onRecordingFailed(throwable)
+                    stateMachine.state.onRecordingFailed(throwable)
                 }
             }
 
@@ -227,14 +229,26 @@ class SampleJavaMethodsDialogLogic(
             }
             val waitForApplicationTimeout = if (pkgName.isEmpty()) DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT else 5
 
-            currentPackageName = pkgName
-            currentActivityName = activity
-            state = pendingRecording
-            job = GlobalScope.launch(errorHandler) {
+            val methodTraceRecorder = methodTraceRecorderFactory.create(stateMachine, view.isSystraceStageEnabled)
+            stateMachine.methodTraceRecorder = methodTraceRecorder
+            stateMachine.currentPackageName = pkgName
+            stateMachine.currentActivityName = activity
+            stateMachine.changeState(
+                PendingRecording(
+                    stateMachine,
+                    view,
+                    methodTraceRecorder,
+                    settings,
+                    logger,
+                    view.isSystraceStageEnabled,
+                    view.systraceStagePrefix
+                )
+            )
+            stateMachine.job = GlobalScope.launch(errorHandler) {
                 methodTraceRecorder.reconnect(remoteAddress)
                 methodTraceRecorder.startRecording(
                     fileName, pkgName,
-                    activity, selectedMode, sampling, bufferSizeInMb,
+                    activity, stateMachine.selectedMode, sampling, bufferSizeInMb,
                     waitForApplicationTimeoutInSeconds = waitForApplicationTimeout,
                     remoteDeviceAddress = remoteAddress
                 )
@@ -244,33 +258,63 @@ class SampleJavaMethodsDialogLogic(
         override fun onRecordingFailed(throwable: Throwable) = Unit
     }
 
-    private inner class Recording : State {
+    private class Recording(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val shouldWaitForSystrace: Boolean,
+        private val systracePrefix: String?
+    ) : State {
         override fun onStopPressed() {
-            state = waitForResult
+            if (shouldWaitForSystrace) {
+                stateMachine.changeState(
+                    WaitForRecordingResultWithSystrace(
+                        stateMachine,
+                        view,
+                        methodTraceRecorder,
+                        settings,
+                        logger,
+                        systracePrefix
+                    )
+                )
+            } else {
+                stateMachine.changeState(
+                    WaitForRecordingResult(
+                        stateMachine,
+                        view,
+                        methodTraceRecorder,
+                        settings,
+                        logger
+                    )
+                )
+            }
             logger.d("$TAG: stop button pressed")
-            methodTraceRecorder.stopRecording()
+
             view.enableStopButton(false)
             view.setStatusTextAndColor("Waiting for result...", Color.RED)
             val timeout: Long = (1000L * settings.getIntValueOrDefault(
                 WAIT_FOR_RESULT_TIMEOUT_SETTINGS,
                 DEFAULT_WAIT_FOR_RESULT_TIMEOUT
-            )).toLong()
+            ))
             Timer().schedule(
                 object : TimerTask() {
                     override fun run() {
                         SwingUtilities.invokeLater {
-                            logger.d("$TAG on timeout invoked, state is ${state.javaClass.simpleName}")
-                            state.onWaitForResultTimeout()
+                            logger.d("$TAG on timeout invoked, state is ${stateMachine.state.javaClass.simpleName}")
+                            stateMachine.state.onWaitForResultTimeout()
                         }
                     }
                 },
                 timeout
             )
+            methodTraceRecorder.stopRecording()
         }
 
         override fun onRecordingFailed(throwable: Throwable) {
-            state = idle
-            fail(throwable)
+            stateMachine.idleState()
+            stateMachine.fail(throwable)
         }
     }
 
@@ -283,23 +327,47 @@ class SampleJavaMethodsDialogLogic(
         job = null
     }
 
-    private inner class WaitingForApplication : State {
+    private class WaitingForApplication(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val shouldWaitForSystrace: Boolean,
+        private val systracePrefix: String?
+    ) : State {
+
+        override fun onStartedRecording() {
+            view.setStatusTextAndColor("Recording...", Color.RED)
+            stateMachine.changeState(
+                Recording(
+                    stateMachine,
+                    view,
+                    methodTraceRecorder,
+                    settings,
+                    logger,
+                    shouldWaitForSystrace,
+                    systracePrefix
+                )
+            )
+        }
+
         override fun onStopPressed() {
-            cancelRecordingJob()
+            stateMachine.cancelRecordingJob()
             methodTraceRecorder.disconnect()
             view.initialState()
-            state = idle
+            stateMachine.idleState()
         }
 
         override fun onDialogClosed() {
-            cancelRecordingJob()
+            stateMachine.cancelRecordingJob()
             methodTraceRecorder.disconnect()
             view.initialState()
-            state = idle
+            stateMachine.idleState()
         }
 
         override fun onRecordingFailed(throwable: Throwable) {
-            state = idle
+            stateMachine.idleState()
             methodTraceRecorder.stopRecording()
             methodTraceRecorder.disconnect()
 
@@ -307,12 +375,12 @@ class SampleJavaMethodsDialogLogic(
             view.initialState()
 
             if (throwable is AppTimeoutException) {
-                val msg = if (currentActivityName == null) {
+                val msg = if (stateMachine.currentActivityName == null) {
                     "Did you started application manually? Or enter activity name and try again"
                 } else {
                     "This can happens when Android Studio is opened, try to close it and try again."
                 }
-                view.showErrorDialog(message = msg, title = "Cant find process '${currentPackageName}'")
+                view.showErrorDialog(message = msg, title = "Cant find process '${stateMachine.currentPackageName}'")
                 return
             }
 
@@ -320,18 +388,25 @@ class SampleJavaMethodsDialogLogic(
         }
     }
 
-    private inner class WaitForRecordingResult : State {
+    private open class WaitForRecordingResult(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val systraceResult: List<SystraceRecord> = emptyList()
+    ) : State {
         override fun onTraceResultReceived(file: File) {
             logger.d("onMethodTraceReceived: $file")
             methodTraceRecorder.disconnect()
-            traceFile = file
+            stateMachine.result = RecordedResult(file, systraceResult)
             view.initialState()
             view.closeDialog()
-            state = idle
+            stateMachine.idleState()
         }
 
         override fun onLocalTraceReceived(remoteFilePath: String) {
-            state = idle
+            stateMachine.idleState()
             methodTraceRecorder.disconnect()
             logger.d("$TAG: onMethodTraceReceived $remoteFilePath")
             view.initialState()
@@ -339,8 +414,8 @@ class SampleJavaMethodsDialogLogic(
         }
 
         override fun onWaitForResultTimeout() {
-            state = idle
-            cancelRecordingJob()
+            stateMachine.idleState()
+            stateMachine.cancelRecordingJob()
             methodTraceRecorder.disconnect()
 
             logger.d("$TAG: StopButtonTimeout invoked")
@@ -349,68 +424,158 @@ class SampleJavaMethodsDialogLogic(
         }
 
         override fun onDialogClosed() {
-            cancelRecordingJob()
+            stateMachine.cancelRecordingJob()
             methodTraceRecorder.disconnect()
             view.initialState()
-            state = idle
+            stateMachine.idleState()
         }
 
         override fun onRecordingFailed(throwable: Throwable) {
-            state = idle
-            fail(throwable)
+            stateMachine.idleState()
+            stateMachine.fail(throwable)
         }
     }
 
-    private inner class WaitForDevice : State {
-        override fun onStopPressed() {
-            cancelRecordingJob()
-            methodTraceRecorder.disconnect()
-            view.initialState()
-            state = idle
+    private class WaitForRecordingResultWithSystrace(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val systracePrefix: String?
+    ) : WaitForRecordingResult(stateMachine, view, methodTraceRecorder, settings, logger) {
+
+        override fun onTraceResultReceived(file: File) {
+            logger.d("state is ${stateMachine.state.javaClass.simpleName}: onMethodTraceReceived: $file")
+            stateMachine.changeState(
+                WaitForSystraceResult(
+                    stateMachine, view, methodTraceRecorder, settings, logger, file, systracePrefix
+                )
+            )
         }
 
-        override fun onDialogClosed() {
-            cancelRecordingJob()
-            methodTraceRecorder.disconnect()
-            view.initialState()
-            state = idle
-        }
-
-        override fun onRecordingFailed(throwable: Throwable) {
-            state = idle
-            fail(throwable)
+        override fun onSystraceReceived(values: List<SystraceRecord>) {
+            logger.d("onSystraceReceived: ${values.size}")
+            stateMachine.changeState(
+                WaitForRecordingResult(
+                    stateMachine, view, methodTraceRecorder, settings, logger,
+                    if (systracePrefix != null) values.filter { it.name.startsWith(systracePrefix) } else values
+                )
+            )
         }
     }
 
-    private inner class PendingRecording : State {
+    private class WaitForSystraceResult(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val traceFile: File,
+        private val systracePrefix: String?
+    ) : WaitForRecordingResult(stateMachine, view, methodTraceRecorder, settings, logger) {
+        override fun onSystraceReceived(values: List<SystraceRecord>) {
+            logger.d("onSystraceReceived: ${values.size}")
+            methodTraceRecorder.disconnect()
+
+            stateMachine.result = RecordedResult(
+                traceFile,
+                if (systracePrefix != null) values.filter { it.name.startsWith(systracePrefix) } else values
+            )
+            view.initialState()
+            view.closeDialog()
+            stateMachine.idleState()
+        }
+    }
+
+    private class WaitForDevice(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val shouldWaitForSystrace: Boolean,
+        private val systracePrefix: String?
+    ) : State {
+        private val waitForApplicationColor = Color(0xD2691A)
+
+        override fun onStartWaitingForApplication() {
+            view.setStatusTextAndColor("Waiting for application...", waitForApplicationColor)
+            stateMachine.changeState(
+                WaitingForApplication(stateMachine, view, methodTraceRecorder, settings, logger,
+                    shouldWaitForSystrace, systracePrefix)
+            )
+        }
+
         override fun onStopPressed() {
-            cancelRecordingJob()
+            stateMachine.cancelRecordingJob()
             methodTraceRecorder.disconnect()
             view.initialState()
-            state = idle
+            stateMachine.idleState()
         }
 
         override fun onDialogClosed() {
-            cancelRecordingJob()
+            stateMachine.cancelRecordingJob()
             methodTraceRecorder.disconnect()
             view.initialState()
-            state = idle
+            stateMachine.idleState()
         }
 
         override fun onRecordingFailed(throwable: Throwable) {
-            state = idle
-            fail(throwable)
+            stateMachine.idleState()
+            stateMachine.fail(throwable)
+        }
+    }
+
+    private class PendingRecording(
+        private val stateMachine: JavaMethodsDialogLogic,
+        private val view: JavaMethodsRecorderDialogView,
+        private val methodTraceRecorder: MethodTraceRecorder,
+        private val settings: SettingsRepository,
+        private val logger: AppLogger,
+        private val shouldWaitForSystrace: Boolean,
+        private val systracePrefix: String?
+    ) : State {
+        override fun onStopPressed() {
+            stateMachine.cancelRecordingJob()
+            methodTraceRecorder.disconnect()
+            view.initialState()
+            stateMachine.idleState()
+        }
+
+        override fun onDialogClosed() {
+            stateMachine.cancelRecordingJob()
+            methodTraceRecorder.disconnect()
+            view.initialState()
+            stateMachine.idleState()
+        }
+
+        override fun onRecordingFailed(throwable: Throwable) {
+            stateMachine.idleState()
+            stateMachine.fail(throwable)
+        }
+
+        override fun onStartWaitingForDevice() {
+            view.setStatusTextAndColor("Wait for device...", Color.DARK_GRAY)
+            stateMachine.changeState(
+                WaitForDevice(stateMachine, view, methodTraceRecorder, settings, logger,
+                    shouldWaitForSystrace, systracePrefix)
+            )
         }
     }
 
     private interface State {
         fun onStopPressed() = Unit
-        fun onStartPressed() = Unit
+        fun onStartPressed(methodTraceRecorderFactory: MethodTraceRecorderFactory) = Unit
         fun onWaitForResultTimeout() = Unit
         fun onTraceResultReceived(file: File) = Unit
         fun onLocalTraceReceived(remoteFilePath: String) = Unit
         fun onDialogClosed() = Unit
         fun onRecordingFailed(throwable: Throwable)
+        fun onSystraceReceived(values: List<SystraceRecord>) = Unit
+        fun onStartedRecording() = Unit
+        fun onStartWaitingForApplication() = Unit
+        fun onStartWaitingForDevice() = Unit
     }
 
     private class MethodTraceRecorderStub : MethodTraceRecorder {

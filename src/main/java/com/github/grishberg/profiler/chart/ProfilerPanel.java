@@ -6,6 +6,7 @@ import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.chart.stages.StagesFacade;
+import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
@@ -41,7 +42,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
 
     private Bookmarks bookmarks;
     private int currentThreadId = -1;
-    private AnalyzerResult result = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0);
+    private AnalyzerResult result = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
     private final Map<Integer, List<ProfileRectangle>> objects = new HashMap<>();
 
     private int levelHeight = 20;
@@ -76,6 +77,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private final SettingsRepository settings;
     private final AppLogger logger;
     private StagesFacade stagesFacade;
+    private SystraceStagesFacade systraceStagesFacade;
     private boolean isThreadTime;
     private String fontName;
     private final Font labelFont;
@@ -89,17 +91,21 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
                          SettingsRepository settings,
                          AppLogger logger,
                          DependenciesFoundAction dependenciesFoundAction,
-                         StagesFacade stagesFacade) {
+                         StagesFacade stagesFacade,
+                         SystraceStagesFacade systraceStagesFacade) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
         this.settings = settings;
         this.logger = logger;
         this.stagesFacade = stagesFacade;
+        this.systraceStagesFacade = systraceStagesFacade;
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         bookmarks = new Bookmarks(settings, logger);
         stagesFacade.setRepaintDelegate(this);
         stagesFacade.setLabelPaintDelegate(this);
+        systraceStagesFacade.setRepaintDelegate(this);
+        systraceStagesFacade.setLabelPaintDelegate(this);
 
         addMouseListener(new SimpleMouseListener() {
             @Override
@@ -507,6 +513,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     private void drawToolbar(Graphics2D g, AffineTransform at, FontMetrics fm) {
+        systraceStagesFacade.drawStages(g, at, fm);
         stagesFacade.drawStages(g, at, fm);
 
         Iterator<BookmarksRectangle> iterator = bookmarks.iterator();

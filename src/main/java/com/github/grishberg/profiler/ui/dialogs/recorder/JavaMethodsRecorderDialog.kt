@@ -32,14 +32,17 @@ class JavaMethodsRecorderDialog(
     private val activityNameField: JTextField
     private val fileNamePrefixField: JTextField
     private val remoteDeviceAddressField: JTextField = JTextField(20)
-    private val showPanelCheckbox = JCheckBox("Connect to remote device")
+    private val stagesTracePrefixField: JTextField = JTextField(10)
+    private val showRemotePanelCheckbox = JCheckBox("Connect to remote device")
+    private val moreOptionsPanelCheckbox = JCheckBox("Additional options")
+    private val systraceStagesCheckbox = JCheckBox("Systrace Stages")
     private val statusLabel: JLabel
     private val startButton: JButton
     private val stopButton: JButton
     private val defaultLabelColor: Color
     private val samplingField = JNumberField(10)
     private val profilerBufferSizeField = JNumberField(10)
-    private val logic: SampleJavaMethodsDialogLogic
+    private val logic: JavaMethodsDialogLogic
     private val recordModeComBox = JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
 
     override var packageName: String
@@ -82,7 +85,28 @@ class JavaMethodsRecorderDialog(
         get() = remoteDeviceAddressField.text.trim()
         set(value) {
             remoteDeviceAddressField.text = value
-            showPanelCheckbox.isSelected = value.isNotEmpty()
+            showRemotePanelCheckbox.isSelected = value.isNotEmpty()
+        }
+
+    override var isSystraceStageEnabled: Boolean
+        get() = systraceStagesCheckbox.isSelected
+        set(value) {
+            systraceStagesCheckbox.isSelected = value
+            if (value) {
+                moreOptionsPanelCheckbox.isSelected = true
+            }
+        }
+    override var systraceStagePrefix: String?
+        get() {
+            val text = stagesTracePrefixField.text.trim()
+            return if (text.isEmpty()) {
+                null
+            } else {
+                text
+            }
+        }
+        set(value) {
+            stagesTracePrefixField.text = value
         }
 
     init {
@@ -123,7 +147,7 @@ class JavaMethodsRecorderDialog(
         additionalPanel.border = EmptyBorder(8, 8, 8, 8)
         additionalPanel.add(JLabel("Sampling in microseconds:"), BorderLayout.LINE_START)
 
-        logic = SampleJavaMethodsDialogLogic(this, settings, logger)
+        logic = JavaMethodsDialogLogic(this, settings, logger)
 
         recordModeComBox.addItemListener {
             if (it.stateChange != ItemEvent.SELECTED) {
@@ -158,6 +182,7 @@ class JavaMethodsRecorderDialog(
         panelBuilder.addLabeledComponent("recording mode: ", recordModeComBox)
         panelBuilder.addLabeledComponent("buffer size (Mb): ", profilerBufferSizeField)
         panelBuilder.addSingleComponent(buildRemoteDevicePanel())
+        panelBuilder.addSingleComponent(buildMoreOptionsPanel())
         panelBuilder.addSingleComponent(buttons)
 
         additionalPanel.add(samplingField, BorderLayout.CENTER)
@@ -178,25 +203,79 @@ class JavaMethodsRecorderDialog(
         pack()
     }
 
+    private fun buildMoreOptionsPanel(): JPanel {
+        val panel = JPanel()
+        panel.layout = BorderLayout()
+
+        panel.add(moreOptionsPanelCheckbox, BorderLayout.NORTH)
+
+        val hiddenPanel = JPanel()
+        hiddenPanel.layout = BorderLayout()
+        hiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+        hiddenPanel.isVisible = false
+        hiddenPanel.add(buildSystraceStagesPanel(), BorderLayout.NORTH)
+
+        moreOptionsPanelCheckbox.addChangeListener {
+            hiddenPanel.isVisible = moreOptionsPanelCheckbox.isSelected
+            pack()
+        }
+        panel.add(hiddenPanel, BorderLayout.SOUTH)
+        return panel
+    }
+
+    private fun buildSystraceStagesPanel(): JPanel {
+        val panel = JPanel()
+        panel.layout = BorderLayout()
+
+        panel.add(systraceStagesCheckbox, BorderLayout.NORTH)
+
+        val hiddenPanel = JPanel()
+        hiddenPanel.layout = BorderLayout()
+        hiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+        hiddenPanel.isVisible = false
+        val contentPanel = JPanel()
+        hiddenPanel.add(contentPanel, BorderLayout.CENTER)
+
+        contentPanel.layout = BorderLayout()
+        contentPanel.border = EmptyBorder(8, 8, 8, 8)
+        contentPanel.add(Label("Stages trace prefix"), BorderLayout.NORTH)
+        contentPanel.add(stagesTracePrefixField, BorderLayout.CENTER)
+        stagesTracePrefixField.toolTipText = "Systrace starting with this prefix will be considered stages"
+
+        systraceStagesCheckbox.addChangeListener {
+            hiddenPanel.isVisible = systraceStagesCheckbox.isSelected
+            pack()
+        }
+        panel.add(hiddenPanel, BorderLayout.SOUTH)
+        return panel
+    }
+
     private fun buildRemoteDevicePanel(): JPanel {
         val panel = JPanel()
         panel.layout = BorderLayout()
         remoteDeviceAddressField.toolTipText = "Remote device address. Optional. If not empty - will try to connect " +
                 "to remote device"
 
-        panel.add(showPanelCheckbox, BorderLayout.NORTH)
+        panel.add(showRemotePanelCheckbox, BorderLayout.NORTH)
 
-        val remoteDeviceHiddenPanel = JPanel()
-        remoteDeviceHiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
-        remoteDeviceHiddenPanel.isVisible = false
-        remoteDeviceHiddenPanel.add(Label("IP address:"))
-        remoteDeviceHiddenPanel.add(remoteDeviceAddressField)
+        val hiddenPanel = JPanel()
+        hiddenPanel.layout = BorderLayout()
+        hiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+        hiddenPanel.isVisible = false
 
-        showPanelCheckbox.addChangeListener {
-            remoteDeviceHiddenPanel.isVisible = showPanelCheckbox.isSelected
+        val contentPanel = JPanel()
+        hiddenPanel.add(contentPanel, BorderLayout.CENTER)
+
+        contentPanel.layout = BorderLayout()
+        contentPanel.border = EmptyBorder(8, 8, 8, 8)
+        contentPanel.add(Label("IP address:"), BorderLayout.NORTH)
+        contentPanel.add(remoteDeviceAddressField, BorderLayout.CENTER)
+
+        showRemotePanelCheckbox.addChangeListener {
+            hiddenPanel.isVisible = showRemotePanelCheckbox.isSelected
             pack()
         }
-        panel.add(remoteDeviceHiddenPanel, BorderLayout.SOUTH)
+        panel.add(hiddenPanel, BorderLayout.SOUTH)
         return panel
     }
 
@@ -206,7 +285,7 @@ class JavaMethodsRecorderDialog(
         logger.d("$TAG: dialog closed")
     }
 
-    fun getTraceFile() = logic.traceFile
+    fun getResult(): RecordedResult? = logic.result
 
     fun showDialog() {
         logger.d("$TAG: dialog shown")

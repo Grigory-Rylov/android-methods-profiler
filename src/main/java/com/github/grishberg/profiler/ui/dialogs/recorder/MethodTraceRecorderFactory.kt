@@ -8,7 +8,7 @@ import com.github.grishberg.tracerecorder.MethodTraceRecorder
 import com.github.grishberg.tracerecorder.MethodTraceRecorderImpl
 
 interface MethodTraceRecorderFactory {
-    fun create(listener: MethodTraceEventListener): MethodTraceRecorder
+    fun create(listener: MethodTraceEventListener, systrace: Boolean): MethodTraceRecorder
 }
 
 private const val SETTINGS_ROOT = "MethodTraceRecordDialog"
@@ -31,11 +31,11 @@ internal class MethodTraceRecorderFactoryImpl(
         settings.setIntValue(DEBUG_PORT_SETTINGS, debugPort)
     }
 
-    override fun create(listener: MethodTraceEventListener): MethodTraceRecorder {
+    override fun create(listener: MethodTraceEventListener, systrace: Boolean): MethodTraceRecorder {
         return MethodTraceRecorderImpl(
             listener,
             true,
-            false,
+            systrace,
             RecorderLoggerWrapper(
                 logger
             ),
