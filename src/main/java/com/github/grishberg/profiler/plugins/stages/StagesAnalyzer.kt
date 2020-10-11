@@ -3,7 +3,8 @@ package com.github.grishberg.profiler.plugins.stages
 import com.github.grishberg.android.profiler.core.ProfileData
 
 class StagesAnalyzer(
-    private val stages: Stages
+    private val stages: Stages,
+    private val methodsAvailability: MethodsAvailability
 ) {
 
     fun analyze(methods: List<ProfileData>): List<WrongStage> {
@@ -13,7 +14,7 @@ class StagesAnalyzer(
         for (method in methods) {
             stages.updateCurrentStage(method)
 
-            if (!stages.isMethodAvailable(method)) {
+            if (!methodsAvailability.isMethodAvailable(method)) {
                 continue
             }
 

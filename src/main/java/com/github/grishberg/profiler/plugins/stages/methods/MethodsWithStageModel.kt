@@ -1,5 +1,6 @@
-package com.github.grishberg.profiler.plugins.stages
+package com.github.grishberg.profiler.plugins.stages.methods
 
+import com.github.grishberg.profiler.plugins.stages.WrongStage
 import javax.swing.table.AbstractTableModel
 
 class MethodsWithStageModel : AbstractTableModel() {

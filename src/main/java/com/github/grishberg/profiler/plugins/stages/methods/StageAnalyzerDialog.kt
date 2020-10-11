@@ -1,8 +1,9 @@
-package com.github.grishberg.profiler.plugins.stages
+package com.github.grishberg.profiler.plugins.stages.methods
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.CyclicTableRowSorter
 import com.github.grishberg.profiler.common.DoubleRenderer
+import com.github.grishberg.profiler.plugins.stages.WrongStage
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import com.github.grishberg.profiler.ui.dialogs.info.JFixedWidthTable
 import java.awt.BorderLayout

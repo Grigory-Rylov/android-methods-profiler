@@ -1,9 +1,11 @@
-package com.github.grishberg.profiler.plugins.stages
+package com.github.grishberg.profiler.plugins.stages.methods
+
+import com.github.grishberg.profiler.plugins.stages.Stage
 
 class StagesState(
-    val stagesList: List<Stage>
+    val stagesList: List<StageRelatedToMethods>
 ) {
-    var currentStage: Stage? = null
+    var currentStage: StageRelatedToMethods? = null
         private set
 
     private val stageWrappers = mutableListOf<StageWrapper>().apply {
@@ -58,7 +60,7 @@ class StagesState(
     }
 
     private class StageWrapper(
-        val stage: Stage
+        val stage: StageRelatedToMethods
     ) {
         var isStarted = false
             private set

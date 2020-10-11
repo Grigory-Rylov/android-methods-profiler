@@ -6,9 +6,9 @@ import com.github.grishberg.profiler.chart.stages.StagesFacade
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
-import com.github.grishberg.profiler.plugins.stages.StageAnalyzerDialog
-import com.github.grishberg.profiler.plugins.stages.StagesAnalyzerLogic
-import com.github.grishberg.profiler.plugins.stages.StagesLoadedAction
+import com.github.grishberg.profiler.plugins.stages.methods.StageAnalyzerDialog
+import com.github.grishberg.profiler.plugins.stages.methods.StagesAnalyzerLogic
+import com.github.grishberg.profiler.plugins.stages.methods.StagesLoadedAction
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.*

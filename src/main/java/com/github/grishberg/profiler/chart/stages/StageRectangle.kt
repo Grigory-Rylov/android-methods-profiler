@@ -2,12 +2,12 @@ package com.github.grishberg.profiler.chart.stages
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.common.hexToColor
-import com.github.grishberg.profiler.plugins.stages.Stage
+import com.github.grishberg.profiler.plugins.stages.methods.StageRelatedToMethods
 import java.awt.Color
 import java.awt.geom.Rectangle2D
 
 class StageRectangle(
-    val stage: Stage,
+    val stage: StageRelatedToMethods,
     private val threadTimeStart: kotlin.Double,
     private val threadTimeEnd: kotlin.Double,
     private val globalTimeTimeStart: kotlin.Double,
@@ -59,7 +59,7 @@ class StageRectangle(
         private val DEFAULT_COLOR = Color(0x8c6057)
 
         fun fromMethodRectangle(
-            stage: Stage,
+            stage: StageRelatedToMethods,
             profileRectangle: ProfileRectangle,
             height: kotlin.Double,
             isThreadTimeMode: Boolean

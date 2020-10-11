@@ -1,26 +1,33 @@
-package com.github.grishberg.profiler.plugins.stages
+package com.github.grishberg.profiler.plugins.stages.methods
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.plugins.stages.StagesAnalyzer
+import com.github.grishberg.profiler.plugins.stages.WrongStage
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.io.*
+import java.io.BufferedWriter
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
 private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
 
-typealias StagesProvider = () -> Stages
+typealias StagesProvider = () -> StagesRelatedToMethods
 
 interface StagesLoadedAction {
-    fun onStagesLoaded(stagesList: List<Stage>)
+    fun onStagesLoaded(stagesList: List<StageRelatedToMethods>)
 }
 
 class StagesAnalyzerLogic(
@@ -30,8 +37,8 @@ class StagesAnalyzerLogic(
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
-    private val stagesList: List<Stage>,
-    private val stages: Stages?,
+    private val stagesList: List<StageRelatedToMethods>,
+    private val stages: StagesRelatedToMethods?,
     private val logger: AppLogger,
     private val stagesLoadedAction: StagesLoadedAction? = null
 ) : DialogListener {
@@ -72,7 +79,7 @@ class StagesAnalyzerLogic(
         }
 
         stagesProvider = if (selectedStagesFile != null) {
-            { Stages.loadFromJson(selectedStagesFile, logger) }
+            { StagesRelatedToMethods.loadFromJson(selectedStagesFile, logger) }
         } else {
             { stages!! }
         }
@@ -86,7 +93,7 @@ class StagesAnalyzerLogic(
                 stagesLoadedAction?.onStagesLoaded(stages.stagesList)
             }
 
-            val analyzer = StagesAnalyzer(stages)
+            val analyzer = StagesAnalyzer(stages, stages)
 
             val result = coroutineScope.async(dispatchers.worker) {
                 analyzer.analyze(methods)
@@ -130,7 +137,7 @@ class StagesAnalyzerLogic(
                 fileToSave = File(fileToSave.absolutePath + ".json")
             }
             settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, fileToSave.parent)
-            Stages.saveToFile(fileToSave, methods, stagesList, emptyList(), logger)
+            StagesRelatedToMethods.saveToFile(fileToSave, methods, stagesList, emptyList(), logger)
         }
     }
 
@@ -151,7 +158,7 @@ class StagesAnalyzerLogic(
     }
 
     private fun generate(file: File, data: List<WrongStage>) {
-        logger.d("${TAG}: generating data: methods size = ${data.size}")
+        logger.d("$TAG: generating data: methods size = ${data.size}")
         val fos = FileOutputStream(file)
 
         writeResultToOutputStream(fos, data)
@@ -181,6 +188,6 @@ class StagesAnalyzerLogic(
                 bw.newLine()
             }
         }
-        logger.d("${TAG}: generating data: methods size = ${data.size}")
+        logger.d("$TAG: generating data: methods size = ${data.size}")
     }
 }

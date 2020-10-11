@@ -8,10 +8,10 @@ import com.github.grishberg.profiler.chart.RepaintDelegate
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.toHex
-import com.github.grishberg.profiler.plugins.stages.MethodWithIndex
-import com.github.grishberg.profiler.plugins.stages.Stage
-import com.github.grishberg.profiler.plugins.stages.Stages
-import com.github.grishberg.profiler.plugins.stages.StagesState
+import com.github.grishberg.profiler.plugins.stages.methods.MethodWithIndex
+import com.github.grishberg.profiler.plugins.stages.methods.StageRelatedToMethods
+import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethods
+import com.github.grishberg.profiler.plugins.stages.methods.StagesState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ class StagesFacade(
             clearStages()
         }
     }
-    private val stages = mutableListOf<Stage>()
+    private val stages = mutableListOf<StageRelatedToMethods>()
     private val stagesRectangles = mutableListOf<StageRectangle>()
     private var methodsRectangles: List<ProfileRectangle>? = null
     var repaintDelegate: RepaintDelegate? = null
@@ -47,11 +47,11 @@ class StagesFacade(
     var height = -1.0
 
     // For storing stages into file
-    val stagesList: List<Stage>
+    val stagesList: List<StageRelatedToMethods>
         get() = stages
 
     // For analyze another opened trace file.
-    var storedStages: Stages? = null
+    var storedStages: StagesRelatedToMethods? = null
         private set
     private var isThreadTimeMode = false
     private var isStagesManuallyCreated = false
@@ -70,7 +70,7 @@ class StagesFacade(
         methodsRectangles?.let {
             coroutineScope.launch {
                 val result = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
-                    Stages.createFromStagesListAndMethods(MethodsListIterator(it), stagesList, log)
+                    StagesRelatedToMethods.createFromStagesListAndMethods(MethodsListIterator(it), stagesList, log)
                 }
                 storedStages = result
             }
@@ -86,14 +86,14 @@ class StagesFacade(
         clearStagesMenuItem.isEnabled = false
     }
 
-    fun setStages(stagesList: List<Stage>) {
+    fun setStages(stagesList: List<StageRelatedToMethods>) {
         clearStagesMenuItem.isEnabled = true
         stages.clear()
         stages.addAll(stagesList)
         calculateStagesBounds()
     }
 
-    fun stageForMethod(method: ProfileData): Stage? {
+    fun stageForMethod(method: ProfileData): StageRelatedToMethods? {
         for (stage in stagesRectangles) {
             if (method == stage.methodRectangle.profileData) {
                 return stage.stage
@@ -105,18 +105,18 @@ class StagesFacade(
     fun createStage(method: ProfileData, title: String, color: Color) {
         clearStagesMenuItem.isEnabled = true
         isStagesManuallyCreated = true
-        stages.add(Stage(title, listOf(MethodWithIndex(method.name)), color.toHex()))
+        stages.add(StageRelatedToMethods(title, listOf(MethodWithIndex(method.name)), color.toHex()))
         calculateStagesBounds()
     }
 
-    fun editStage(targetStage: Stage, newTitle: String, newColor: Color) {
+    fun editStage(targetStage: StageRelatedToMethods, newTitle: String, newColor: Color) {
         isStagesManuallyCreated = true
         val index = stages.indexOf(targetStage)
         if (index < 0) {
             return
         }
         stages.removeAt(index)
-        stages.add(index, Stage(newTitle, targetStage.methods, newColor.toHex()))
+        stages.add(index, StageRelatedToMethods(newTitle, targetStage.methods, newColor.toHex()))
     }
 
     /**
@@ -206,7 +206,7 @@ class StagesFacade(
         }
     }
 
-    fun removeStage(stageForMethod: Stage) {
+    fun removeStage(stageForMethod: StageRelatedToMethods) {
         stages.remove(stageForMethod)
         calculateStagesBounds()
     }
