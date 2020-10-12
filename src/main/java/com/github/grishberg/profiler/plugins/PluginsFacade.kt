@@ -6,12 +6,19 @@ import com.github.grishberg.profiler.chart.stages.StagesFacade
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
-import com.github.grishberg.profiler.plugins.stages.methods.StageAnalyzerDialog
+import com.github.grishberg.profiler.plugins.stages.MethodsAvailabilityImpl
+import com.github.grishberg.profiler.plugins.stages.StageAnalyzerDialog
+import com.github.grishberg.profiler.plugins.stages.StagesAnalyzer
 import com.github.grishberg.profiler.plugins.stages.methods.StagesAnalyzerLogic
 import com.github.grishberg.profiler.plugins.stages.methods.StagesLoadedAction
+import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethodsFactory
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
-import javax.swing.*
+import javax.swing.JFrame
+import javax.swing.JMenu
+import javax.swing.JMenuBar
+import javax.swing.JMenuItem
+import javax.swing.JOptionPane
 
 class PluginsFacade(
     private val frame: JFrame,
@@ -52,7 +59,9 @@ class PluginsFacade(
         val methods = currentTraceProfiler?.data?.get(currentThread?.threadId) ?: return
 
         val ui = StageAnalyzerDialog(frame)
+        val methodsAvailability = MethodsAvailabilityImpl()
         StagesAnalyzerLogic(
+            StagesAnalyzer(),
             ui,
             settings,
             methods,
@@ -61,6 +70,8 @@ class PluginsFacade(
             dispatchers,
             stagesFacade.stagesList,
             stagesFacade.storedStages,
+            StagesRelatedToMethodsFactory(methodsAvailability, logger),
+            methodsAvailability,
             logger,
             stagesLoadedAction
         )

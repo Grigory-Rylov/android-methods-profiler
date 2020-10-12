@@ -2,12 +2,13 @@ package com.github.grishberg.profiler.plugins.stages
 
 import com.github.grishberg.android.profiler.core.ProfileData
 
-class StagesAnalyzer(
-    private val stages: Stages,
-    private val methodsAvailability: MethodsAvailability
-) {
+class StagesAnalyzer {
 
-    fun analyze(methods: List<ProfileData>): List<WrongStage> {
+    fun analyze(
+        stages: Stages,
+        methodsAvailability: MethodsAvailability,
+        methods: List<ProfileData>
+    ): List<WrongStage> {
         val result = mutableListOf<WrongStage>()
         stages.init()
 

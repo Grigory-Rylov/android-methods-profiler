@@ -1,6 +1,7 @@
 package com.github.grishberg.profiler.plugins.stages
 
 import com.github.grishberg.android.profiler.core.ProfileData
+import java.io.File
 
 interface Stages {
     val currentStage: Stage?
@@ -15,4 +16,6 @@ interface Stages {
     fun getMethodsStage(method: ProfileData): Stage?
 
     fun shouldMethodStageBeLaterThenCurrent(methodStage: Stage?): Boolean
+
+    fun saveToFile(file: File, input: List<ProfileData>)
 }

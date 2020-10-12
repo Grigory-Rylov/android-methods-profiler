@@ -2,21 +2,20 @@ package com.github.grishberg.profiler.plugins.stages.methods
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
-import com.github.grishberg.profiler.plugins.stages.IgnoredMethods
 import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
+import com.github.grishberg.profiler.plugins.stages.MethodsAvailabilityImpl
 import com.github.grishberg.profiler.plugins.stages.Stage
 import com.github.grishberg.profiler.plugins.stages.Stages
 import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
-import com.google.gson.stream.JsonReader
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.io.FileReader
 import java.io.IOException
 import java.io.OutputStreamWriter
-import java.lang.reflect.Type
+
+private const val EMPTY_STAGE_NAME = "unknown"
+private const val TAG = "StagesRelatedToMethods"
 
 /**
  * Stages of application run.
@@ -26,8 +25,9 @@ class StagesRelatedToMethods(
     private val stagesState: StagesState,
     // method name : Stage
     private val methodStages: Map<String, StageRelatedToMethods?>,
-    private val packages: List<String>
-) : Stages, MethodsAvailability {
+    private val methodsAvailability: MethodsAvailability,
+    private val logger: AppLogger
+) : Stages {
     override val currentStage: Stage?
         get() = stagesState.currentStage
 
@@ -46,62 +46,67 @@ class StagesRelatedToMethods(
         return methodStages[method.name]
     }
 
-    override fun isMethodAvailable(method: ProfileData): Boolean {
-        return isMethodAvailable(method, packages)
-    }
-
     override fun shouldMethodStageBeLaterThenCurrent(methodStage: Stage?): Boolean =
         stagesState.shouldMethodStageBeLaterThenCurrent(methodStage)
 
+    override fun saveToFile(
+        fileToSave: File,
+        input: List<ProfileData>
+    ) {
+        val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
 
-    private data class StagesModel(
-        val stages: List<StageRelatedToMethods>,
-        val methodStages: Map<String, Set<String>>,
-        val packages: List<String>
-    )
+        var outputStream: FileOutputStream? = null
+        try {
+            outputStream = FileOutputStream(fileToSave)
+            val bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream, "UTF-8"))
+
+            val methodsByStages = mutableMapOf<String, MutableSet<String>>()
+            val stagesState = StagesState(stagesList)
+            var currentStageName = EMPTY_STAGE_NAME
+            val alreadyAddedMethods = mutableSetOf<String>()
+
+            for (method in input) {
+                val methodName = method.name
+                if (stagesState.updateCurrentStage(methodName)) {
+                    currentStageName = stagesState.currentStage?.name ?: EMPTY_STAGE_NAME
+                }
+
+                if (!methodsAvailability.isMethodAvailable(method) || alreadyAddedMethods.contains(methodName)) {
+                    continue
+                }
+
+                val methodsForStage = methodsByStages.getOrPut(currentStageName, { mutableSetOf() })
+                methodsForStage.add(methodName)
+                alreadyAddedMethods.add(methodName)
+            }
+
+            gson.toJson(
+                StagesRelatedToMethodsFactory.StagesModel(stagesList, methodsByStages, emptyList()),
+                bufferedWriter
+            )
+            bufferedWriter.close()
+        } catch (e: FileNotFoundException) {
+            logger.e("$TAG: save bookmarks error", e)
+        } catch (e: IOException) {
+            logger.e("$TAG: save bookmarks error", e)
+        } finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.flush()
+                    outputStream.close()
+                } catch (e: IOException) {
+                }
+            }
+        }
+    }
 
     companion object {
-        private const val REGEX_PATTERN = "([a-z]+\\d+)"
-        private val regex = Regex(REGEX_PATTERN)
-        private const val EMPTY_STAGE_NAME = "unknown"
-        private const val TAG = "Stages"
-        private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
-
-        fun loadFromJson(fn: File, logger: AppLogger): StagesRelatedToMethods {
-            val listType: Type = object : TypeToken<StagesModel>() {}.type
-            try {
-                val fileReader = FileReader(fn)
-                val reader = JsonReader(fileReader)
-                val stagesModel: StagesModel = gson.fromJson(reader, listType)
-
-                val methodsStagesMapping = mutableMapOf<String, StageRelatedToMethods?>()
-                for (entry in stagesModel.methodStages.entries) {
-                    // find stage by name
-                    val stage = stagesModel.stages.firstOrNull { it.name == entry.key }
-                    stage?.let {
-                        for (method in entry.value) {
-                            methodsStagesMapping[method] = it
-                        }
-                    }
-                }
-                return StagesRelatedToMethods(
-                    StagesState(stagesModel.stages),
-                    methodsStagesMapping,
-                    stagesModel.packages
-                )
-            } catch (e: FileNotFoundException) {
-                logger.d("$TAG: there is no bookmarks file.")
-            } catch (e: Exception) {
-                logger.e("$TAG: Cant load stages", e)
-            }
-            return StagesRelatedToMethods(StagesState(emptyList()), emptyMap(), emptyList())
-        }
-
         fun createFromStagesListAndMethods(
             methods: Iterator<ProfileData>,
             stagesList: List<StageRelatedToMethods>,
             logger: AppLogger
         ): StagesRelatedToMethods {
+            val methodsAvailability = MethodsAvailabilityImpl()
             val stagesState = StagesState(stagesList)
             val methodsStagesMapping = mutableMapOf<String, StageRelatedToMethods?>()
             val alreadyAddedMethods = mutableSetOf<String>()
@@ -110,99 +115,13 @@ class StagesRelatedToMethods(
                 val methodName = method.name
                 stagesState.updateCurrentStage(methodName)
 
-                if (!isMethodAvailable(method, emptyList()) || alreadyAddedMethods.contains(methodName)) {
+                if (!methodsAvailability.isMethodAvailable(method) || alreadyAddedMethods.contains(methodName)) {
                     continue
                 }
                 methodsStagesMapping[methodName] = stagesState.currentStage
                 alreadyAddedMethods.add(methodName)
             }
-            return StagesRelatedToMethods(StagesState(stagesList), methodsStagesMapping, emptyList())
-        }
-
-        fun saveToFile(
-            fileToSave: File,
-            input: List<ProfileData>,
-            stages: List<StageRelatedToMethods>,
-            packages: List<String>,
-            logger: AppLogger
-        ) {
-            var outputStream: FileOutputStream? = null
-            try {
-                outputStream = FileOutputStream(fileToSave)
-                val bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream, "UTF-8"))
-
-                val methodsByStages = mutableMapOf<String, MutableSet<String>>()
-                val stagesState = StagesState(stages)
-                var currentStageName = EMPTY_STAGE_NAME
-                val alreadyAddedMethods = mutableSetOf<String>()
-
-                for (method in input) {
-                    val methodName = method.name
-                    if (stagesState.updateCurrentStage(methodName)) {
-                        currentStageName = stagesState.currentStage?.name ?: EMPTY_STAGE_NAME
-                    }
-
-                    if (!isMethodAvailable(method, packages) || alreadyAddedMethods.contains(methodName)) {
-                        continue
-                    }
-
-                    val methodsForStage = methodsByStages.getOrPut(currentStageName, { mutableSetOf() })
-                    methodsForStage.add(methodName)
-                    alreadyAddedMethods.add(methodName)
-                }
-
-                gson.toJson(StagesModel(stages, methodsByStages, packages), bufferedWriter)
-                bufferedWriter.close()
-            } catch (e: FileNotFoundException) {
-                logger.e("$TAG: save bookmarks error", e)
-            } catch (e: IOException) {
-                logger.e("$TAG: save bookmarks error", e)
-            } finally {
-                if (outputStream != null) {
-                    try {
-                        outputStream.flush()
-                        outputStream.close()
-                    } catch (e: IOException) {
-                    }
-                }
-            }
-        }
-
-        private fun isMethodAvailable(method: ProfileData, packages: List<String>): Boolean {
-            if (isExcludedPackagePrefix(method)) return false
-
-            if (method.name.contains("$")) {
-                if (isMethodWithLambdaInName(method.name.toLowerCase())) {
-                    return false
-                }
-            }
-            if (packages.isEmpty()) {
-                return true
-            }
-
-            for (pkg in packages) {
-                if (method.name.startsWith(pkg)) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        private fun isMethodWithLambdaInName(name: String): Boolean {
-            val pos = name.lastIndexOf('$')
-            if (pos < 0) {
-                return false
-            }
-            return regex.containsMatchIn(name.substring(pos + 1))
-        }
-
-        private fun isExcludedPackagePrefix(method: ProfileData): Boolean {
-            for (pkg in IgnoredMethods.exceptions) {
-                if (method.name.startsWith(pkg)) {
-                    return true
-                }
-            }
-            return false
+            return StagesRelatedToMethods(StagesState(stagesList), methodsStagesMapping, methodsAvailability, logger)
         }
     }
 }
