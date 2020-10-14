@@ -89,9 +89,10 @@ class StagesAnalyzerLogic(
         }
 
         coroutineScope.launch {
+            val shouldHideChild = ui.shouldHideChild()
             val result = coroutineScope.async(dispatchers.worker) {
                 val stages =  stagesProvider.invoke()
-                analyzer.analyze(stages, methodsAvailability, methods)
+                analyzer.analyze(stages, methodsAvailability, methods, shouldHideChild)
             }.await()
 
             cachedResult.clear()
