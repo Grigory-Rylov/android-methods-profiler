@@ -277,6 +277,9 @@ class JavaMethodsDialogLogic(
         private val systracePrefix: String?
     ) : State {
         override fun onStopPressed() {
+            view.enableStopButton(false)
+            view.setStatusTextAndColor("Waiting for result...", Color.RED)
+
             if (shouldWaitForSystrace) {
                 stateMachine.changeState(
                     WaitForRecordingResultWithSystrace(
@@ -301,8 +304,6 @@ class JavaMethodsDialogLogic(
             }
             logger.d("$TAG: stop button pressed")
 
-            view.enableStopButton(false)
-            view.setStatusTextAndColor("Waiting for result...", Color.RED)
             val timeout: Long = (1000L * settings.getIntValueOrDefault(
                 WAIT_FOR_RESULT_TIMEOUT_SETTINGS,
                 DEFAULT_WAIT_FOR_RESULT_TIMEOUT
