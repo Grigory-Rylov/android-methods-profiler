@@ -47,7 +47,7 @@ class StageAnalyzerDialog(
     private val startButton = JButton("Analyze").apply { isEnabled = false }
     private val exportToFileButton = JButton("Export report to file").apply { isEnabled = false }
     private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
-    private val shouldHideChild = JCheckBox("Should hide child")
+    private val shouldHideChild = JCheckBox("Should hide child methods")
     private val statusLabel = JLabel()
     var dialogListener: DialogListener? = null
 
@@ -165,7 +165,7 @@ class StageAnalyzerDialog(
         startButton.isEnabled = false
     }
 
-    fun shouldHideChild() : Boolean {
+    fun shouldHideChild(): Boolean {
         return shouldHideChild.isSelected
     }
 
