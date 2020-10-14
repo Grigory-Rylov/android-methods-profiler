@@ -164,57 +164,7 @@ class StagesFacade(
             coroutineScope.launch {
 
                 val result = coroutineScope.async(dispatchers.worker) {
-                    val boundsRectangles = calculateStageRectangles(methods)
-                    val result = mutableListOf<StageRectangle>()
-                    val maxGlobalTime = openedTrace!!.calculateMaxGlobalTime()
-                    val maxThreadTime = openedTrace!!.calculateMaxThreadTime()
-
-                    var previousStageRectangle: StageRectangle? = null
-                    for (stageRectangle in boundsRectangles) {
-                        if (previousStageRectangle == null) {
-                            previousStageRectangle = stageRectangle
-                            continue
-                        }
-
-                        val startGlobalTime = previousStageRectangle.globalTimeTimeStart
-                        val startThreadTime = previousStageRectangle.threadTimeStart
-                        val endGlobalTime = stageRectangle.globalTimeTimeStart
-                        val endThreadEndTime = stageRectangle.threadTimeStart
-                        result.add(
-                            StageRectangle(
-                                previousStageRectangle.stage,
-                                startThreadTime,
-                                endThreadEndTime,
-                                startGlobalTime,
-                                endGlobalTime,
-                                previousStageRectangle.methodRectangle,
-                                height,
-                                isThreadTimeMode,
-                                previousStageRectangle.headerColor
-                            )
-                        )
-                        previousStageRectangle = stageRectangle
-                    }
-
-                    if (previousStageRectangle != null) {
-                        val startGlobalTime = previousStageRectangle.globalTimeTimeStart
-                        val startThreadTime = previousStageRectangle.threadTimeStart
-                        val endGlobalTime = maxGlobalTime
-                        val endThreadEndTime = maxThreadTime
-                        result.add(
-                            StageRectangle(
-                                previousStageRectangle.stage,
-                                startThreadTime,
-                                endThreadEndTime,
-                                startGlobalTime,
-                                endGlobalTime,
-                                previousStageRectangle.methodRectangle,
-                                height,
-                                isThreadTimeMode,
-                                previousStageRectangle.headerColor
-                            )
-                        )
-                    }
+                    val result = doCalculateStagesBounds(methods)
 
                     return@async result
                 }.await()
@@ -224,6 +174,61 @@ class StagesFacade(
                 repaintDelegate?.repaint()
             }
         }
+    }
+
+    private fun doCalculateStagesBounds(methods: List<ProfileRectangle>): MutableList<StageRectangle> {
+        val boundsRectangles = calculateStageRectangles(methods)
+        val result = mutableListOf<StageRectangle>()
+        val maxGlobalTime = openedTrace!!.calculateMaxGlobalTime()
+        val maxThreadTime = openedTrace!!.calculateMaxThreadTime()
+
+        var previousStageRectangle: StageRectangle? = null
+        for (stageRectangle in boundsRectangles) {
+            if (previousStageRectangle == null) {
+                previousStageRectangle = stageRectangle
+                continue
+            }
+
+            val startGlobalTime = previousStageRectangle.globalTimeTimeStart
+            val startThreadTime = previousStageRectangle.threadTimeStart
+            val endGlobalTime = stageRectangle.globalTimeTimeStart
+            val endThreadEndTime = stageRectangle.threadTimeStart
+            result.add(
+                StageRectangle(
+                    previousStageRectangle.stage,
+                    startThreadTime,
+                    endThreadEndTime,
+                    startGlobalTime,
+                    endGlobalTime,
+                    previousStageRectangle.methodRectangle,
+                    height,
+                    isThreadTimeMode,
+                    previousStageRectangle.headerColor
+                )
+            )
+            previousStageRectangle = stageRectangle
+        }
+
+        if (previousStageRectangle != null) {
+            val startGlobalTime = previousStageRectangle.globalTimeTimeStart
+            val startThreadTime = previousStageRectangle.threadTimeStart
+            val endGlobalTime = maxGlobalTime
+            val endThreadEndTime = maxThreadTime
+            result.add(
+                StageRectangle(
+                    previousStageRectangle.stage,
+                    startThreadTime,
+                    endThreadEndTime,
+                    startGlobalTime,
+                    endGlobalTime,
+                    previousStageRectangle.methodRectangle,
+                    height,
+                    isThreadTimeMode,
+                    previousStageRectangle.headerColor
+                )
+            )
+        }
+        return result
     }
 
     private fun calculateStageRectangles(methods: List<ProfileRectangle>): MutableList<StageRectangle> {
