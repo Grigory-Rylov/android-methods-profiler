@@ -8,7 +8,7 @@ import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
-import com.github.grishberg.profiler.chart.stages.StagesFacade;
+import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
@@ -233,7 +233,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         boolean isThreadTime = settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false);
         hoverInfoPanel.changeTimeMode(isThreadTime);
         chart.getRootPane().setGlassPane(hoverInfoPanel);
-        systraceStagesFacade.onThreadModeSwitched(isThreadTime);
 
         chart.setMouseEventListener(this);
         chart.setRightClickListener(this);
@@ -256,9 +255,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         pluginsFacade = new PluginsFacade(frame,
                 stagesFacade,
+                systraceStagesFacade,
                 focusElementDelegate, settings, log,
-                coroutineScope, coroutinesDispatchers,
-                stagesFacade::setStages);
+                coroutineScope, coroutinesDispatchers);
         KeyBinder keyBinder = new KeyBinder(chart,
                 selectedClassNameLabel,
                 findClassText,
@@ -484,7 +483,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         globalTimeMenuItem.setSelected(!isThreadTime);
         settings.setBoolValue(SETTINGS_THREAD_TIME_MODE, isThreadTime);
         chart.switchTimeMode(isThreadTime);
-        systraceStagesFacade.onThreadModeSwitched(isThreadTime);
         hoverInfoPanel.changeTimeMode(isThreadTime);
         timeModeLabel.setText(timeModeAsString());
         updateSelectedElementValues();

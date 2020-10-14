@@ -5,7 +5,7 @@ import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
-import com.github.grishberg.profiler.chart.stages.StagesFacade;
+import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
@@ -229,7 +229,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void openTraceResult(TraceContainer trace) {
-        stagesFacade.onOpenNewTrace();
+        stagesFacade.onOpenNewTrace(trace.getResult());
 
         scale = new Grid(settings, TOP_OFFSET, timeFormatter, labelFont, labelFontMetrics);
 
@@ -279,6 +279,10 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         repaint();
 
         stagesFacade.onThreadSwitched(objectsForThread,
+                threadId == result.getMainThreadId(),
+                isThreadTime,
+                TOP_OFFSET);
+        systraceStagesFacade.onThreadSwitched(objectsForThread,
                 threadId == result.getMainThreadId(),
                 isThreadTime,
                 TOP_OFFSET);

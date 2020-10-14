@@ -11,8 +11,19 @@ import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.*
-import javax.swing.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.Box
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JOptionPane
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.KeyStroke
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 
@@ -122,6 +133,10 @@ class StageAnalyzerDialog(
     fun showDialog() {
         setLocationRelativeTo(parent)
         isVisible = true
+    }
+
+    fun disableSaveStagesButton() {
+        saveStagesButton.isEnabled = false
     }
 
     fun enableSaveStagesButton() {

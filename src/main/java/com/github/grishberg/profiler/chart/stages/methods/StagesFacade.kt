@@ -1,16 +1,24 @@
-package com.github.grishberg.profiler.chart.stages
+package com.github.grishberg.profiler.chart.stages.methods
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
+import com.github.grishberg.profiler.analyzer.calculateMaxThreadTime
 import com.github.grishberg.profiler.chart.ChartPaintDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.chart.RepaintDelegate
+import com.github.grishberg.profiler.chart.stages.MethodsListIterator
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.toHex
+import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
+import com.github.grishberg.profiler.plugins.stages.StagesFactory
 import com.github.grishberg.profiler.plugins.stages.methods.MethodWithIndex
 import com.github.grishberg.profiler.plugins.stages.methods.StageRelatedToMethods
+import com.github.grishberg.profiler.plugins.stages.methods.StagesLoadedFromFileAction
 import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethods
+import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethodsFactory
 import com.github.grishberg.profiler.plugins.stages.methods.StagesState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -42,6 +50,7 @@ class StagesFacade(
     private val stages = mutableListOf<StageRelatedToMethods>()
     private val stagesRectangles = mutableListOf<StageRectangle>()
     private var methodsRectangles: List<ProfileRectangle>? = null
+    private var openedTrace: AnalyzerResult? = null
     var repaintDelegate: RepaintDelegate? = null
     var labelPaintDelegate: ChartPaintDelegate? = null
     var height = -1.0
@@ -59,7 +68,9 @@ class StagesFacade(
     /**
      * Is called when user opened new trace.
      */
-    fun onOpenNewTrace() {
+    fun onOpenNewTrace(trace: AnalyzerResult) {
+        openedTrace = trace
+
         if (stagesList.isEmpty()) {
             return
         }
@@ -153,26 +164,59 @@ class StagesFacade(
             coroutineScope.launch {
 
                 val result = coroutineScope.async(dispatchers.worker) {
-                    val rectangles = mutableListOf<StageRectangle>()
-                    val stagesState = StagesState(stages)
-                    for (method in methods) {
-                        if (stagesState.updateCurrentStage(method.profileData.name)) {
-                            val currentStage = stagesState.currentStage ?: continue
-                            rectangles.add(
-                                StageRectangle.fromMethodRectangle(
-                                    currentStage,
-                                    method,
-                                    height,
-                                    isThreadTimeMode
-                                )
-                            )
-                            log.d("$TAG: added ${currentStage.name} stage for method ${method.profileData.name}")
-                            if (stagesState.isLastStage()) {
-                                break
-                            }
+                    val boundsRectangles = calculateStageRectangles(methods)
+                    val result = mutableListOf<StageRectangle>()
+                    val maxGlobalTime = openedTrace!!.calculateMaxGlobalTime()
+                    val maxThreadTime = openedTrace!!.calculateMaxThreadTime()
+
+                    var previousStageRectangle: StageRectangle? = null
+                    for (stageRectangle in boundsRectangles) {
+                        if (previousStageRectangle == null) {
+                            previousStageRectangle = stageRectangle
+                            continue
                         }
+
+                        val startGlobalTime = previousStageRectangle.globalTimeTimeStart
+                        val startThreadTime = previousStageRectangle.threadTimeStart
+                        val endGlobalTime = stageRectangle.globalTimeTimeStart
+                        val endThreadEndTime = stageRectangle.threadTimeStart
+                        result.add(
+                            StageRectangle(
+                                previousStageRectangle.stage,
+                                startThreadTime,
+                                endThreadEndTime,
+                                startGlobalTime,
+                                endGlobalTime,
+                                previousStageRectangle.methodRectangle,
+                                height,
+                                isThreadTimeMode,
+                                previousStageRectangle.headerColor
+                            )
+                        )
+                        previousStageRectangle = stageRectangle
                     }
-                    return@async rectangles
+
+                    if (previousStageRectangle != null) {
+                        val startGlobalTime = previousStageRectangle.globalTimeTimeStart
+                        val startThreadTime = previousStageRectangle.threadTimeStart
+                        val endGlobalTime = maxGlobalTime
+                        val endThreadEndTime = maxThreadTime
+                        result.add(
+                            StageRectangle(
+                                previousStageRectangle.stage,
+                                startThreadTime,
+                                endThreadEndTime,
+                                startGlobalTime,
+                                endGlobalTime,
+                                previousStageRectangle.methodRectangle,
+                                height,
+                                isThreadTimeMode,
+                                previousStageRectangle.headerColor
+                            )
+                        )
+                    }
+
+                    return@async result
                 }.await()
                 stagesRectangles.clear()
                 stagesRectangles.addAll(result)
@@ -180,6 +224,29 @@ class StagesFacade(
                 repaintDelegate?.repaint()
             }
         }
+    }
+
+    private fun calculateStageRectangles(methods: List<ProfileRectangle>): MutableList<StageRectangle> {
+        val boundsRectangles = mutableListOf<StageRectangle>()
+        val stagesState = StagesState(stages)
+        for (method in methods) {
+            if (stagesState.updateCurrentStage(method.profileData.name)) {
+                val currentStage = stagesState.currentStage ?: continue
+                boundsRectangles.add(
+                    StageRectangle.fromMethodRectangle(
+                        currentStage,
+                        method,
+                        height,
+                        isThreadTimeMode
+                    )
+                )
+                log.d("$TAG: added ${currentStage.name} stage for method ${method.profileData.name}")
+                if (stagesState.isLastStage()) {
+                    break
+                }
+            }
+        }
+        return boundsRectangles
     }
 
     fun drawStages(g: Graphics2D, at: AffineTransform, fm: FontMetrics) {
@@ -211,14 +278,17 @@ class StagesFacade(
         calculateStagesBounds()
     }
 
-    class MethodsListIterator(
-        methodsList: List<ProfileRectangle>
-    ) : Iterator<ProfileData> {
-        private val innerIterator = methodsList.iterator()
-
-        override fun hasNext(): Boolean = innerIterator.hasNext()
-
-        override fun next(): ProfileData = innerIterator.next().profileData
+    fun getStagesFactory(methodsAvailability: MethodsAvailability): StagesFactory {
+        return StagesRelatedToMethodsFactory(
+            stagesList,
+            MethodsListIterator(methodsRectangles!!),
+            methodsAvailability,
+            log,
+            object : StagesLoadedFromFileAction {
+                override fun onStagesLoaded(stagesList: List<StageRelatedToMethods>) {
+                    setStages(stagesList)
+                }
+            })
     }
 
 }

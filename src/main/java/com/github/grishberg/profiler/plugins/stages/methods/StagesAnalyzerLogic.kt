@@ -15,6 +15,7 @@ import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.io.BufferedWriter
@@ -31,7 +32,7 @@ private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDir
 
 typealias StagesProvider = () -> Stages
 
-interface StagesLoadedAction {
+interface StagesLoadedFromFileAction {
     fun onStagesLoaded(stagesList: List<StageRelatedToMethods>)
 }
 
@@ -43,22 +44,17 @@ class StagesAnalyzerLogic(
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
-    private val stagesList: List<StageRelatedToMethods>,
-    private val stages: Stages?,
     private val stagesFactory: StagesFactory,
     private val methodsAvailability: MethodsAvailability,
-    private val logger: AppLogger,
-    private val stagesLoadedAction: StagesLoadedAction? = null
+    private val logger: AppLogger
 ) : DialogListener {
     private var stageFile: File? = null
     private val cachedResult = mutableListOf<WrongStage>()
 
     init {
         ui.dialogListener = this
-        if (stagesList.isNotEmpty()) {
+        if (stagesFactory.hasLocalConfiguration()) {
             ui.enableSaveStagesButton()
-        }
-        if (stages != null) {
             ui.enableStartButton()
         }
         ui.showDialog()
@@ -82,27 +78,19 @@ class StagesAnalyzerLogic(
         ui.showProgress()
         val selectedStagesFile = stageFile
         val stagesProvider: StagesProvider
-        if (selectedStagesFile == null && stages == null) {
-            return
+        if (selectedStagesFile == null && !stagesFactory.hasLocalConfiguration()) {
+            throw IllegalStateException("Started analyze without configuration or opened file")
         }
 
         stagesProvider = if (selectedStagesFile != null) {
             { stagesFactory.loadFromFile(selectedStagesFile) }
         } else {
-            { stages!! }
+            { stagesFactory.createFromLocalConfiguration()!! }
         }
 
         coroutineScope.launch {
-            val stages = coroutineScope.async(dispatchers.worker) {
-                stagesProvider.invoke()
-            }.await()
-
-            if (selectedStagesFile != null) {
-                // TODO: pass read stages
-                //stagesLoadedAction?.onStagesLoaded(stages.stagesList)
-            }
-
             val result = coroutineScope.async(dispatchers.worker) {
+                val stages =  stagesProvider.invoke()
                 analyzer.analyze(stages, methodsAvailability, methods)
             }.await()
 
@@ -144,8 +132,13 @@ class StagesAnalyzerLogic(
                 fileToSave = File(fileToSave.absolutePath + ".json")
             }
             settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, fileToSave.parent)
-            stages?.let {
-                it.saveToFile(fileToSave, methods)
+            ui.disableSaveStagesButton()
+
+            coroutineScope.launch {
+                withContext(dispatchers.worker){
+                    stagesFactory.createFromLocalConfiguration()?.saveToFile(fileToSave, methods)
+                }
+                ui.enableSaveStagesButton()
             }
         }
     }

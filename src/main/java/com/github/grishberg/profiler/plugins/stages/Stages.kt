@@ -3,6 +3,8 @@ package com.github.grishberg.profiler.plugins.stages
 import com.github.grishberg.android.profiler.core.ProfileData
 import java.io.File
 
+const val EMPTY_STAGE_NAME = "unknown"
+
 interface Stages {
     val currentStage: Stage?
 

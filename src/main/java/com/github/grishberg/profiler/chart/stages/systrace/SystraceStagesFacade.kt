@@ -1,10 +1,16 @@
 package com.github.grishberg.profiler.chart.stages.systrace
 
 import com.github.grishberg.android.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
 import com.github.grishberg.profiler.chart.ChartPaintDelegate
+import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.chart.RepaintDelegate
+import com.github.grishberg.profiler.chart.stages.MethodsListIterator
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
+import com.github.grishberg.profiler.plugins.stages.StagesFactory
+import com.github.grishberg.profiler.plugins.stages.systrace.SystraceStagesFactory
 import com.github.grishberg.tracerecorder.SystraceRecord
 import java.awt.Color
 import java.awt.FontMetrics
@@ -30,27 +36,44 @@ class SystraceStagesFacade(
     private var nextColorIndex = 0
 
     private val stagesRectangles = mutableListOf<SystraceStageRectangle>()
+    private val innerRecordsList = mutableListOf<SystraceRecord>()
+    val recordsList: List<SystraceRecord>
+        get() = innerRecordsList
 
     var repaintDelegate: RepaintDelegate? = null
     var labelPaintDelegate: ChartPaintDelegate? = null
     var height = -1.0
     var shouldShow: Boolean = true
+    private var methodsRectangles: List<ProfileRectangle>? = null
 
     fun setSystraceStages(
         trace: AnalyzerResult,
         systraceRecords: List<SystraceRecord>
     ) {
-        val maxGlobalTime = calculateMaxGlobalTime(trace)
+        innerRecordsList.clear()
+        val offset = trace.startTimeUs / 1000
+        for (record in systraceRecords) {
+            innerRecordsList.add(
+                SystraceRecord(
+                    record.name, record.cpu,
+                    record.startTime * 1000 - offset,
+                    record.endTime * 1000 - offset
+                )
+            )
+        }
+
+        val maxGlobalTime = trace.calculateMaxGlobalTime()
         stagesRectangles.clear()
         var previousSystraceRecord: SystraceRecord? = null
         for (systrace in systraceRecords) {
+
             if (previousSystraceRecord == null) {
                 previousSystraceRecord = systrace
                 continue
             }
             val element = SystraceStageRectangle(previousSystraceRecord.name, getNextColor())
-            val start = previousSystraceRecord.startTime * 1000 - trace.startTimeUs / 1000
-            val end = systrace.startTime * 1000 - trace.startTimeUs / 1000
+            val start = previousSystraceRecord.startTime * 1000 - offset
+            val end = systrace.startTime * 1000 - offset
             element.x = start
             element.width = end - start
             stagesRectangles.add(element)
@@ -58,7 +81,7 @@ class SystraceStagesFacade(
         }
         if (previousSystraceRecord != null) {
             val element = SystraceStageRectangle(previousSystraceRecord.name, getNextColor())
-            val start = previousSystraceRecord.startTime * 1000 - trace.startTimeUs / 1000
+            val start = previousSystraceRecord.startTime * 1000 - offset
             val end = maxGlobalTime
             element.x = start
             element.width = end - start
@@ -75,16 +98,21 @@ class SystraceStagesFacade(
         return Color(selectedColor.red, selectedColor.green, selectedColor.blue, 180)
     }
 
-    private fun calculateMaxGlobalTime(trace: AnalyzerResult): Double {
-        var maxGlobalTime = 0.0
-        for (bound in trace.globalTimeBounds) {
-            maxGlobalTime = max(maxGlobalTime, bound.value.maxTime)
-        }
-        return maxGlobalTime
-    }
-
-    fun onThreadModeSwitched(threadTime: Boolean) {
+    /**
+     * Should be called after new trace was opened.
+     */
+    fun onThreadSwitched(
+        rectangles: List<ProfileRectangle>,
+        isMainThread: Boolean,
+        threadTime: Boolean,
+        toolbarHeight: Double
+    ) {
         shouldShow = !threadTime
+        if (isMainThread) {
+            methodsRectangles = rectangles
+            return
+        }
+        methodsRectangles = null
     }
 
     fun drawStages(g: Graphics2D, at: AffineTransform, fm: FontMetrics) {
@@ -112,5 +140,14 @@ class SystraceStagesFacade(
                 }
             }
         }
+    }
+
+    fun getStagesFactory(methodsAvailability: MethodsAvailability): StagesFactory {
+        return SystraceStagesFactory(
+            MethodsListIterator(methodsRectangles!!),
+            recordsList,
+            methodsAvailability,
+            log
+        )
     }
 }

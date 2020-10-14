@@ -7,12 +7,18 @@ import com.github.grishberg.tracerecorder.MethodTraceRecorder
 import com.github.grishberg.tracerecorder.RecordMode
 import com.github.grishberg.tracerecorder.SystraceRecord
 import com.github.grishberg.tracerecorder.exceptions.AppTimeoutException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import java.awt.Color
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Timer
+import java.util.TimerTask
 import javax.swing.SwingUtilities
 
 private const val TRACE_FOLDER = "trace"
@@ -25,6 +31,7 @@ private const val ACTIVITY_NAME_SETTINGS = "$SETTINGS_ROOT.activity"
 private const val SAMPLING_NAME_SETTINGS = "$SETTINGS_ROOT.sampling"
 private const val PROFILER_BUFFER_SIZE_SETTINGS = "$SETTINGS_ROOT.profilerBufferSizeInMb"
 private const val FILE_NAME_PREFIX_SETTINGS = "$SETTINGS_ROOT.fileNamePrefix"
+private const val SYSTRACE_STAGE_PREFIX_SETTINGS = "$SETTINGS_ROOT.systraceStagePrefix"
 private const val RECORD_MODE_SAMPLE_SETTINGS = "$SETTINGS_ROOT.recordModeSample"
 private const val REMOTE_DEVICE_ADDRESS_SETTINGS = "$SETTINGS_ROOT.remoteDeviceAddress"
 private const val WAIT_FOR_RESULT_TIMEOUT_SETTINGS = "$SETTINGS_ROOT.waitForResultTimeoutInSeconds"
@@ -89,6 +96,7 @@ class JavaMethodsDialogLogic(
         view.sampling = settings.getIntValueOrDefault(SAMPLING_NAME_SETTINGS, 60)
         view.profilerBufferSizeInMb = settings.getIntValueOrDefault(PROFILER_BUFFER_SIZE_SETTINGS, 8)
         view.fileNamePrefix = settings.getStringValueOrDefault(FILE_NAME_PREFIX_SETTINGS, "")
+        view.systraceStagePrefix = settings.getStringValueOrDefault(SYSTRACE_STAGE_PREFIX_SETTINGS, "")
         selectedMode = if (settings.getBoolValueOrDefault(
                 RECORD_MODE_SAMPLE_SETTINGS,
                 true
@@ -213,6 +221,7 @@ class JavaMethodsDialogLogic(
             settings.setBoolValue(RECORD_MODE_SAMPLE_SETTINGS, stateMachine.selectedMode == RecordMode.METHOD_SAMPLE)
             settings.setIntValue(PROFILER_BUFFER_SIZE_SETTINGS, bufferSizeInMb)
             settings.setStringValue(REMOTE_DEVICE_ADDRESS_SETTINGS, view.remoteDeviceAddress)
+            settings.setStringValue(SYSTRACE_STAGE_PREFIX_SETTINGS, view.systraceStagePrefix ?: "")
             view.inProgressState()
             val fileName = stateMachine.createFileName()
 
@@ -502,8 +511,10 @@ class JavaMethodsDialogLogic(
         override fun onStartWaitingForApplication() {
             view.setStatusTextAndColor("Waiting for application...", waitForApplicationColor)
             stateMachine.changeState(
-                WaitingForApplication(stateMachine, view, methodTraceRecorder, settings, logger,
-                    shouldWaitForSystrace, systracePrefix)
+                WaitingForApplication(
+                    stateMachine, view, methodTraceRecorder, settings, logger,
+                    shouldWaitForSystrace, systracePrefix
+                )
             )
         }
 
@@ -558,8 +569,10 @@ class JavaMethodsDialogLogic(
         override fun onStartWaitingForDevice() {
             view.setStatusTextAndColor("Wait for device...", Color.DARK_GRAY)
             stateMachine.changeState(
-                WaitForDevice(stateMachine, view, methodTraceRecorder, settings, logger,
-                    shouldWaitForSystrace, systracePrefix)
+                WaitForDevice(
+                    stateMachine, view, methodTraceRecorder, settings, logger,
+                    shouldWaitForSystrace, systracePrefix
+                )
             )
         }
     }

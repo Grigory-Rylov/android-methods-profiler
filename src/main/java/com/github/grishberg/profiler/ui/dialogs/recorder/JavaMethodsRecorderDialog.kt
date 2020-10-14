@@ -175,6 +175,9 @@ class JavaMethodsRecorderDialog(
         remoteDeviceAddressField.addActionListener {
             logic.onStartPressed()
         }
+        stagesTracePrefixField.addActionListener{
+            logic.onStartPressed()
+        }
 
         panelBuilder.addLabeledComponent("package: ", packageNameField)
         panelBuilder.addLabeledComponent("activity: ", activityNameField)

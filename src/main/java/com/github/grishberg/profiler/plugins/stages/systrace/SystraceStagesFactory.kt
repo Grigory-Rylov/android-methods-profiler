@@ -1,10 +1,14 @@
-package com.github.grishberg.profiler.plugins.stages.methods
+package com.github.grishberg.profiler.plugins.stages.systrace
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
+import com.github.grishberg.profiler.plugins.stages.Stage
 import com.github.grishberg.profiler.plugins.stages.Stages
 import com.github.grishberg.profiler.plugins.stages.StagesFactory
+import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethods
+import com.github.grishberg.profiler.plugins.stages.methods.StagesState
+import com.github.grishberg.tracerecorder.SystraceRecord
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
@@ -13,14 +17,13 @@ import java.io.FileNotFoundException
 import java.io.FileReader
 import java.lang.reflect.Type
 
-private const val TAG = "StagesRelatedToMethodsFactory"
+private const val TAG = "SystraceStagesFactory"
 
-class StagesRelatedToMethodsFactory(
-    private val stagesList: List<StageRelatedToMethods>,
+class SystraceStagesFactory(
     private val methods: Iterator<ProfileData>,
+    private val recordsList: List<SystraceRecord>,
     private val methodsAvailability: MethodsAvailability,
-    private val logger: AppLogger,
-    private val stagesLoadedAction: StagesLoadedFromFileAction? = null
+    private val logger: AppLogger
 ) : StagesFactory {
     private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
 
@@ -31,20 +34,23 @@ class StagesRelatedToMethodsFactory(
             val reader = JsonReader(fileReader)
             val stagesModel: StagesModel = gson.fromJson(reader, listType)
 
-            val methodsStagesMapping = mutableMapOf<String, StageRelatedToMethods?>()
+            val stagesList = mutableListOf<StageFromSystrace>()
+            for (record in recordsList) {
+                stagesList.add(StageFromSystrace(record))
+            }
+
+            val methodsStagesMapping = mutableMapOf<String, Stage?>()
             for (entry in stagesModel.methodStages.entries) {
                 // find stage by name
-                val stage = stagesModel.stages.firstOrNull { it.name == entry.key }
+                val stage = stagesList.firstOrNull { it.name == entry.key }
                 stage?.let {
                     for (method in entry.value) {
                         methodsStagesMapping[method] = it
                     }
                 }
             }
-            stagesLoadedAction?.onStagesLoaded(stagesModel.stages)
-
-            return StagesRelatedToMethods(
-                StagesState(stagesModel.stages),
+            return StagesFromSystrace(
+                SystraceStagesState(recordsList),
                 methodsStagesMapping,
                 methodsAvailability,
                 logger
@@ -58,28 +64,40 @@ class StagesRelatedToMethodsFactory(
     }
 
     override fun createFromLocalConfiguration(): Stages? {
-        val stagesState = StagesState(stagesList)
-        val methodsStagesMapping = mutableMapOf<String, StageRelatedToMethods?>()
+        val stagesList = mutableListOf<StageFromSystrace>()
+        for (record in recordsList) {
+            stagesList.add(StageFromSystrace(record))
+        }
+
+        val methodsStagesMapping = mutableMapOf<String, Stage?>()
         val alreadyAddedMethods = mutableSetOf<String>()
+
+        val tempStageState = SystraceStagesState(recordsList)
 
         for (method in methods) {
             val methodName = method.name
-            stagesState.updateCurrentStage(methodName)
+
+            tempStageState.updateCurrentStage(method)
+            val currentStage = tempStageState.currentStage
 
             if (!methodsAvailability.isMethodAvailable(method) || alreadyAddedMethods.contains(methodName)) {
                 continue
             }
-            methodsStagesMapping[methodName] = stagesState.currentStage
+            methodsStagesMapping[methodName] = currentStage
             alreadyAddedMethods.add(methodName)
         }
-        return StagesRelatedToMethods(StagesState(stagesList), methodsStagesMapping, methodsAvailability, logger)
+
+        return StagesFromSystrace(
+            SystraceStagesState(recordsList),
+            methodsStagesMapping,
+            methodsAvailability,
+            logger
+        )
     }
 
-    override fun hasLocalConfiguration(): Boolean = stagesList.isNotEmpty()
+    override fun hasLocalConfiguration(): Boolean = recordsList.isNotEmpty()
 
-    class StagesModel(
-        val stages: List<StageRelatedToMethods>,
-        val methodStages: Map<String, Set<String>>,
-        val packages: List<String>
+    data class StagesModel(
+        val methodStages: Map<String, Set<String>>
     )
 }

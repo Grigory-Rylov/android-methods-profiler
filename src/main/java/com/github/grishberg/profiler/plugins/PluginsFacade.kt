@@ -2,7 +2,8 @@ package com.github.grishberg.profiler.plugins
 
 import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ThreadItem
-import com.github.grishberg.profiler.chart.stages.StagesFacade
+import com.github.grishberg.profiler.chart.stages.methods.StagesFacade
+import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
@@ -10,8 +11,6 @@ import com.github.grishberg.profiler.plugins.stages.MethodsAvailabilityImpl
 import com.github.grishberg.profiler.plugins.stages.StageAnalyzerDialog
 import com.github.grishberg.profiler.plugins.stages.StagesAnalyzer
 import com.github.grishberg.profiler.plugins.stages.methods.StagesAnalyzerLogic
-import com.github.grishberg.profiler.plugins.stages.methods.StagesLoadedAction
-import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethodsFactory
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JFrame
@@ -23,30 +22,34 @@ import javax.swing.JOptionPane
 class PluginsFacade(
     private val frame: JFrame,
     private val stagesFacade: StagesFacade,
+    private val systraceStagesFacade: SystraceStagesFacade,
     private val focusElementDelegate: FocusElementDelegate,
     private val settings: SettingsRepository,
     private val logger: AppLogger,
     private val coroutineScope: CoroutineScope,
-    private val dispatchers: CoroutinesDispatchers,
-    private val stagesLoadedAction: StagesLoadedAction? = null
+    private val dispatchers: CoroutinesDispatchers
 ) {
     var currentThread: ThreadItem? = null
     var currentTraceProfiler: AnalyzerResult? = null
 
-
     fun createPluginsMenu(menuBar: JMenuBar) {
         val tools = JMenu("Tools")
-        val stageAnalyzer = JMenuItem("Stage analyzer")
-        tools.add(stageAnalyzer)
+        val stageAnalyzerMethods = JMenuItem("Stage analyzer (methods)")
+        val stageAnalyzerSystrace = JMenuItem("Stage analyzer (systrace)")
+        tools.add(stageAnalyzerMethods)
+        tools.add(stageAnalyzerSystrace)
         menuBar.add(tools)
-        stageAnalyzer.addActionListener {
-            runStageAnalyzer()
+        stageAnalyzerMethods.addActionListener {
+            runStageAnalyzerMethods()
+        }
+        stageAnalyzerSystrace.addActionListener {
+            runStageAnalyzerSystrace()
         }
 
         tools.add(stagesFacade.clearStagesMenuItem)
     }
 
-    private fun runStageAnalyzer() {
+    private fun runStageAnalyzerMethods() {
         if (currentTraceProfiler == null || currentThread == null) {
             JOptionPane.showMessageDialog(
                 frame,
@@ -68,12 +71,37 @@ class PluginsFacade(
             focusElementDelegate,
             coroutineScope,
             dispatchers,
-            stagesFacade.stagesList,
-            stagesFacade.storedStages,
-            StagesRelatedToMethodsFactory(methodsAvailability, logger),
+            stagesFacade.getStagesFactory(methodsAvailability),
             methodsAvailability,
-            logger,
-            stagesLoadedAction
+            logger
+        )
+    }
+
+    private fun runStageAnalyzerSystrace() {
+        if (currentTraceProfiler == null || currentThread == null) {
+            JOptionPane.showMessageDialog(
+                frame,
+                "Open or record trace first".trimIndent(),
+                "Stage Analyzer error",
+                JOptionPane.ERROR_MESSAGE
+            )
+            return
+        }
+        val methods = currentTraceProfiler?.data?.get(currentThread?.threadId) ?: return
+
+        val ui = StageAnalyzerDialog(frame)
+        val methodsAvailability = MethodsAvailabilityImpl()
+        StagesAnalyzerLogic(
+            analyzer = StagesAnalyzer(),
+            ui = ui,
+            settings = settings,
+            methods = methods,
+            focusElementDelegate = focusElementDelegate,
+            coroutineScope = coroutineScope,
+            dispatchers = dispatchers,
+            stagesFactory = systraceStagesFacade.getStagesFactory(methodsAvailability),
+            methodsAvailability = methodsAvailability,
+            logger
         )
     }
 }
