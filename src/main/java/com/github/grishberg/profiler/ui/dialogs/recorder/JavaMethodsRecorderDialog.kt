@@ -1,11 +1,13 @@
 package com.github.grishberg.profiler.ui.dialogs.recorder
 
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.JNumberField
 import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.profiler.ui.LabeledGridBuilder
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import com.github.grishberg.tracerecorder.RecordMode
+import kotlinx.coroutines.CoroutineScope
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -21,6 +23,8 @@ private const val TITLE = "Record new trace"
 private const val FIELD_LENGTH = 30
 
 class JavaMethodsRecorderDialog(
+    private val coroutineScope: CoroutineScope,
+    private val dispatchers: CoroutinesDispatchers,
     owner: Frame,
     private val settings: SettingsRepository,
     private val logger: AppLogger
@@ -147,7 +151,7 @@ class JavaMethodsRecorderDialog(
         additionalPanel.border = EmptyBorder(8, 8, 8, 8)
         additionalPanel.add(JLabel("Sampling in microseconds:"), BorderLayout.LINE_START)
 
-        logic = JavaMethodsDialogLogic(this, settings, logger)
+        logic = JavaMethodsDialogLogic(coroutineScope , dispatchers ,this, settings, logger)
 
         recordModeComBox.addItemListener {
             if (it.stateChange != ItemEvent.SELECTED) {

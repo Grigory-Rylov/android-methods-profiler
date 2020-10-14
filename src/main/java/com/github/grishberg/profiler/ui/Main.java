@@ -244,7 +244,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         loadingDialog = new LoadingDialog(frame);
         loadingDialog.pack();
 
-        methodTraceRecordDialog = new JavaMethodsRecorderDialog(frame, settings, log);
+        methodTraceRecordDialog = new JavaMethodsRecorderDialog(coroutineScope, coroutinesDispatchers, frame, settings, log);
         methodTraceRecordDialog.pack();
 
         scaleRangeDialog = new ScaleRangeDialog(frame);

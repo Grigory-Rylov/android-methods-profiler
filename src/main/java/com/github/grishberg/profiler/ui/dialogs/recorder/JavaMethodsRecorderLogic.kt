@@ -1,6 +1,7 @@
 package com.github.grishberg.profiler.ui.dialogs.recorder
 
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.tracerecorder.MethodTraceEventListener
 import com.github.grishberg.tracerecorder.MethodTraceRecorder
@@ -8,6 +9,7 @@ import com.github.grishberg.tracerecorder.RecordMode
 import com.github.grishberg.tracerecorder.SystraceRecord
 import com.github.grishberg.tracerecorder.exceptions.AppTimeoutException
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -62,6 +64,8 @@ interface JavaMethodsRecorderDialogView {
 }
 
 class JavaMethodsDialogLogic(
+    private val coroutineScope: CoroutineScope,
+    private val dispatchers: CoroutinesDispatchers,
     private val view: JavaMethodsRecorderDialogView,
     private val settings: SettingsRepository,
     private val logger: AppLogger,
@@ -83,7 +87,7 @@ class JavaMethodsDialogLogic(
     private var job: Job? = null
     private var methodTraceRecorder: MethodTraceRecorder = MethodTraceRecorderStub()
 
-    private var state: State = Idle(this, view, settings, logger)
+    private var state: State = Idle(coroutineScope, dispatchers, this, view, settings, logger)
 
     private var currentPackageName: String = ""
     private var currentActivityName: String? = null
@@ -191,10 +195,12 @@ class JavaMethodsDialogLogic(
     }
 
     private fun idleState() {
-        state = Idle(this, view, settings, logger)
+        state = Idle(coroutineScope, dispatchers, this, view, settings, logger)
     }
 
     private class Idle(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val settings: SettingsRepository,
@@ -244,6 +250,7 @@ class JavaMethodsDialogLogic(
             stateMachine.currentActivityName = activity
             stateMachine.changeState(
                 PendingRecording(
+                    coroutineScope, dispatchers,
                     stateMachine,
                     view,
                     methodTraceRecorder,
@@ -268,6 +275,8 @@ class JavaMethodsDialogLogic(
     }
 
     private class Recording(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
@@ -283,6 +292,7 @@ class JavaMethodsDialogLogic(
             if (shouldWaitForSystrace) {
                 stateMachine.changeState(
                     WaitForRecordingResultWithSystrace(
+                        coroutineScope, dispatchers,
                         stateMachine,
                         view,
                         methodTraceRecorder,
@@ -294,6 +304,7 @@ class JavaMethodsDialogLogic(
             } else {
                 stateMachine.changeState(
                     WaitForRecordingResult(
+                        coroutineScope, dispatchers,
                         stateMachine,
                         view,
                         methodTraceRecorder,
@@ -319,7 +330,9 @@ class JavaMethodsDialogLogic(
                 },
                 timeout
             )
-            methodTraceRecorder.stopRecording()
+            coroutineScope.launch(dispatchers.worker) {
+                methodTraceRecorder.stopRecording()
+            }
         }
 
         override fun onRecordingFailed(throwable: Throwable) {
@@ -338,6 +351,8 @@ class JavaMethodsDialogLogic(
     }
 
     private class WaitingForApplication(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
@@ -351,6 +366,7 @@ class JavaMethodsDialogLogic(
             view.setStatusTextAndColor("Recording...", Color.RED)
             stateMachine.changeState(
                 Recording(
+                    coroutineScope, dispatchers,
                     stateMachine,
                     view,
                     methodTraceRecorder,
@@ -399,6 +415,8 @@ class JavaMethodsDialogLogic(
     }
 
     private open class WaitForRecordingResult(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
@@ -447,18 +465,21 @@ class JavaMethodsDialogLogic(
     }
 
     private class WaitForRecordingResultWithSystrace(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
         private val settings: SettingsRepository,
         private val logger: AppLogger,
         private val systracePrefix: String?
-    ) : WaitForRecordingResult(stateMachine, view, methodTraceRecorder, settings, logger) {
+    ) : WaitForRecordingResult(coroutineScope, dispatchers, stateMachine, view, methodTraceRecorder, settings, logger) {
 
         override fun onTraceResultReceived(file: File) {
             logger.d("state is ${stateMachine.state.javaClass.simpleName}: onMethodTraceReceived: $file")
             stateMachine.changeState(
                 WaitForSystraceResult(
+                    coroutineScope, dispatchers,
                     stateMachine, view, methodTraceRecorder, settings, logger, file, systracePrefix
                 )
             )
@@ -468,6 +489,7 @@ class JavaMethodsDialogLogic(
             logger.d("onSystraceReceived: ${values.size}")
             stateMachine.changeState(
                 WaitForRecordingResult(
+                    coroutineScope, dispatchers,
                     stateMachine, view, methodTraceRecorder, settings, logger,
                     if (systracePrefix != null) values.filter { it.name.startsWith(systracePrefix) } else values
                 )
@@ -476,6 +498,8 @@ class JavaMethodsDialogLogic(
     }
 
     private class WaitForSystraceResult(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
@@ -483,7 +507,7 @@ class JavaMethodsDialogLogic(
         private val logger: AppLogger,
         private val traceFile: File,
         private val systracePrefix: String?
-    ) : WaitForRecordingResult(stateMachine, view, methodTraceRecorder, settings, logger) {
+    ) : WaitForRecordingResult(coroutineScope, dispatchers, stateMachine, view, methodTraceRecorder, settings, logger) {
         override fun onSystraceReceived(values: List<SystraceRecord>) {
             logger.d("onSystraceReceived: ${values.size}")
             methodTraceRecorder.disconnect()
@@ -499,6 +523,8 @@ class JavaMethodsDialogLogic(
     }
 
     private class WaitForDevice(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
@@ -513,6 +539,7 @@ class JavaMethodsDialogLogic(
             view.setStatusTextAndColor("Waiting for application...", waitForApplicationColor)
             stateMachine.changeState(
                 WaitingForApplication(
+                    coroutineScope, dispatchers,
                     stateMachine, view, methodTraceRecorder, settings, logger,
                     shouldWaitForSystrace, systracePrefix
                 )
@@ -540,6 +567,8 @@ class JavaMethodsDialogLogic(
     }
 
     private class PendingRecording(
+        private val coroutineScope: CoroutineScope,
+        private val dispatchers: CoroutinesDispatchers,
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val methodTraceRecorder: MethodTraceRecorder,
@@ -571,6 +600,7 @@ class JavaMethodsDialogLogic(
             view.setStatusTextAndColor("Wait for device...", Color.DARK_GRAY)
             stateMachine.changeState(
                 WaitForDevice(
+                    coroutineScope, dispatchers,
                     stateMachine, view, methodTraceRecorder, settings, logger,
                     shouldWaitForSystrace, systracePrefix
                 )

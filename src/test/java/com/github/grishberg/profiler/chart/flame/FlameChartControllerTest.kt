@@ -1,6 +1,5 @@
 package com.github.grishberg.profiler.chart.flame
 
-import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
