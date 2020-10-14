@@ -169,6 +169,10 @@ class StageAnalyzerDialog(
         return shouldHideChild.isSelected
     }
 
+    fun checkHideChildCheckbox(checked: Boolean) {
+        shouldHideChild.isSelected = checked
+    }
+
     private inner class CopyAction : ActionListener {
         override fun actionPerformed(e: ActionEvent) {
             if (e.actionCommand.compareTo("Copy") != 0) {

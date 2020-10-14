@@ -29,6 +29,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
 private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
+private const val SETTINGS_HIDE_CHILD_METHODS = "Plugins.StagesResult.hideChild"
 
 typealias StagesProvider = () -> Stages
 
@@ -57,6 +58,7 @@ class StagesAnalyzerLogic(
             ui.enableSaveStagesButton()
             ui.enableStartButton()
         }
+        ui.checkHideChildCheckbox(settings.getBoolValueOrDefault(SETTINGS_HIDE_CHILD_METHODS, true))
         ui.showDialog()
     }
 
@@ -88,10 +90,12 @@ class StagesAnalyzerLogic(
             { stagesFactory.createFromLocalConfiguration()!! }
         }
 
+        settings.setBoolValue(SETTINGS_HIDE_CHILD_METHODS, ui.shouldHideChild())
+
         coroutineScope.launch {
             val shouldHideChild = ui.shouldHideChild()
             val result = coroutineScope.async(dispatchers.worker) {
-                val stages =  stagesProvider.invoke()
+                val stages = stagesProvider.invoke()
                 analyzer.analyze(stages, methodsAvailability, methods, shouldHideChild)
             }.await()
 
@@ -136,7 +140,7 @@ class StagesAnalyzerLogic(
             ui.disableSaveStagesButton()
 
             coroutineScope.launch {
-                withContext(dispatchers.worker){
+                withContext(dispatchers.worker) {
                     stagesFactory.createFromLocalConfiguration()?.saveToFile(fileToSave, methods)
                 }
                 ui.enableSaveStagesButton()
