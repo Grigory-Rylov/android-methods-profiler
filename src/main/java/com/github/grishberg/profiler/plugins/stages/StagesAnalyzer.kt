@@ -24,7 +24,7 @@ class StagesAnalyzer {
 
             val methodStage = stages.getMethodsStage(method)
             if (stages.shouldMethodStageBeLaterThenCurrent(methodStage)) {
-                if (!shouldHideChild || isMethodChildOfLastAdded(method, addedMethods)) {
+                if (!shouldHideChild || !isMethodChildOfLastAdded(method, addedMethods)) {
                     result.add(WrongStage(method, stages.currentStage, methodStage))
                     if (shouldHideChild) {
                         addedMethods.add(method)
@@ -33,7 +33,7 @@ class StagesAnalyzer {
             }
             if (methodStage == null) {
                 // method without stage, maybe new
-                if (!shouldHideChild || isMethodChildOfLastAdded(method, addedMethods)) {
+                if (!shouldHideChild || !isMethodChildOfLastAdded(method, addedMethods)) {
                     result.add(WrongStage(method, stages.currentStage, null))
                     if (shouldHideChild) {
                         addedMethods.add(method)
