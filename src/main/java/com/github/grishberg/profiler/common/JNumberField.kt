@@ -21,7 +21,7 @@ class JNumberField(columns: Int) : JTextField(columns) {
     override fun processKeyEvent(ev: KeyEvent) {
         val c = ev.getKeyChar()
         val keyCode = ev.keyCode
-        if (!(Character.isDigit(c) || keyCode == KeyEvent.VK_BACK_SPACE ||
+        if (!(Character.isDigit(c) || keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_ENTER ||
                     keyCode == KeyEvent.VK_DELETE || keyCode == KeyEvent.VK_LEFT ||
                     keyCode == KeyEvent.VK_RIGHT || keyCode == KeyEvent.VK_META ||
                     keyCode == KeyEvent.VK_SHIFT || keyCode == KeyEvent.VK_CONTROL ||

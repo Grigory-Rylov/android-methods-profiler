@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.chart
 
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.profiler.chart.stages.StagesFacade
+import com.github.grishberg.profiler.chart.stages.methods.StagesFacade
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.dialogs.ElementWithColorDialog
 import java.awt.Frame

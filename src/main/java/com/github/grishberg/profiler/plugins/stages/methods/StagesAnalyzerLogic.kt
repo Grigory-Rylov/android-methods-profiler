@@ -1,51 +1,64 @@
-package com.github.grishberg.profiler.plugins.stages
+package com.github.grishberg.profiler.plugins.stages.methods
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.plugins.stages.DialogListener
+import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
+import com.github.grishberg.profiler.plugins.stages.StageAnalyzerDialog
+import com.github.grishberg.profiler.plugins.stages.Stages
+import com.github.grishberg.profiler.plugins.stages.StagesAnalyzer
+import com.github.grishberg.profiler.plugins.stages.StagesFactory
+import com.github.grishberg.profiler.plugins.stages.WrongStage
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.io.*
+import java.io.BufferedWriter
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
 private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
+private const val SETTINGS_HIDE_CHILD_METHODS = "Plugins.StagesResult.hideChild"
 
 typealias StagesProvider = () -> Stages
 
-interface StagesLoadedAction {
-    fun onStagesLoaded(stagesList: List<Stage>)
+interface StagesLoadedFromFileAction {
+    fun onStagesLoaded(stagesList: List<StageRelatedToMethods>)
 }
 
 class StagesAnalyzerLogic(
+    private val analyzer: StagesAnalyzer,
     private val ui: StageAnalyzerDialog,
     private val settings: SettingsRepository,
     private val methods: List<ProfileData>,
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
-    private val stagesList: List<Stage>,
-    private val stages: Stages?,
-    private val logger: AppLogger,
-    private val stagesLoadedAction: StagesLoadedAction? = null
+    private val stagesFactory: StagesFactory,
+    private val methodsAvailability: MethodsAvailability,
+    private val logger: AppLogger
 ) : DialogListener {
     private var stageFile: File? = null
     private val cachedResult = mutableListOf<WrongStage>()
 
     init {
         ui.dialogListener = this
-        if (stagesList.isNotEmpty()) {
+        if (stagesFactory.hasLocalConfiguration()) {
             ui.enableSaveStagesButton()
-        }
-        if (stages != null) {
             ui.enableStartButton()
         }
+        ui.checkHideChildCheckbox(settings.getBoolValueOrDefault(SETTINGS_HIDE_CHILD_METHODS, true))
         ui.showDialog()
     }
 
@@ -67,29 +80,23 @@ class StagesAnalyzerLogic(
         ui.showProgress()
         val selectedStagesFile = stageFile
         val stagesProvider: StagesProvider
-        if (selectedStagesFile == null && stages == null) {
-            return
+        if (selectedStagesFile == null && !stagesFactory.hasLocalConfiguration()) {
+            throw IllegalStateException("Started analyze without configuration or opened file")
         }
 
         stagesProvider = if (selectedStagesFile != null) {
-            { Stages.loadFromJson(selectedStagesFile, logger) }
+            { stagesFactory.loadFromFile(selectedStagesFile) }
         } else {
-            { stages!! }
+            { stagesFactory.createFromLocalConfiguration()!! }
         }
 
+        settings.setBoolValue(SETTINGS_HIDE_CHILD_METHODS, ui.shouldHideChild())
+
         coroutineScope.launch {
-            val stages = coroutineScope.async(dispatchers.worker) {
-                stagesProvider.invoke()
-            }.await()
-
-            if (selectedStagesFile != null) {
-                stagesLoadedAction?.onStagesLoaded(stages.stagesList)
-            }
-
-            val analyzer = StagesAnalyzer(stages)
-
+            val shouldHideChild = ui.shouldHideChild()
             val result = coroutineScope.async(dispatchers.worker) {
-                analyzer.analyze(methods)
+                val stages = stagesProvider.invoke()
+                analyzer.analyze(stages, methodsAvailability, methods, shouldHideChild)
             }.await()
 
             cachedResult.clear()
@@ -130,7 +137,14 @@ class StagesAnalyzerLogic(
                 fileToSave = File(fileToSave.absolutePath + ".json")
             }
             settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, fileToSave.parent)
-            Stages.saveToFile(fileToSave, methods, stagesList, emptyList(), logger)
+            ui.disableSaveStagesButton()
+
+            coroutineScope.launch {
+                withContext(dispatchers.worker) {
+                    stagesFactory.createFromLocalConfiguration()?.saveToFile(fileToSave, methods)
+                }
+                ui.enableSaveStagesButton()
+            }
         }
     }
 
@@ -151,7 +165,7 @@ class StagesAnalyzerLogic(
     }
 
     private fun generate(file: File, data: List<WrongStage>) {
-        logger.d("${TAG}: generating data: methods size = ${data.size}")
+        logger.d("$TAG: generating data: methods size = ${data.size}")
         val fos = FileOutputStream(file)
 
         writeResultToOutputStream(fos, data)
@@ -181,6 +195,6 @@ class StagesAnalyzerLogic(
                 bw.newLine()
             }
         }
-        logger.d("${TAG}: generating data: methods size = ${data.size}")
+        logger.d("$TAG: generating data: methods size = ${data.size}")
     }
 }

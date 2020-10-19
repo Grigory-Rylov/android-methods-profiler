@@ -22,3 +22,8 @@ fun Color.toHex(): String {
 fun colorToHex(color: Color): String {
     return "%x%x%x%x".format(color.alpha, color.red, color.green, color.blue)
 }
+
+fun contrastColor(c: Color): Color {
+    val y = (299 * c.red + 587 * c.green + 114 * c.blue) / 1000.toDouble()
+    return if (y >= 128) Color.black else Color.white
+}

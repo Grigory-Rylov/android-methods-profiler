@@ -66,7 +66,8 @@ class TraceAnalyzer(
             vmTraceHandler.maxLevel,
             vmTraceHandler.traceData,
             sortedThreads,
-            vmTraceHandler.mainThreadId
+            vmTraceHandler.mainThreadId,
+            vmTraceHandler.startTime
         )
     }
 
@@ -108,7 +109,7 @@ class TraceAnalyzer(
         val methodsStacksForThread = mutableMapOf<Int, MutableMap<Long, Stack<ProfileDataImpl>>>()
         val level = mutableMapOf<Int, Int>()
         val parents = mutableMapOf<Int, Stack<ProfileDataImpl>>()
-        private var startTimeUs: Long = -1
+        var startTime: Long = -1
 
         override fun setVersion(version: Int) {
             this.version = version
@@ -200,10 +201,12 @@ class TraceAnalyzer(
                     stack = Stack()
                     stacksForThread[methodId] = stack
                 }
-                val parent: ProfileDataImpl? = if (parentsStackForThread.isEmpty()) null else parentsStackForThread.peek()
+                val parent: ProfileDataImpl? =
+                    if (parentsStackForThread.isEmpty()) null else parentsStackForThread.peek()
 
                 val convertedClassName = nameConverter.convertClassName(methodInfo.className)
-                val convertedMethodName = nameConverter.convertMethodName(convertedClassName, methodInfo.methodName, methodInfo.signature)
+                val convertedMethodName =
+                    nameConverter.convertMethodName(convertedClassName, methodInfo.methodName, methodInfo.signature)
                 val duration = ProfileDataImpl(
                     "${convertedClassName}.${convertedMethodName}",
                     level.getOrDefault(threadId, -1),
@@ -236,7 +239,7 @@ class TraceAnalyzer(
         }
 
         override fun setStartTimeUs(startTimeUs: Long) {
-            this.startTimeUs = startTimeUs
+            this.startTime = startTimeUs
         }
     }
 }
