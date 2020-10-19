@@ -14,6 +14,7 @@ class StagesAnalyzer {
         stages.init()
 
         val addedMethods = mutableListOf<ProfileData>()
+        val addedMethodNames = mutableSetOf<String>()
 
         for (method in methods) {
             stages.updateCurrentStage(method)
@@ -22,22 +23,24 @@ class StagesAnalyzer {
                 continue
             }
 
+            if (addedMethodNames.contains(method.name)) {
+                continue
+            }
+
             val methodStage = stages.getMethodsStage(method)
             if (stages.shouldMethodStageBeLaterThenCurrent(methodStage)) {
                 if (!shouldHideChild || !isMethodChildOfLastAdded(method, addedMethods)) {
                     result.add(WrongStage(method, stages.currentStage, methodStage))
-                    if (shouldHideChild) {
-                        addedMethods.add(method)
-                    }
+                    addedMethods.add(method)
+                    addedMethodNames.add(method.name)
                 }
             }
             if (methodStage == null) {
                 // method without stage, maybe new
                 if (!shouldHideChild || !isMethodChildOfLastAdded(method, addedMethods)) {
                     result.add(WrongStage(method, stages.currentStage, null))
-                    if (shouldHideChild) {
-                        addedMethods.add(method)
-                    }
+                    addedMethods.add(method)
+                    addedMethodNames.add(method.name)
                 }
             }
         }

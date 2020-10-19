@@ -20,7 +20,7 @@ import java.lang.reflect.Type
 private const val TAG = "SystraceStagesFactory"
 
 class SystraceStagesFactory(
-    private val methods: Iterator<ProfileData>,
+    private val methodsProvider: () -> Iterator<ProfileData>,
     private val recordsList: List<SystraceRecord>,
     private val methodsAvailability: MethodsAvailability,
     private val logger: AppLogger
@@ -74,6 +74,7 @@ class SystraceStagesFactory(
 
         val tempStageState = SystraceStagesState(recordsList)
 
+        val methods = methodsProvider.invoke()
         for (method in methods) {
             val methodName = method.name
 

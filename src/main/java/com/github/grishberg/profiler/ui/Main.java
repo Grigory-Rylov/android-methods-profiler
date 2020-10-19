@@ -17,6 +17,7 @@ import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog;
+import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
 import com.github.grishberg.profiler.ui.dialogs.recorder.RecordedResult;
 import com.github.grishberg.tracerecorder.SystraceRecord;
 import org.jetbrains.annotations.NotNull;
@@ -354,6 +355,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JMenuItem newFile = new JMenuItem("Record new .trace");
         JMenuItem newFileInNewWindow = new JMenuItem("Record new .trace in new Window");
         JMenuItem exportTraceWithBookmarks = new JMenuItem("Export trace with bookmarks");
+        JMenuItem openTracesDirInExternalFileManager = new JMenuItem("Open traces dir in external FIle manager");
 
         file.add(openFile);
         file.add(openFileInNewWindow);
@@ -362,6 +364,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         file.add(newFileInNewWindow);
         file.addSeparator();
         file.add(exportTraceWithBookmarks);
+        file.addSeparator();
+        file.add(openTracesDirInExternalFileManager);
 
         openFile.addActionListener(arg0 -> showOpenFileChooser(false));
         openFileInNewWindow.addActionListener(arg0 -> showOpenFileChooser(true));
@@ -369,9 +373,18 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         newFile.addActionListener(arg0 -> showNewTraceDialog(false));
         newFileInNewWindow.addActionListener(arg0 -> showNewTraceDialog(true));
         exportTraceWithBookmarks.addActionListener(arg0 -> exportTraceWithBookmarks());
-
+        openTracesDirInExternalFileManager.addActionListener(arg -> openTracesDirInExternalFileManager());
         file.addSeparator();
         return file;
+    }
+
+    private void openTracesDirInExternalFileManager() {
+        Desktop desktop = Desktop.getDesktop();
+        try {
+            desktop.open(new File(settings.filesDir(), JavaMethodsRecorderLogicKt.TRACE_FOLDER));
+        } catch (Exception e) {
+            log.e("File Not Found", e);
+        }
     }
 
     private JMenu createViewMenu() {

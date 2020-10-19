@@ -23,7 +23,7 @@ import java.util.Timer
 import java.util.TimerTask
 import javax.swing.SwingUtilities
 
-private const val TRACE_FOLDER = "trace"
+const val TRACE_FOLDER = "trace"
 
 private const val TAG = "MethodTraceRecordDialog"
 

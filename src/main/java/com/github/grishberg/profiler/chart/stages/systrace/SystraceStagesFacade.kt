@@ -144,7 +144,7 @@ class SystraceStagesFacade(
 
     fun getStagesFactory(methodsAvailability: MethodsAvailability): StagesFactory {
         return SystraceStagesFactory(
-            MethodsListIterator(methodsRectangles!!),
+            { MethodsListIterator(methodsRectangles!!) },
             recordsList,
             methodsAvailability,
             log
