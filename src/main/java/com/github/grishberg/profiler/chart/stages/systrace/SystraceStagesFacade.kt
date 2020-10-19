@@ -12,6 +12,7 @@ import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
 import com.github.grishberg.profiler.plugins.stages.StagesFactory
 import com.github.grishberg.profiler.plugins.stages.systrace.SystraceStagesFactory
 import com.github.grishberg.tracerecorder.SystraceRecord
+import com.github.grishberg.tracerecorder.SystraceRecordResult
 import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D
@@ -48,11 +49,12 @@ class SystraceStagesFacade(
 
     fun setSystraceStages(
         trace: AnalyzerResult,
-        systraceRecords: List<SystraceRecord>
+        systrace: SystraceRecordResult
     ) {
         innerRecordsList.clear()
-        val offset = trace.startTimeUs / 1000
-        for (record in systraceRecords) {
+        val tracesOffset = trace.startTimeUs / 1000
+        val offset = systrace.startOffset * 1000 + (tracesOffset - systrace.parentTs * 1000)
+        for (record in systrace.records) {
             innerRecordsList.add(
                 SystraceRecord(
                     record.name, record.cpu,
@@ -65,7 +67,7 @@ class SystraceStagesFacade(
         val maxGlobalTime = trace.calculateMaxGlobalTime()
         stagesRectangles.clear()
         var previousSystraceRecord: SystraceRecord? = null
-        for (systrace in systraceRecords) {
+        for (systrace in systrace.records) {
 
             if (previousSystraceRecord == null) {
                 previousSystraceRecord = systrace

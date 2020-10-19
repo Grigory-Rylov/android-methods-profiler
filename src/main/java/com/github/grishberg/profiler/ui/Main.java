@@ -20,6 +20,7 @@ import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDial
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
 import com.github.grishberg.profiler.ui.dialogs.recorder.RecordedResult;
 import com.github.grishberg.tracerecorder.SystraceRecord;
+import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -685,10 +686,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public void openTraceFile(File file) {
-        openTraceFile(file, Collections.emptyList());
+        openTraceFile(file, null);
     }
 
-    public void openTraceFile(File file, List<SystraceRecord> systraceRecords) {
+    public void openTraceFile(File file, SystraceRecordResult systraceRecords) {
         new ParseWorker(file, systraceRecords).execute();
         showProgressDialog(file);
     }
@@ -789,9 +790,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private class ParseWorker extends SwingWorker<WorkerResult, WorkerResult> {
         private final File traceFile;
-        private List<SystraceRecord> systraceRecords;
+        private SystraceRecordResult systraceRecords;
 
-        private ParseWorker(File traceFile, List<SystraceRecord> systraceRecords) {
+        private ParseWorker(
+                File traceFile,
+                SystraceRecordResult systraceRecords) {
             this.traceFile = traceFile;
             this.systraceRecords = systraceRecords;
         }
@@ -823,8 +826,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 resultContainer = result.traceContainer;
                 frame.setTitle(TITLE + getClass().getPackage().getImplementationVersion() + " " + ": " + traceFile.getName());
                 chart.openTraceResult(result.traceContainer);
-                if (!systraceRecords.isEmpty()) {
-                    systraceStagesFacade.setSystraceStages(result.traceContainer.getResult(), systraceRecords);
+                if (systraceRecords != null) {
+                    systraceStagesFacade.setSystraceStages(
+                            result.traceContainer.getResult(),
+                            systraceRecords);
                 }
                 pluginsFacade.setCurrentTraceProfiler(result.traceContainer.getResult());
 

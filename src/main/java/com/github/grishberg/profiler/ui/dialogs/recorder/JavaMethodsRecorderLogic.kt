@@ -6,7 +6,7 @@ import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.tracerecorder.MethodTraceEventListener
 import com.github.grishberg.tracerecorder.MethodTraceRecorder
 import com.github.grishberg.tracerecorder.RecordMode
-import com.github.grishberg.tracerecorder.SystraceRecord
+import com.github.grishberg.tracerecorder.SystraceRecordResult
 import com.github.grishberg.tracerecorder.exceptions.AppTimeoutException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -162,12 +162,12 @@ class JavaMethodsDialogLogic(
         state.onStartWaitingForDevice()
     }
 
-    override fun onSystraceReceived(values: List<SystraceRecord>) {
+    override fun onSystraceReceived(result: SystraceRecordResult) {
         logger.d("onSystraceReceived: ")
-        for (record in values) {
+        for (record in result.records) {
             logger.d("${record.name} - ${String.format("%.06f", record.endTime - record.startTime)}")
         }
-        state.onSystraceReceived(values)
+        state.onSystraceReceived(result)
     }
 
     private fun createFileName(): String {
@@ -422,7 +422,7 @@ class JavaMethodsDialogLogic(
         private val methodTraceRecorder: MethodTraceRecorder,
         private val settings: SettingsRepository,
         private val logger: AppLogger,
-        private val systraceResult: List<SystraceRecord> = emptyList()
+        private val systraceResult: SystraceRecordResult? = null
     ) : State {
         override fun onTraceResultReceived(file: File) {
             logger.d("onMethodTraceReceived: $file")
@@ -485,13 +485,22 @@ class JavaMethodsDialogLogic(
             )
         }
 
-        override fun onSystraceReceived(values: List<SystraceRecord>) {
-            logger.d("onSystraceReceived: ${values.size}")
+        override fun onSystraceReceived(result: SystraceRecordResult) {
+            logger.d("onSystraceReceived: ${result.records.size}")
+            val filteredRecords = if (systracePrefix != null) {
+                result.records.filter { it.name.startsWith(systracePrefix) }
+            } else {
+                result.records
+            }
             stateMachine.changeState(
                 WaitForRecordingResult(
                     coroutineScope, dispatchers,
                     stateMachine, view, methodTraceRecorder, settings, logger,
-                    if (systracePrefix != null) values.filter { it.name.startsWith(systracePrefix) } else values
+                    SystraceRecordResult(
+                        records = filteredRecords,
+                        startOffset = result.startOffset,
+                        parentTs = result.parentTs
+                    )
                 )
             )
         }
@@ -508,13 +517,17 @@ class JavaMethodsDialogLogic(
         private val traceFile: File,
         private val systracePrefix: String?
     ) : WaitForRecordingResult(coroutineScope, dispatchers, stateMachine, view, methodTraceRecorder, settings, logger) {
-        override fun onSystraceReceived(values: List<SystraceRecord>) {
-            logger.d("onSystraceReceived: ${values.size}")
+        override fun onSystraceReceived(result: SystraceRecordResult) {
+            logger.d("onSystraceReceived: ${result.records.size}")
             methodTraceRecorder.disconnect()
-
+            val filteredRecords = if (systracePrefix != null) {
+                result.records.filter { it.name.startsWith(systracePrefix) }
+            } else {
+                result.records
+            }
             stateMachine.result = RecordedResult(
                 traceFile,
-                if (systracePrefix != null) values.filter { it.name.startsWith(systracePrefix) } else values
+                SystraceRecordResult(filteredRecords, result.startOffset, result.parentTs)
             )
             view.initialState()
             view.closeDialog()
@@ -616,7 +629,7 @@ class JavaMethodsDialogLogic(
         fun onLocalTraceReceived(remoteFilePath: String) = Unit
         fun onDialogClosed() = Unit
         fun onRecordingFailed(throwable: Throwable)
-        fun onSystraceReceived(values: List<SystraceRecord>) = Unit
+        fun onSystraceReceived(values: SystraceRecordResult) = Unit
         fun onStartedRecording() = Unit
         fun onStartWaitingForApplication() = Unit
         fun onStartWaitingForDevice() = Unit
