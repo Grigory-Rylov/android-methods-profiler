@@ -19,6 +19,8 @@ import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 import kotlin.math.max
 
+private const val TAG = "SystraceStagesFacade"
+
 class SystraceStagesFacade(
     private val log: AppLogger
 ) {
@@ -62,6 +64,8 @@ class SystraceStagesFacade(
                     record.endTime * 1000 - offset
                 )
             )
+            log.d("$TAG: added converted systrace name = ${record.name}, startTime = ${record.startTime}, " +
+                    "endTime = ${record.endTime}")
         }
 
         val maxGlobalTime = trace.calculateMaxGlobalTime()
