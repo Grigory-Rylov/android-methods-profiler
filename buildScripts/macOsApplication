@@ -19,7 +19,7 @@ $jdk/bin/javapackager \
   -appclass com.github.grishberg.profiler.Launcher \
   -outdir build/release \
   -outfile ${APP_DIR_NAME} \
-  -title "Android Methods Profiler" \
+  -title "YAMP" \
   -nosign \
   -v
 
