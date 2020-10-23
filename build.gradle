@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'com.github.grishberg'
-version '20.10.23.0'
+version '20.10.23.2'
 def use_jdk8 = project.hasProperty("use_jdk8")
 
 if (use_jdk8) {
@@ -35,7 +35,7 @@ repositories {
 
 dependencies {
     implementation 'com.github.Grishberg:mvtrace-dependencies:1.0.1'
-    implementation 'com.github.Grigory-Rylov:andoid_method_trace_recorder:1.7.4'
+    implementation 'com.github.Grigory-Rylov:andoid_method_trace_recorder:1.7.5'
     implementation 'com.github.Grigory-Rylov:proguard-deobfuscator:0.3.0'
     implementation 'com.github.Grigory-Rylov:android-methods-profiler-core:1.1.0'
     implementation 'com.google.code.gson:gson:2.8.6'
