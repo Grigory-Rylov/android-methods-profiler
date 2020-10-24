@@ -6,4 +6,8 @@ data class WrongStage(
     val method: ProfileData,
     val currentStage: Stage?,
     val correctStage: Stage?
-)
+) {
+    override fun toString(): String {
+        return method.name
+    }
+}

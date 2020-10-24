@@ -140,6 +140,7 @@ class JavaMethodsDialogLogic(
         view.initialState()
 
         view.showErrorDialog(if (throwable.message != null) throwable.message!! else "Unknown errror")
+        idleState()
     }
 
     override fun onMethodTraceReceived(traceFile: File) {
