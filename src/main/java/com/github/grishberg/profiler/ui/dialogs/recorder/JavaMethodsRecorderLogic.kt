@@ -6,6 +6,7 @@ import com.github.grishberg.profiler.common.settings.SettingsRepository
 import com.github.grishberg.tracerecorder.MethodTraceEventListener
 import com.github.grishberg.tracerecorder.MethodTraceRecorder
 import com.github.grishberg.tracerecorder.RecordMode
+import com.github.grishberg.tracerecorder.SerialNumber
 import com.github.grishberg.tracerecorder.SystraceRecordResult
 import com.github.grishberg.tracerecorder.exceptions.AppTimeoutException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -37,6 +38,7 @@ private const val SYSTRACE_STAGE_PREFIX_SETTINGS = "$SETTINGS_ROOT.systraceStage
 private const val RECORD_MODE_SAMPLE_SETTINGS = "$SETTINGS_ROOT.recordModeSample"
 private const val REMOTE_DEVICE_ADDRESS_SETTINGS = "$SETTINGS_ROOT.remoteDeviceAddress"
 private const val WAIT_FOR_RESULT_TIMEOUT_SETTINGS = "$SETTINGS_ROOT.waitForResultTimeoutInSeconds"
+private const val SERIAL_NUMBER_SETTINGS = "$SETTINGS_ROOT.serialNumber"
 private const val DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT = 120
 private const val DEFAULT_WAIT_FOR_RESULT_TIMEOUT = 20
 
@@ -50,6 +52,7 @@ interface JavaMethodsRecorderDialogView {
     var remoteDeviceAddress: String
     var isSystraceStageEnabled: Boolean
     var systraceStagePrefix: String?
+    var serialNumber: String?
 
     fun showErrorDialog(message: String, title: String = "Method trace recording error")
     fun showInfoDialog(message: String)
@@ -69,7 +72,10 @@ class JavaMethodsDialogLogic(
     private val view: JavaMethodsRecorderDialogView,
     private val settings: SettingsRepository,
     private val logger: AppLogger,
-    private val recorderFactory: MethodTraceRecorderFactory = MethodTraceRecorderFactoryImpl(logger, settings)
+    private val recorderFactory: MethodTraceRecorderFactory = MethodTraceRecorderFactoryImpl(
+        logger,
+        settings
+    )
 ) : MethodTraceEventListener {
     var selectedMode: RecordMode = RecordMode.METHOD_TRACES
         set(value) {
@@ -98,16 +104,20 @@ class JavaMethodsDialogLogic(
         view.packageName = settings.getStringValueOrDefault(PKG_NAME_SETTINGS, "")
         view.activityName = settings.getStringValueOrDefault(ACTIVITY_NAME_SETTINGS, "")
         view.sampling = settings.getIntValueOrDefault(SAMPLING_NAME_SETTINGS, 60)
-        view.profilerBufferSizeInMb = settings.getIntValueOrDefault(PROFILER_BUFFER_SIZE_SETTINGS, 8)
+        view.profilerBufferSizeInMb =
+            settings.getIntValueOrDefault(PROFILER_BUFFER_SIZE_SETTINGS, 8)
         view.fileNamePrefix = settings.getStringValueOrDefault(FILE_NAME_PREFIX_SETTINGS, "")
-        view.systraceStagePrefix = settings.getStringValueOrDefault(SYSTRACE_STAGE_PREFIX_SETTINGS, "")
+        view.systraceStagePrefix =
+            settings.getStringValueOrDefault(SYSTRACE_STAGE_PREFIX_SETTINGS, "")
         selectedMode = if (settings.getBoolValueOrDefault(
                 RECORD_MODE_SAMPLE_SETTINGS,
                 true
             )
         ) RecordMode.METHOD_SAMPLE else RecordMode.METHOD_TRACES
         view.recordMode = selectedMode
-        view.remoteDeviceAddress = settings.getStringValueOrDefault(REMOTE_DEVICE_ADDRESS_SETTINGS, "")
+        view.remoteDeviceAddress =
+            settings.getStringValueOrDefault(REMOTE_DEVICE_ADDRESS_SETTINGS, "")
+        view.serialNumber = settings.getStringValueOrDefault(SERIAL_NUMBER_SETTINGS, "")
     }
 
     fun onDialogShown() {
@@ -165,7 +175,14 @@ class JavaMethodsDialogLogic(
     override fun onSystraceReceived(result: SystraceRecordResult) {
         logger.d("onSystraceReceived: ")
         for (record in result.records) {
-            logger.d("${record.name} - ${String.format("%.06f", record.endTime - record.startTime)}")
+            logger.d(
+                "${record.name} - ${
+                    String.format(
+                        "%.06f",
+                        record.endTime - record.startTime
+                    )
+                }"
+            )
         }
         state.onSystraceReceived(result)
     }
@@ -209,7 +226,8 @@ class JavaMethodsDialogLogic(
         override fun onStartPressed(methodTraceRecorderFactory: MethodTraceRecorderFactory) {
             val pkgName = view.packageName
             val activity: String? = if (view.activityName.isEmpty()) null else view.activityName
-            val remoteAddress: String? = if (view.remoteDeviceAddress.isEmpty()) null else view.remoteDeviceAddress
+            val remoteAddress: String? =
+                if (view.remoteDeviceAddress.isEmpty()) null else view.remoteDeviceAddress
             if (pkgName.isEmpty()) {
                 logger.d("$TAG: onStartPressed: package name is empty")
                 view.showErrorDialog("Enter package name.")
@@ -224,9 +242,13 @@ class JavaMethodsDialogLogic(
             settings.setStringValue(ACTIVITY_NAME_SETTINGS, view.activityName)
             settings.setIntValue(SAMPLING_NAME_SETTINGS, sampling)
             settings.setStringValue(FILE_NAME_PREFIX_SETTINGS, fileNamePrefix)
-            settings.setBoolValue(RECORD_MODE_SAMPLE_SETTINGS, stateMachine.selectedMode == RecordMode.METHOD_SAMPLE)
+            settings.setBoolValue(
+                RECORD_MODE_SAMPLE_SETTINGS,
+                stateMachine.selectedMode == RecordMode.METHOD_SAMPLE
+            )
             settings.setIntValue(PROFILER_BUFFER_SIZE_SETTINGS, bufferSizeInMb)
             settings.setStringValue(REMOTE_DEVICE_ADDRESS_SETTINGS, view.remoteDeviceAddress)
+            settings.setStringValue(SERIAL_NUMBER_SETTINGS, view.serialNumber.orEmpty())
             settings.setStringValue(SYSTRACE_STAGE_PREFIX_SETTINGS, view.systraceStagePrefix ?: "")
             view.inProgressState()
             val fileName = stateMachine.createFileName()
@@ -242,9 +264,13 @@ class JavaMethodsDialogLogic(
             activity?.let {
                 view.setStatusTextAndColor("Start activity $it", Color.BLACK)
             }
-            val waitForApplicationTimeout = if (pkgName.isEmpty()) DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT else 5
+            val waitForApplicationTimeout =
+                if (pkgName.isEmpty()) DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT else 5
 
-            val methodTraceRecorder = methodTraceRecorderFactory.create(stateMachine, view.isSystraceStageEnabled)
+            val methodTraceRecorder = methodTraceRecorderFactory.create(
+                stateMachine, view.isSystraceStageEnabled,
+                view.serialNumber?.let(::SerialNumber)
+            )
             stateMachine.methodTraceRecorder = methodTraceRecorder
             stateMachine.currentPackageName = pkgName
             stateMachine.currentActivityName = activity
@@ -406,7 +432,10 @@ class JavaMethodsDialogLogic(
                 } else {
                     "This can happens when Android Studio is opened, try to close it and try again."
                 }
-                view.showErrorDialog(message = msg, title = "Cant find process '${stateMachine.currentPackageName}'")
+                view.showErrorDialog(
+                    message = msg,
+                    title = "Cant find process '${stateMachine.currentPackageName}'"
+                )
                 return
             }
 
@@ -473,7 +502,15 @@ class JavaMethodsDialogLogic(
         private val settings: SettingsRepository,
         private val logger: AppLogger,
         private val systracePrefix: String?
-    ) : WaitForRecordingResult(coroutineScope, dispatchers, stateMachine, view, methodTraceRecorder, settings, logger) {
+    ) : WaitForRecordingResult(
+        coroutineScope,
+        dispatchers,
+        stateMachine,
+        view,
+        methodTraceRecorder,
+        settings,
+        logger
+    ) {
 
         override fun onTraceResultReceived(file: File) {
             logger.d("state is ${stateMachine.state.javaClass.simpleName}: onMethodTraceReceived: $file")
@@ -516,7 +553,15 @@ class JavaMethodsDialogLogic(
         private val logger: AppLogger,
         private val traceFile: File,
         private val systracePrefix: String?
-    ) : WaitForRecordingResult(coroutineScope, dispatchers, stateMachine, view, methodTraceRecorder, settings, logger) {
+    ) : WaitForRecordingResult(
+        coroutineScope,
+        dispatchers,
+        stateMachine,
+        view,
+        methodTraceRecorder,
+        settings,
+        logger
+    ) {
         override fun onSystraceReceived(result: SystraceRecordResult) {
             logger.d("onSystraceReceived: ${result.records.size}")
             methodTraceRecorder.disconnect()
