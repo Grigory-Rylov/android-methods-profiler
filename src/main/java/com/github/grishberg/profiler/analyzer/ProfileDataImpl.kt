@@ -1,7 +1,6 @@
 package com.github.grishberg.profiler.analyzer
 
 import com.github.grishberg.android.profiler.core.ProfileData
-import java.awt.Color
 
 data class ProfileDataImpl(
     override val name: String,
@@ -13,12 +12,16 @@ data class ProfileDataImpl(
     override var threadSelfTime: Double = 0.0,
     override var globalSelfTime: Double = 0.0,
     override var parent: ProfileDataImpl? = null
-): ProfileData {
+) : ProfileData {
     private val _children = mutableListOf<ProfileDataImpl>()
     override val children: List<ProfileDataImpl> = _children
 
     fun addChild(child: ProfileDataImpl) {
         _children.add(child)
         child.parent = this
+    }
+
+    override fun toString(): String {
+        return name
     }
 }

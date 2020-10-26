@@ -38,8 +38,13 @@ class JavaMethodsRecorderDialog(
     private val remoteDeviceAddressField: JTextField = JTextField(20)
     private val stagesTracePrefixField: JTextField = JTextField(10)
     private val showRemotePanelCheckbox = JCheckBox("Connect to remote device")
+    private val showDevicePanelCheckbox = JCheckBox("Connect to device by serial number")
     private val moreOptionsPanelCheckbox = JCheckBox("Additional options")
     private val systraceStagesCheckbox = JCheckBox("Systrace Stages")
+
+    // TODO(geaden): Most certainly this field should be JComboBox instead of JTextField
+    //   however it requires more effort and changes from trace-recorder are needed
+    private val serialNumberField: JTextField = JTextField(20)
     private val statusLabel: JLabel
     private val startButton: JButton
     private val stopButton: JButton
@@ -47,7 +52,8 @@ class JavaMethodsRecorderDialog(
     private val samplingField = JNumberField(10)
     private val profilerBufferSizeField = JNumberField(10)
     private val logic: JavaMethodsDialogLogic
-    private val recordModeComBox = JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
+    private val recordModeComBox =
+        JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
 
     override var packageName: String
         get() = packageNameField.text.trim()
@@ -90,6 +96,13 @@ class JavaMethodsRecorderDialog(
         set(value) {
             remoteDeviceAddressField.text = value
             showRemotePanelCheckbox.isSelected = value.isNotEmpty()
+        }
+
+    override var serialNumber: String?
+        get() = serialNumberField.text.trim().takeIf { showDevicePanelCheckbox.isSelected }
+        set(value) {
+            serialNumberField.text = value
+            showDevicePanelCheckbox.isSelected = !value.isNullOrEmpty()
         }
 
     override var isSystraceStageEnabled: Boolean
@@ -151,7 +164,7 @@ class JavaMethodsRecorderDialog(
         additionalPanel.border = EmptyBorder(8, 8, 8, 8)
         additionalPanel.add(JLabel("Sampling in microseconds:"), BorderLayout.LINE_START)
 
-        logic = JavaMethodsDialogLogic(coroutineScope , dispatchers ,this, settings, logger)
+        logic = JavaMethodsDialogLogic(coroutineScope, dispatchers, this, settings, logger)
 
         recordModeComBox.addItemListener {
             if (it.stateChange != ItemEvent.SELECTED) {
@@ -179,7 +192,10 @@ class JavaMethodsRecorderDialog(
         remoteDeviceAddressField.addActionListener {
             logic.onStartPressed()
         }
-        stagesTracePrefixField.addActionListener{
+        serialNumberField.addActionListener {
+            logic.onStartPressed()
+        }
+        stagesTracePrefixField.addActionListener {
             logic.onStartPressed()
         }
 
@@ -189,6 +205,7 @@ class JavaMethodsRecorderDialog(
         panelBuilder.addLabeledComponent("recording mode: ", recordModeComBox)
         panelBuilder.addLabeledComponent("buffer size (Mb): ", profilerBufferSizeField)
         panelBuilder.addSingleComponent(buildRemoteDevicePanel())
+        panelBuilder.addSingleComponent(buildSerialNumberPanel())
         panelBuilder.addSingleComponent(buildMoreOptionsPanel())
         panelBuilder.addSingleComponent(buttons)
 
@@ -247,7 +264,8 @@ class JavaMethodsRecorderDialog(
         contentPanel.border = EmptyBorder(8, 8, 8, 8)
         contentPanel.add(Label("Stages trace prefix"), BorderLayout.NORTH)
         contentPanel.add(stagesTracePrefixField, BorderLayout.CENTER)
-        stagesTracePrefixField.toolTipText = "Systrace starting with this prefix will be considered stages"
+        stagesTracePrefixField.toolTipText =
+            "Systrace starting with this prefix will be considered stages"
 
         systraceStagesCheckbox.addChangeListener {
             hiddenPanel.isVisible = systraceStagesCheckbox.isSelected
@@ -260,8 +278,9 @@ class JavaMethodsRecorderDialog(
     private fun buildRemoteDevicePanel(): JPanel {
         val panel = JPanel()
         panel.layout = BorderLayout()
-        remoteDeviceAddressField.toolTipText = "Remote device address. Optional. If not empty - will try to connect " +
-                "to remote device"
+        remoteDeviceAddressField.toolTipText =
+            "Remote device address. Optional. If not empty - will try to connect " +
+                    "to remote device"
 
         panel.add(showRemotePanelCheckbox, BorderLayout.NORTH)
 
@@ -280,6 +299,37 @@ class JavaMethodsRecorderDialog(
 
         showRemotePanelCheckbox.addChangeListener {
             hiddenPanel.isVisible = showRemotePanelCheckbox.isSelected
+            pack()
+        }
+        panel.add(hiddenPanel, BorderLayout.SOUTH)
+        return panel
+    }
+
+    // TODO(geaden): The code is almost similar to buildRemoteDevicePanel
+    //    so it should be extracted into common abstraction.
+    private fun buildSerialNumberPanel(): JPanel {
+        val panel = JPanel()
+        panel.layout = BorderLayout()
+        serialNumberField.toolTipText = "Device serial number to record trace for"
+
+        panel.add(showDevicePanelCheckbox, BorderLayout.NORTH)
+
+        val hiddenPanel = JPanel()
+        hiddenPanel.layout = BorderLayout()
+        hiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
+        hiddenPanel.isVisible = showDevicePanelCheckbox.isSelected
+
+        val contentPanel = JPanel()
+        hiddenPanel.add(contentPanel, BorderLayout.CENTER)
+
+        contentPanel.layout = BorderLayout()
+        contentPanel.border = EmptyBorder(8, 8, 8, 8)
+        contentPanel.add(Label("Serial Number:"), BorderLayout.NORTH)
+        contentPanel.add(serialNumberField, BorderLayout.CENTER)
+
+        showDevicePanelCheckbox.toolTipText = "If not selected the first connected device is used"
+        showDevicePanelCheckbox.addChangeListener {
+            hiddenPanel.isVisible = showDevicePanelCheckbox.isSelected
             pack()
         }
         panel.add(hiddenPanel, BorderLayout.SOUTH)

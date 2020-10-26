@@ -6,9 +6,14 @@ import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.tracerecorder.MethodTraceEventListener
 import com.github.grishberg.tracerecorder.MethodTraceRecorder
 import com.github.grishberg.tracerecorder.MethodTraceRecorderImpl
+import com.github.grishberg.tracerecorder.SerialNumber
 
 interface MethodTraceRecorderFactory {
-    fun create(listener: MethodTraceEventListener, systrace: Boolean): MethodTraceRecorder
+    fun create(
+        listener: MethodTraceEventListener,
+        systrace: Boolean,
+        serialNumber: SerialNumber?
+    ): MethodTraceRecorder
 }
 
 private const val SETTINGS_ROOT = "MethodTraceRecordDialog"
@@ -31,21 +36,25 @@ internal class MethodTraceRecorderFactoryImpl(
         settings.setIntValue(DEBUG_PORT_SETTINGS, debugPort)
     }
 
-    override fun create(listener: MethodTraceEventListener, systrace: Boolean): MethodTraceRecorder {
+    override fun create(
+        listener: MethodTraceEventListener,
+        systrace: Boolean,
+        serialNumber: SerialNumber?
+    ): MethodTraceRecorder {
         return MethodTraceRecorderImpl(
-            listener,
-            true,
-            systrace,
-            RecorderLoggerWrapper(
+            listener = listener,
+            methodTrace = true,
+            systrace = systrace,
+            logger = RecorderLoggerWrapper(
                 logger
             ),
-            settings.getStringValue(Main.SETTINGS_ANDROID_HOME),
-            debugPort,
+            androidHome = settings.getStringValue(Main.SETTINGS_ANDROID_HOME),
+            debugPort = debugPort,
+            serialNumber = serialNumber,
             applicationWaitPostTimeoutInMilliseconds = settings.getIntValueOrDefault(
                 TIMEOUT_BEFORE_RECORDING,
                 DEFAULT_TIMEOUT_BEFORE_RECORDING
             ).toLong()
-
         )
     }
 }
