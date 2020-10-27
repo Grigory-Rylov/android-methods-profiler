@@ -17,6 +17,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.Box
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JOptionPane
@@ -34,6 +35,7 @@ interface DialogListener {
     fun openStagesFile()
     fun startAnalyze()
     fun onSaveStagesClicked()
+    fun onShouldHideUnknownChanged()
 }
 
 class StageAnalyzerDialog(
@@ -45,6 +47,7 @@ class StageAnalyzerDialog(
     private val startButton = JButton("Analyze").apply { isEnabled = false }
     private val exportToFileButton = JButton("Export report to file").apply { isEnabled = false }
     private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
+    private val shouldHideUnknown = JCheckBox("Hide unknown")
     private val statusLabel = JLabel()
     var dialogListener: DialogListener? = null
 
@@ -104,6 +107,10 @@ class StageAnalyzerDialog(
             dialogListener?.onSaveStagesClicked()
         }
 
+        shouldHideUnknown.addActionListener {
+            dialogListener?.onShouldHideUnknownChanged()
+        }
+
         val actionButtons = JPanel().apply {
             add(startButton)
             add(exportToFileButton)
@@ -111,6 +118,7 @@ class StageAnalyzerDialog(
             add(openStagesFileButton)
             add(saveStagesButton)
             add(Box.createHorizontalStrut(5))
+            add(shouldHideUnknown)
         }
 
         val statusPanel = JPanel().apply {
@@ -171,6 +179,14 @@ class StageAnalyzerDialog(
     fun showProgress() {
         table.isEnabled = false
         startButton.isEnabled = false
+    }
+
+    fun shouldHideUnknown(): Boolean {
+        return shouldHideUnknown.isSelected
+    }
+
+    fun checkHideUnknownCheckbox(checked: Boolean) {
+        shouldHideUnknown.isSelected = checked
     }
 
     private inner class CopyAction : ActionListener {

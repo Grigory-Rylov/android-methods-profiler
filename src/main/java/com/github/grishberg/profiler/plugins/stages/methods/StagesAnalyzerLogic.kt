@@ -29,6 +29,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
 
 private const val TAG = "StagesAnalyzerLogic"
 private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
+private const val SETTINGS_STAGES_HIDE_UNKNOWN = "Plugins.stagesHideUnknown"
 
 typealias StagesProvider = () -> Stages
 
@@ -58,6 +59,8 @@ class StagesAnalyzerLogic(
             ui.enableStartButton()
         }
         ui.showDialog()
+
+        ui.checkHideUnknownCheckbox(settings.getBoolValueOrDefault(SETTINGS_STAGES_HIDE_UNKNOWN, false))
     }
 
     override fun copyToClipboard() {
@@ -96,9 +99,22 @@ class StagesAnalyzerLogic(
 
             cachedResult.clear()
             cachedResult.addAll(result)
-            ui.showResult(cachedResult)
+            populateWithFilteredResult()
             ui.enableExportButtons()
         }
+    }
+
+    override fun onShouldHideUnknownChanged() {
+        settings.setBoolValue(SETTINGS_STAGES_HIDE_UNKNOWN, ui.shouldHideUnknown())
+        populateWithFilteredResult()
+    }
+
+    private fun populateWithFilteredResult() {
+        val filtered = if (ui.shouldHideUnknown())
+            cachedResult.filter { it.correctStage != null }
+        else cachedResult
+
+        ui.showResult(filtered)
     }
 
     override fun openStagesFile() {
