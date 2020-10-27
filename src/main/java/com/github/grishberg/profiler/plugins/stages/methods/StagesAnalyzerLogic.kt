@@ -30,6 +30,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
 private const val TAG = "StagesAnalyzerLogic"
 private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
 private const val SETTINGS_STAGES_HIDE_UNKNOWN = "Plugins.stagesHideUnknown"
+private const val SETTINGS_STAGES_HIERARCHICAL = "Plugins.stagesHierarchical"
 
 typealias StagesProvider = () -> Stages
 
@@ -61,6 +62,7 @@ class StagesAnalyzerLogic(
         ui.showDialog()
 
         ui.checkHideUnknownCheckbox(settings.getBoolValueOrDefault(SETTINGS_STAGES_HIDE_UNKNOWN, false))
+        ui.checkHierarchicalCheckbox(settings.getBoolValueOrDefault(SETTINGS_STAGES_HIERARCHICAL, true))
     }
 
     override fun copyToClipboard() {
@@ -78,6 +80,9 @@ class StagesAnalyzerLogic(
     }
 
     override fun startAnalyze() {
+        if (!stagesFactory.hasLocalConfiguration() && stageFile == null) {
+            return
+        }
         ui.showProgress()
         val selectedStagesFile = stageFile
         val stagesProvider: StagesProvider
@@ -92,9 +97,10 @@ class StagesAnalyzerLogic(
         }
 
         coroutineScope.launch {
+            val shouldHideChild = ui.hierarchical()
             val result = coroutineScope.async(dispatchers.worker) {
                 val stages = stagesProvider.invoke()
-                analyzer.analyze(stages, methodsAvailability, methods, true)
+                analyzer.analyze(stages, methodsAvailability, methods, shouldHideChild)
             }.await()
 
             cachedResult.clear()
@@ -115,6 +121,10 @@ class StagesAnalyzerLogic(
         else cachedResult
 
         ui.showResult(filtered)
+    }
+
+    override fun onHierarchicalModeChanged() {
+        startAnalyze()
     }
 
     override fun openStagesFile() {

@@ -36,6 +36,7 @@ interface DialogListener {
     fun startAnalyze()
     fun onSaveStagesClicked()
     fun onShouldHideUnknownChanged()
+    fun onHierarchicalModeChanged()
 }
 
 class StageAnalyzerDialog(
@@ -48,6 +49,7 @@ class StageAnalyzerDialog(
     private val exportToFileButton = JButton("Export report to file").apply { isEnabled = false }
     private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
     private val shouldHideUnknown = JCheckBox("Hide unknown")
+    private val hierarchical = JCheckBox("Hierarchical")
     private val statusLabel = JLabel()
     var dialogListener: DialogListener? = null
 
@@ -111,6 +113,10 @@ class StageAnalyzerDialog(
             dialogListener?.onShouldHideUnknownChanged()
         }
 
+        hierarchical.addActionListener {
+            dialogListener?.onHierarchicalModeChanged()
+        }
+
         val actionButtons = JPanel().apply {
             add(startButton)
             add(exportToFileButton)
@@ -119,6 +125,7 @@ class StageAnalyzerDialog(
             add(saveStagesButton)
             add(Box.createHorizontalStrut(5))
             add(shouldHideUnknown)
+            add(hierarchical)
         }
 
         val statusPanel = JPanel().apply {
@@ -136,7 +143,7 @@ class StageAnalyzerDialog(
             layout = BorderLayout()
             add(listScroll, BorderLayout.CENTER)
             add(bottomPanel, BorderLayout.SOUTH)
-            preferredSize = Dimension(800, 500)
+            preferredSize = Dimension(840, 500)
             border = EmptyBorder(8, 8, 8, 8)
         }
 
@@ -187,6 +194,14 @@ class StageAnalyzerDialog(
 
     fun checkHideUnknownCheckbox(checked: Boolean) {
         shouldHideUnknown.isSelected = checked
+    }
+
+    fun hierarchical(): Boolean {
+        return hierarchical.isSelected
+    }
+
+    fun checkHierarchicalCheckbox(checked: Boolean) {
+        hierarchical.isSelected = checked
     }
 
     private inner class CopyAction : ActionListener {
