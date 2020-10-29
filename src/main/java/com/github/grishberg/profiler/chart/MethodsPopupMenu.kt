@@ -24,7 +24,7 @@ class MethodsPopupMenu(
 ) : JPopupMenu() {
     private val flameChartMenuItem = JMenuItem("Flame Chart")
     private val copyNameMenuItem = JMenuItem("Copy name").apply {
-        accelerator = createControlAccelerator('M')
+        accelerator = createControlAccelerator('C')
     }
     private val copyStackTraceMenuItem = JMenuItem("Copy stacktrace").apply {
         accelerator = createControlAccelerator('S')
