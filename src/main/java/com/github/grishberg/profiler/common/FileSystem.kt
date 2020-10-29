@@ -19,6 +19,7 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
+import kotlin.jvm.Throws
 
 
 data class TraceContainer(val traceFile: File, val result: AnalyzerResult, val bookmarks: Bookmarks)

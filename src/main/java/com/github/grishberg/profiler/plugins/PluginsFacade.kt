@@ -101,7 +101,7 @@ class PluginsFacade(
             dispatchers = dispatchers,
             stagesFactory = systraceStagesFacade.getStagesFactory(methodsAvailability),
             methodsAvailability = methodsAvailability,
-            logger
+            logger = logger
         )
     }
 }

@@ -12,6 +12,10 @@ fun createControlAccelerator(keyChar: Char): KeyStroke {
     return KeyStroke.getKeyStroke(keyChar, Toolkit.getDefaultToolkit().menuShortcutKeyMask)
 }
 
+fun createControlAccelerator(keyChar: Int): KeyStroke {
+    return KeyStroke.getKeyStroke(keyChar, Toolkit.getDefaultToolkit().menuShortcutKeyMask)
+}
+
 fun createControlShiftAccelerator(keyChar: Char): KeyStroke {
     return KeyStroke.getKeyStroke(keyChar, Toolkit.getDefaultToolkit().menuShortcutKeyMask + ActionEvent.SHIFT_MASK)
 }

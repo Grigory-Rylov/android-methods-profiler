@@ -3,16 +3,16 @@ package com.github.grishberg.profiler.common
 import java.awt.Color
 
 fun hexToColor(colorInHex: String): Color {
-    val colorInt = Integer.parseInt(colorInHex, 16)
-    return Color(colorInt, true)
+    val colorInt = java.lang.Long.parseLong(colorInHex, 16)
+    return Color(colorInt.toInt(), true)
 }
 
 fun hexToColor(colorInHex: String?, default: Color): Color {
     if (colorInHex == null) {
         return default
     }
-    val colorInt = Integer.parseInt(colorInHex, 16)
-    return Color(colorInt, false)
+    val colorInt = java.lang.Long.parseLong(colorInHex, 16)
+    return Color(colorInt.toInt(), false)
 }
 
 fun Color.toHex(): String {

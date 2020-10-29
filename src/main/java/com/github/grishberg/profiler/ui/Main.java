@@ -499,8 +499,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         viewMenu.addSeparator();
 
         JMenuItem clearBookmarks = new JMenuItem("Clear bookmarks");
+        clearBookmarks.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator(KeyEvent.VK_BACK_SPACE));
         viewMenu.add(clearBookmarks);
-        showFlameChart.addActionListener(a -> clearBookmarks());
+        clearBookmarks.addActionListener(a -> clearBookmarks());
 
         viewMenu.addSeparator();
         JMenuItem fitScreen = new JMenuItem("Scale selected method on screen width");
