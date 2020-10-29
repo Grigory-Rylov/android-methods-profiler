@@ -4,39 +4,78 @@ import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.analyzer.ThreadItemImpl;
-import com.github.grishberg.profiler.chart.*;
+import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
+import com.github.grishberg.profiler.chart.BookmarksRectangle;
+import com.github.grishberg.profiler.chart.Finder;
+import com.github.grishberg.profiler.chart.MethodsPopupMenu;
+import com.github.grishberg.profiler.chart.ProfilerPanel;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
-import com.github.grishberg.profiler.common.*;
+import com.github.grishberg.profiler.common.AppLogger;
+import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
+import com.github.grishberg.profiler.common.FileSystem;
+import com.github.grishberg.profiler.common.MainScope;
+import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
+import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
-import com.github.grishberg.profiler.ui.dialogs.*;
+import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
+import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
+import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog;
+import com.github.grishberg.profiler.ui.dialogs.ReportsGeneratorDialog;
+import com.github.grishberg.profiler.ui.dialogs.ScaleRangeDialog;
+import com.github.grishberg.profiler.ui.dialogs.SetAndroidHomeDialog;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
 import com.github.grishberg.profiler.ui.dialogs.recorder.RecordedResult;
-import com.github.grishberg.tracerecorder.SystraceRecord;
 import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ProfilerPanel.FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
@@ -269,6 +308,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         keyBinder.setUpKeyBindings();
 
         showBookmarks = new JCheckBoxMenuItem("Show bookmarks");
+        showBookmarks.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('B'));
         fileMenu = createFileMenu();
         createMenu(fileMenu);
         menuHistoryItems = new MenuHistoryItems(fileMenu, settings, this::openTraceFile);
@@ -300,6 +340,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private void onClose() {
         settings.save();
         log.d("App closed");
+    }
+
+    public void addBookmark() {
+        newBookmarkDialog.clearAndHide();
+        newBookmarkDialog.showNewBookmarkDialog(chart);
+        BookMarkInfo result = newBookmarkDialog.getBookMarkInfo();
+        if (result != null) {
+            chart.addBookmarkAtSelectedElement(result);
+        }
     }
 
     private void addToolbarButtons(JToolBar toolBar) {
@@ -351,11 +400,21 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private JMenu createFileMenu() {
         JMenu file = new JMenu("File");
         JMenuItem openFile = new JMenuItem("Open .trace file");
+        openFile.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('O'));
+
         JMenuItem openMappingFile = new JMenuItem("Open mapping text file");
+
         JMenuItem openFileInNewWindow = new JMenuItem("Open .trace file in new window");
+        openFileInNewWindow.setAccelerator(MenuAcceleratorHelperKt.createControlShiftAccelerator('O'));
+
         JMenuItem newFile = new JMenuItem("Record new .trace");
+        newFile.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('N'));
+
         JMenuItem newFileInNewWindow = new JMenuItem("Record new .trace in new Window");
+        newFileInNewWindow.setAccelerator(MenuAcceleratorHelperKt.createControlShiftAccelerator('N'));
+
         JMenuItem exportTraceWithBookmarks = new JMenuItem("Export trace with bookmarks");
+        exportTraceWithBookmarks.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('E'));
         JMenuItem openTracesDirInExternalFileManager = new JMenuItem("Open traces dir in external FIle manager");
 
         file.add(openFile);
@@ -407,12 +466,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ButtonGroup group = new ButtonGroup();
         globalTimeMenuItem.setSelected(!settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false));
         globalTimeMenuItem.setMnemonic(KeyEvent.VK_G);
+        globalTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('G'));
         group.add(globalTimeMenuItem);
         viewMenu.add(globalTimeMenuItem);
         globalTimeMenuItem.addActionListener(e -> switchTimeMode(false));
 
         threadTimeMenuItem.setSelected(settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE, false));
         threadTimeMenuItem.setMnemonic(KeyEvent.VK_T);
+        threadTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('T'));
         threadTimeMenuItem.addActionListener(e -> switchTimeMode(true));
         group.add(threadTimeMenuItem);
         viewMenu.add(threadTimeMenuItem);
@@ -427,13 +488,71 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         viewMenu.addSeparator();
 
         JMenuItem openRangeDialog = new JMenuItem("Set screen range");
+        openRangeDialog.setAccelerator(MenuAcceleratorHelperKt.createShiftAccelerator('R'));
         viewMenu.add(openRangeDialog);
         openRangeDialog.addActionListener(arg0 -> showScaleRangeDialog());
 
         JMenuItem showFlameChart = new JMenuItem("Show Flame Chart");
         viewMenu.add(showFlameChart);
         showFlameChart.addActionListener(a -> showFlameChartDialog());
+
+        viewMenu.addSeparator();
+
+        JMenuItem clearBookmarks = new JMenuItem("Clear bookmarks");
+        clearBookmarks.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator(KeyEvent.VK_BACK_SPACE));
+        viewMenu.add(clearBookmarks);
+        clearBookmarks.addActionListener(a -> clearBookmarks());
+
+        viewMenu.addSeparator();
+        JMenuItem fitScreen = new JMenuItem("Scale selected method on screen width");
+        fitScreen.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('F'));
+        viewMenu.add(fitScreen);
+        fitScreen.addActionListener(a -> chart.fitSelectedElement());
+
+        JMenuItem centerSelectedElement = new JMenuItem("Centering the selected method");
+        centerSelectedElement.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('C'));
+        viewMenu.add(centerSelectedElement);
+        centerSelectedElement.addActionListener(a -> chart.centerSelectedElement());
+
+        JMenuItem resetZoom = new JMenuItem("Reset zoom");
+        resetZoom.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('Z'));
+        viewMenu.add(resetZoom);
+        resetZoom.addActionListener(a -> chart.resetZoom());
+
+        viewMenu.addSeparator();
+
+        JMenuItem focusNextBookmark = new JMenuItem("Focus next bookmark");
+        focusNextBookmark.setAccelerator(MenuAcceleratorHelperKt.createShiftAccelerator('E'));
+        viewMenu.add(focusNextBookmark);
+        focusNextBookmark.addActionListener(a -> {
+            chart.focusNextMarker();
+            hoverInfoPanel.hidePanel();
+        });
+
+        JMenuItem focusPreviousBookmark = new JMenuItem("Focus previous bookmark");
+        focusPreviousBookmark.setAccelerator(MenuAcceleratorHelperKt.createShiftAccelerator('Q'));
+        viewMenu.add(focusPreviousBookmark);
+        focusPreviousBookmark.addActionListener(a -> {
+            chart.focusPrevMarker();
+            hoverInfoPanel.hidePanel();
+        });
+
+        viewMenu.addSeparator();
+        JMenuItem increaseFontSize = new JMenuItem("Increase font size");
+        increaseFontSize.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('+'));
+        viewMenu.add(increaseFontSize);
+        increaseFontSize.addActionListener(a -> chart.increaseFontSize());
+
+        JMenuItem decreaseFontSize = new JMenuItem("Decrease font size");
+        decreaseFontSize.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('-'));
+        viewMenu.add(decreaseFontSize);
+        decreaseFontSize.addActionListener(a -> chart.decreaseFontSize());
+
         return viewMenu;
+    }
+
+    private void clearBookmarks() {
+        chart.clearBookmarks();
     }
 
     public void showFlameChartDialog() {

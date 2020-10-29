@@ -2,6 +2,8 @@ package com.github.grishberg.profiler.chart
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade
+import com.github.grishberg.profiler.common.createAccelerator
+import com.github.grishberg.profiler.common.createControlAccelerator
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.dialogs.ElementWithColorDialog
 import java.awt.Frame
@@ -21,15 +23,27 @@ class MethodsPopupMenu(
     private val stagesFacade: StagesFacade
 ) : JPopupMenu() {
     private val flameChartMenuItem = JMenuItem("Flame Chart")
-    private val copyNameMenuItem = JMenuItem("Copy name")
-    private val copyStackTraceMenuItem = JMenuItem("Copy stacktrace")
+    private val copyNameMenuItem = JMenuItem("Copy name").apply {
+        accelerator = createControlAccelerator('M')
+    }
+    private val copyStackTraceMenuItem = JMenuItem("Copy stacktrace").apply {
+        accelerator = createControlAccelerator('S')
+    }
     private val addStageMenuItem = JMenuItem("Add new stage")
-    private val removeStageMenuItem = JMenuItem("RemoveStage")
+    private val removeStageMenuItem = JMenuItem("Remove stage")
+    private val addBookmark = JMenuItem("Add bookmark").apply {
+        accelerator = createAccelerator('M')
+    }
 
     init {
         add(copyNameMenuItem)
         add(copyStackTraceMenuItem)
+        add(addBookmark)
         add(flameChartMenuItem)
+
+        addBookmark.addActionListener {
+            main.addBookmark()
+        }
 
         flameChartMenuItem.addActionListener {
             main.showFlameChartDialog()

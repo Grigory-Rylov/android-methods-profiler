@@ -69,6 +69,7 @@ class KeyBinder(
 
         addKeyMap(KeyEvent.VK_E, InputEvent.SHIFT_MASK, NextBookmarkAction())
         addKeyMap(KeyEvent.VK_Q, InputEvent.SHIFT_MASK, PrevBookmarkAction())
+        addKeyMapWithCtrl(KeyEvent.VK_BACK_SPACE, ClearAllBookmarksAction())
 
         addKeyMapWithCtrl(KeyEvent.VK_P, GenerateReportsAction())
         addKeyMapWithCtrl(KeyEvent.VK_PLUS, ChangeFontSizeAction(true))
@@ -231,14 +232,15 @@ class KeyBinder(
         }
     }
 
+    private inner class ClearAllBookmarksAction : SmartAction() {
+        override fun actionPerformed() {
+            profilerView.clearBookmarks()
+        }
+    }
+
     private inner class AddBookmarkAction : SmartAction() {
         override fun actionPerformed() {
-            newBookmarkDialog.clearAndHide()
-            newBookmarkDialog.showNewBookmarkDialog(profilerView)
-            val result = newBookmarkDialog.bookMarkInfo
-            if (result != null) {
-                profilerView.addBookmarkAtSelectedElement(result)
-            }
+            main.addBookmark()
         }
     }
 

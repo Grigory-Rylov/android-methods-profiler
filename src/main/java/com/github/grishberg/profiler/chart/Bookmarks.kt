@@ -7,7 +7,13 @@ import com.github.grishberg.profiler.ui.BookMarkInfo
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
-import java.io.*
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.FileReader
+import java.io.IOException
+import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 
 
@@ -220,5 +226,14 @@ class Bookmarks {
     fun updateBookmark(selectedBookmark: BookmarksRectangle, result: BookMarkInfo) {
         selectedBookmark.updateNameAndColor(result)
         save()
+    }
+
+    fun clear() {
+        bookmarks.clear()
+        val currentDir = File(settings.filesDir(), BOOKMARKS_DIR)
+        val bookmarkFileName = File(currentDir, "$bookmarkFileName.$BOOKMARK_EXTENSION")
+        if (bookmarkFileName.exists()) {
+            bookmarkFileName.delete()
+        }
     }
 }

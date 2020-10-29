@@ -110,6 +110,8 @@ If you entered activity name in **New trace** dialog and see "Wait for applicati
 
 To scale application on hi-res displays on linux, try to edit `/opt/android-methods-profiler/app/android-methods-profiler.cfg` and enter `-Dsun.java2d.uiScale=2` below `[JVMOptions]`
 
+<a href="https://www.buymeacoffee.com/grishberg" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 # License
 
 YAMP is released under the [Apache License, Version 2.0](LICENSE.txt).
