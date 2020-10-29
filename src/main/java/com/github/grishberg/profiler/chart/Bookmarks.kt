@@ -221,4 +221,8 @@ class Bookmarks {
         selectedBookmark.updateNameAndColor(result)
         save()
     }
+
+    fun clear() {
+        bookmarks.clear()
+    }
 }

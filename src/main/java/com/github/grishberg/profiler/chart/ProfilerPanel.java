@@ -789,6 +789,11 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         repaint();
     }
 
+    public void clearBookmarks() {
+        bookmarks.clear();
+        repaint();
+    }
+
     public void disableSearching() {
         if (!isSearchingInProgress) {
             return;
