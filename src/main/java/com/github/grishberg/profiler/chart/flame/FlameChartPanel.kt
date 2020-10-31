@@ -11,16 +11,22 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.Shape
+import java.awt.Toolkit
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.awt.geom.AffineTransform
 import java.awt.geom.Rectangle2D
+import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 
 private const val MINIMUM_WIDTH_IN_PX = 1.0
 private const val FIT_PADDING = 8
 
 class FlameChartPanel(
-        private val parentDialog: Component,
-        private val controller: FlameChartController
+    private val parentDialog: Component,
+    private val controller: FlameChartController
 ) : JPanel(), View {
     private val bgColor = Color(65, 65, 65)
 
@@ -40,6 +46,9 @@ class FlameChartPanel(
 
     init {
         background = bgColor
+        val copyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().menuShortcutKeyMask, false)
+        registerKeyboardAction(CopyAction(), "Copy", copyStroke, JComponent.WHEN_FOCUSED)
+        componentPopupMenu = ElementPopupMenu(controller)
     }
 
     override fun showDialog() {
@@ -192,5 +201,14 @@ class FlameChartPanel(
     fun findDataByPosition(point: Point): FlameRectangle? {
         val transformedPoint = zoomAndPanDelegate.transformPoint(point)
         return controller.findDataByPosition(transformedPoint)
+    }
+
+    private inner class CopyAction : ActionListener {
+        override fun actionPerformed(e: ActionEvent) {
+            if (e.actionCommand.compareTo("Copy") != 0) {
+                return
+            }
+            controller.copySelectedToClipboard()
+        }
     }
 }
