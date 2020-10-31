@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import kotlin.math.min
@@ -299,6 +301,14 @@ class FlameChartController(
     fun removeSelection() {
         currentSelectedElement = null
         view?.redraw()
+    }
+
+    fun copySelectedToClipboard() {
+        currentSelectedElement?.let {
+            val stringSelection = StringSelection(it.name)
+            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+            clipboard.setContents(stringSelection, null)
+        }
     }
 
     data class ChildHolder(

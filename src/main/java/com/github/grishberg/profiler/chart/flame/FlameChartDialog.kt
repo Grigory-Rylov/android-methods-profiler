@@ -63,6 +63,10 @@ class FlameChartDialog(
             override fun mouseLeftClicked(e: MouseEvent) {
                 selectElement(e)
             }
+
+            override fun mouseRightClicked(e: MouseEvent) {
+                selectElement(e)
+            }
         })
         controller.view = flameChart
         mainPanel.add(flameChart, BorderLayout.CENTER)
