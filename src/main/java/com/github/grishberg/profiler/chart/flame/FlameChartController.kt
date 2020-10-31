@@ -13,8 +13,11 @@ import kotlinx.coroutines.launch
 import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import kotlin.math.min
 
 interface View {
     var levelHeight: Double
@@ -112,8 +115,10 @@ class FlameChartController(
                 settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE),
                 levelHeight
             )
-            val rootSource = selectedElements.first()
-            return@async calculator.calculateFlame(rootSource)
+            if (selectedElements.size == 1) {
+                return@async calculator.calculateFlame(selectedElements.first())
+            }
+            return@async calculator.calculateFlame(selectedElements)
         }
         return data.await()
     }
@@ -127,6 +132,36 @@ class FlameChartController(
         private val result = mutableListOf<FlameRectangle>()
         var topOffset = 0.0
             private set
+
+        fun calculateFlame(threadMethods: List<ProfileData>): Result {
+            result.clear()
+            rootLevel = threadMethods.first().level
+            val rootsSource = threadMethods.filter { it.level == rootLevel }
+
+            var left = 0.0
+
+            for (rootSource in rootsSource) {
+                val currenLeft = calculateStartXForTime(rootSource)
+                left = min(left, currenLeft)
+            }
+
+            processChildren(rootsSource, left)
+
+            var maxX = Double.MIN_VALUE
+            var minX = Double.MAX_VALUE
+
+            for (rect in result) {
+                rect.y -= topOffset
+                if (rect.maxX > maxX) {
+                    maxX = rect.maxX
+                }
+                if (rect.minX < minX) {
+                    minX = rect.minX
+                }
+                rect.color = methodsColor.getColorForMethod(rect.name)
+            }
+            return Result(result, minX, -topOffset - levelHeight, maxX)
+        }
 
         fun calculateFlame(rootSource: ProfileData): Result {
             result.clear()
@@ -266,6 +301,14 @@ class FlameChartController(
     fun removeSelection() {
         currentSelectedElement = null
         view?.redraw()
+    }
+
+    fun copySelectedToClipboard() {
+        currentSelectedElement?.let {
+            val stringSelection = StringSelection(it.name)
+            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+            clipboard.setContents(stringSelection, null)
+        }
     }
 
     data class ChildHolder(

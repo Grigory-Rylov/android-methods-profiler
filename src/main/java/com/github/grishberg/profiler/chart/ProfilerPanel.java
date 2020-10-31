@@ -11,20 +11,37 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
-import com.github.grishberg.profiler.ui.*;
+import com.github.grishberg.profiler.ui.BookMarkInfo;
+import com.github.grishberg.profiler.ui.Main;
+import com.github.grishberg.profiler.ui.SimpleComponentListener;
+import com.github.grishberg.profiler.ui.TimeFormatter;
+import com.github.grishberg.profiler.ui.ZoomAndPanDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
     public static final int TOP_OFFSET = 20;
@@ -1019,6 +1036,14 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     public void updateBookmark(BookmarksRectangle selectedBookmark, BookMarkInfo result) {
         bookmarks.updateBookmark(selectedBookmark, result);
         repaint();
+    }
+
+    @NotNull
+    public List<ProfileData> getCurrentThreadMethods() {
+        if (result == null) {
+            return Collections.emptyList();
+        }
+        return result.getData().get(currentThreadId);
     }
 
     public interface FoundInfoListener {
