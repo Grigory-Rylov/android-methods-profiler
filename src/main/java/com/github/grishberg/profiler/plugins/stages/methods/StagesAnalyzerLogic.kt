@@ -140,6 +140,7 @@ class StagesAnalyzerLogic(
                 settings.setStringValue(SETTINGS_STAGES_FILE_DIALOG_DIR, it.parent)
             }
             ui.enableStartButton()
+            ui.enableSaveStagesButton()
             startAnalyze()
         }
     }
