@@ -135,7 +135,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                     return;
                 }
                 chart.switchThread(thread.getThreadId());
-                chart.requestFocus();
                 pluginsFacade.setCurrentThread(thread);
             }
         });
@@ -516,6 +515,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             hoverInfoPanel.hidePanel();
         });
 
+        JMenuItem switchMainThread = new JMenuItem("Switch to main thread");
+        switchMainThread.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('0'));
+        viewMenu.add(switchMainThread);
+        switchMainThread.addActionListener(a -> {
+            switchMainThread();
+        });
+
         viewMenu.addSeparator();
         JMenuItem increaseFontSize = new JMenuItem("Increase font size");
         increaseFontSize.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('+'));
@@ -528,6 +534,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         decreaseFontSize.addActionListener(a -> chart.decreaseFontSize());
 
         return viewMenu;
+    }
+
+    public void switchMainThread() {
+        if (threadsComboBox.getItemCount() > 0) {
+            threadsComboBox.setSelectedIndex(0);
+            hoverInfoPanel.hidePanel();
+        }
     }
 
     private void clearBookmarks() {

@@ -258,6 +258,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void switchThread(int threadId) {
+        requestFocus();
         updateBounds(threadId);
 
         if (threadId == currentThreadId) {
