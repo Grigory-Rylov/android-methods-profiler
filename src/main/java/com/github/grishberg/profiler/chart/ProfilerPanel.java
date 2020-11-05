@@ -11,37 +11,20 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
-import com.github.grishberg.profiler.ui.BookMarkInfo;
-import com.github.grishberg.profiler.ui.Main;
-import com.github.grishberg.profiler.ui.SimpleComponentListener;
-import com.github.grishberg.profiler.ui.TimeFormatter;
-import com.github.grishberg.profiler.ui.ZoomAndPanDelegate;
+import com.github.grishberg.profiler.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
     public static final int TOP_OFFSET = 20;
@@ -101,6 +84,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private final FontMetrics labelFontMetrics;
     @Nullable
     private OnRightClickListener rightClickListener;
+    private final MethodsNameDrawer cellPaintDelegate = new MethodsNameDrawer(leftSymbolOffset);
 
     public ProfilerPanel(TimeFormatter timeFormatter,
                          MethodsColorImpl methodsColor,
@@ -246,6 +230,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void openTraceResult(TraceContainer trace) {
+        cellPaintDelegate.resetFontSize();
         stagesFacade.onOpenNewTrace(trace.getResult());
 
         scale = new Grid(settings, TOP_OFFSET, timeFormatter, labelFont, labelFontMetrics);
@@ -489,7 +474,11 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             Shape transformedShape = at.createTransformedShape(element);
             Rectangle bounds = transformedShape.getBounds();
             g.setColor(Color.BLACK);
-            drawLabel(g, fm, element.profileData.getName(), bounds, bounds.y + bounds.height - fontTopOffset);
+
+            double left = Math.max(0, bounds.x);
+            double right = Math.min(screenSize.width, bounds.x + bounds.width);
+            cellPaintDelegate.drawLabel(g, fm, element.profileData.getName(),
+                    left, right, bounds.y + bounds.height - fontTopOffset);
         }
 
         // draw selections
@@ -974,6 +963,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void increaseFontSize() {
+        cellPaintDelegate.resetFontSize();
         int newFontSize = changeFontSize(1);
         levelHeight = newFontSize + 3;
         updateData();
@@ -981,6 +971,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void decreaseFontSize() {
+        cellPaintDelegate.resetFontSize();
         int newFontSize = changeFontSize(-1);
         levelHeight = newFontSize + 3;
         updateData();
