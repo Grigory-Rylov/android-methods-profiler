@@ -4,30 +4,16 @@ import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.analyzer.ThreadItemImpl;
-import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
-import com.github.grishberg.profiler.chart.BookmarksRectangle;
-import com.github.grishberg.profiler.chart.Finder;
-import com.github.grishberg.profiler.chart.MethodsPopupMenu;
-import com.github.grishberg.profiler.chart.ProfilerPanel;
+import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
-import com.github.grishberg.profiler.common.AppLogger;
-import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
-import com.github.grishberg.profiler.common.FileSystem;
-import com.github.grishberg.profiler.common.MainScope;
-import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
-import com.github.grishberg.profiler.common.TraceContainer;
+import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
-import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
-import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
-import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog;
-import com.github.grishberg.profiler.ui.dialogs.ReportsGeneratorDialog;
-import com.github.grishberg.profiler.ui.dialogs.ScaleRangeDialog;
-import com.github.grishberg.profiler.ui.dialogs.SetAndroidHomeDialog;
+import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog;
@@ -37,41 +23,13 @@ import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.AbstractButton;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.SwingWorker;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URI;
@@ -83,6 +41,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
     private final MethodsColorImpl methodsColor;
+    @Nullable
+    private File currentOpenedFile;
 
     private enum Actions {
         OPEN_TRACE_FILE,
@@ -132,6 +92,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final PluginsFacade pluginsFacade;
     private final StagesFacade stagesFacade;
     private final SystraceStagesFacade systraceStagesFacade;
+    private final Bookmarks bookmarks;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -244,6 +205,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         };
         dependenciesDialog = new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
 
+        bookmarks = new Bookmarks(settings, log);
         MainScope coroutineScope = new MainScope();
         CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
@@ -257,7 +219,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 log,
                 dependenciesDialog,
                 stagesFacade,
-                systraceStagesFacade);
+                systraceStagesFacade,
+                bookmarks);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -417,6 +380,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         exportTraceWithBookmarks.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('E'));
         JMenuItem openTracesDirInExternalFileManager = new JMenuItem("Open traces dir in external FIle manager");
 
+        JMenuItem deleteCurrentFile = new JMenuItem("Delete current file");
+
         file.add(openFile);
         file.add(openFileInNewWindow);
         file.add(openMappingFile);
@@ -426,6 +391,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         file.add(exportTraceWithBookmarks);
         file.addSeparator();
         file.add(openTracesDirInExternalFileManager);
+        file.add(deleteCurrentFile);
 
         openFile.addActionListener(arg0 -> showOpenFileChooser(false));
         openFileInNewWindow.addActionListener(arg0 -> showOpenFileChooser(true));
@@ -434,6 +400,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         newFileInNewWindow.addActionListener(arg0 -> showNewTraceDialog(true));
         exportTraceWithBookmarks.addActionListener(arg0 -> exportTraceWithBookmarks());
         openTracesDirInExternalFileManager.addActionListener(arg -> openTracesDirInExternalFileManager());
+        deleteCurrentFile.addActionListener(arg -> deleteCurrentFile());
         file.addSeparator();
         return file;
     }
@@ -445,6 +412,18 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         } catch (Exception e) {
             log.e("File Not Found", e);
         }
+    }
+
+    private void deleteCurrentFile() {
+        if (currentOpenedFile == null) {
+            return;
+        }
+        currentOpenedFile.delete();
+        bookmarks.clear();
+        menuHistoryItems.remove(currentOpenedFile);
+        currentOpenedFile = null;
+        chart.closeTrace();
+        threadsComboBox.removeAllItems();
     }
 
     private JMenu createViewMenu() {
@@ -810,6 +789,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public void openTraceFile(File file, SystraceRecordResult systraceRecords) {
+        currentOpenedFile = file;
         new ParseWorker(file, systraceRecords).execute();
         showProgressDialog(file);
     }

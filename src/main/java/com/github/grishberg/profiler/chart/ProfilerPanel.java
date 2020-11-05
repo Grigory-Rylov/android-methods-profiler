@@ -36,13 +36,14 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private static final int SCALE_FONT_SIZE = 13;
     private static final double NOT_FOUND_ITEM_DARKEN_FACTOR = 0.5;
     private static final double MINIMUM_WIDTH_IN_PX = 3;
+    private static final AnalyzerResultImpl RESULT_STUB = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
 
     private final FoundInfoListener foundInfoListener;
     private boolean init = true;
 
     private Bookmarks bookmarks;
     private int currentThreadId = -1;
-    private AnalyzerResult result = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
+    private AnalyzerResult result = RESULT_STUB;
     private final Map<Integer, List<ProfileRectangle>> objects = new HashMap<>();
 
     private int levelHeight = 20;
@@ -93,7 +94,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
                          AppLogger logger,
                          DependenciesFoundAction dependenciesFoundAction,
                          StagesFacade stagesFacade,
-                         SystraceStagesFacade systraceStagesFacade) {
+                         SystraceStagesFacade systraceStagesFacade,
+                         Bookmarks bookmarks) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
@@ -102,7 +104,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         this.stagesFacade = stagesFacade;
         this.systraceStagesFacade = systraceStagesFacade;
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
-        bookmarks = new Bookmarks(settings, logger);
+        this.bookmarks = bookmarks;
         stagesFacade.setRepaintDelegate(this);
         stagesFacade.setLabelPaintDelegate(this);
         systraceStagesFacade.setRepaintDelegate(this);
@@ -1035,6 +1037,12 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             return Collections.emptyList();
         }
         return result.getData().get(currentThreadId);
+    }
+
+    public void closeTrace() {
+        result = RESULT_STUB;
+        objects.clear();
+        repaint();
     }
 
     public interface FoundInfoListener {
