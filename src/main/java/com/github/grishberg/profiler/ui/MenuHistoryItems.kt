@@ -2,13 +2,13 @@ package com.github.grishberg.profiler.ui
 
 import com.github.grishberg.profiler.common.settings.SettingsRepository
 import java.io.File
-import java.util.*
+import java.util.LinkedList
 import javax.swing.JMenu
 import javax.swing.JMenuItem
 
 private const val SETTINGS_HISTORY = "Main.history"
 private const val MAX_HISTORY_SIZE = 10
-private const val FILE_MENU_ITEMS_COUNT_BEFORE_HISTORY = 10
+private const val FILE_MENU_ITEMS_COUNT_BEFORE_HISTORY = 11
 
 
 class MenuHistoryItems(
@@ -59,7 +59,18 @@ class MenuHistoryItems(
         }
     }
 
-    private fun createShortFileName(recentFile: File): String? {
+    private fun createShortFileName(recentFile: File): String {
         return recentFile.name
+    }
+
+    fun remove(currentOpenedFile: File) {
+        recentFiles.remove(currentOpenedFile.absolutePath)
+        settings.setStringList(SETTINGS_HISTORY, recentFiles)
+        for (i in 0 until menu.itemCount) {
+            if (menu.getItem(i).text == currentOpenedFile.name) {
+                menu.remove(i)
+                return
+            }
+        }
     }
 }

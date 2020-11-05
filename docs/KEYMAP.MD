@@ -39,6 +39,8 @@
 
 **Ctrl + i** when selected element - Show information table about selected method and all called methods - tree
 
+**Ctrl + 0** Switch to main thread.
+
 ### Find / Bookmarks
 **Ctrl + f** - Focus to the Find element field, to find elements press **Enter**
 
