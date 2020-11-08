@@ -24,4 +24,18 @@ data class ProfileDataImpl(
     override fun toString(): String {
         return name
     }
+
+    fun updateSelfTime() {
+        if (threadSelfTime > 0.0 && globalSelfTime > 0.0) {
+            return
+        }
+        threadSelfTime = threadEndTimeInMillisecond - threadStartTimeInMillisecond
+        globalSelfTime = globalEndTimeInMillisecond - globalStartTimeInMillisecond
+        for (child in children) {
+            threadSelfTime -= child.threadEndTimeInMillisecond - child.threadStartTimeInMillisecond
+            globalSelfTime -= child.globalEndTimeInMillisecond - child.globalStartTimeInMillisecond
+
+            child.updateSelfTime()
+        }
+    }
 }

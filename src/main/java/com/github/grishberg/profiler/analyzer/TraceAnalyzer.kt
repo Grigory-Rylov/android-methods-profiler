@@ -36,7 +36,7 @@ class TraceAnalyzer(
             }
 
             for (duration in traceDataForThread) {
-                updateSelfTime(duration)
+                duration.updateSelfTime()
             }
         }
 
@@ -81,7 +81,11 @@ class TraceAnalyzer(
             for (child in children) {
                 threadSelfTime -= child.threadEndTimeInMillisecond - child.threadStartTimeInMillisecond
                 globalSelfTime -= child.globalEndTimeInMillisecond - child.globalStartTimeInMillisecond
-                updateSelfTime(child)
+                try {
+                    updateSelfTime(child)
+                } catch (e: StackOverflowError) {
+                    e.printStackTrace()
+                }
             }
         }
     }
