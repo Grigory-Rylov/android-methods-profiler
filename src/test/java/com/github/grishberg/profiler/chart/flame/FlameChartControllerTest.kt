@@ -48,6 +48,8 @@ internal class FlameChartControllerTest {
 
         override fun redraw() = Unit
 
+        override fun requestFocus() = Unit
+
         override fun drawRect(
             g: Graphics2D,
             fm: FontMetrics,
@@ -103,7 +105,7 @@ internal class FlameChartControllerTest {
 
     @Test
     fun createSampleFlame() = runBlocking {
-        underTest.showFlameChart(listOf(root))
+        underTest.showFlameChart(listOf(root), false)
 
         underTest.onDraw(mock(), mock(), 1.0, 0.0, 0.0, 1000.0, 1000.0)
 
@@ -153,9 +155,9 @@ internal class FlameChartControllerTest {
 
     @Test
     fun checkFitBounds() = runBlocking {
-        underTest.showFlameChart(listOf(root))
+        underTest.showFlameChart(listOf(root), false)
 
-        assertEquals(Rectangle2D.Double(0.0, 0.0, 100.0, 60.0), viewStub.bounds)
+        assertEquals(Rectangle2D.Double(0.0, 0.0, 100.0, 80.0), viewStub.bounds)
     }
 
     private fun ProfileDataImpl.child(childName: String, start: Double, end: Double): ProfileDataImpl {

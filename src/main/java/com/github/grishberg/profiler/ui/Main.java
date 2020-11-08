@@ -553,11 +553,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ProfileData selected = chart.getSelected();
 
         flameChartController.showDialog();
+
+        boolean isThreadTime = settings.getBoolValueOrDefault(Main.SETTINGS_THREAD_TIME_MODE, false);
         if (selected == null) {
-            flameChartController.showFlameChart(chart.getCurrentThreadMethods());
+            flameChartController.showFlameChart(chart.getCurrentThreadMethods(), isThreadTime);
             return;
         }
-        flameChartController.showFlameChart(selected);
+        flameChartController.showFlameChart(selected, isThreadTime);
     }
 
     public void toggleBookmarkMode(boolean triggeredFromKeyMap) {
