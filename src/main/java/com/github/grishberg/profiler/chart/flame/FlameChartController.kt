@@ -104,22 +104,22 @@ class FlameChartController(
      * Switches between thread / global time.
      */
     fun switchTimeMode(isThreadTime: Boolean) {
-        showFlameChart(selectedElements)
+        showFlameChart(selectedElements, isThreadTime)
     }
 
     internal fun onDialogClosed() {
         isViewVisible = false
     }
 
-    fun showFlameChart(selectedElements: ProfileData) {
-        showFlameChart(listOf(selectedElements))
+    fun showFlameChart(selectedElements: ProfileData, isThreadTime: Boolean) {
+        showFlameChart(listOf(selectedElements), isThreadTime)
     }
 
-    fun showFlameChart(selectedElements: List<ProfileData>) {
+    fun showFlameChart(selectedElements: List<ProfileData>, isThreadTime: Boolean) {
         this.selectedElements = selectedElements
         coroutineScope.launch(dispatchers.ui) {
             val levelHeight = view?.levelHeight ?: 1.0
-            val data = calculateFlame(levelHeight, selectedElements)
+            val data = calculateFlame(levelHeight, selectedElements, isThreadTime)
             rectangles.clear()
             rectangles.addAll(data.rectangles)
             val bounds =
@@ -137,11 +137,15 @@ class FlameChartController(
         }
     }
 
-    private suspend fun calculateFlame(levelHeight: Double, selectedElements: List<ProfileData>): Result {
+    private suspend fun calculateFlame(
+        levelHeight: Double,
+        selectedElements: List<ProfileData>,
+        isThreadTime: Boolean
+    ): Result {
         val data = coroutineScope.async(dispatchers.worker) {
             val calculator = FlameCalculator(
                 methodsColor,
-                settings.getBoolValueOrDefault(Main.SETTINGS_THREAD_TIME_MODE),
+                isThreadTime,
                 levelHeight
             )
             if (selectedElements.size == 1) {
