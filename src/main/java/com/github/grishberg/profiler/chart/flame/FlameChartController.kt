@@ -1,12 +1,16 @@
 package com.github.grishberg.profiler.chart.flame
 
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.chart.ElementColor
+import com.github.grishberg.profiler.chart.FoundInfoListener
 import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
+import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsRepository
-import com.github.grishberg.profiler.ui.Main.SETTINGS_THREAD_TIME_MODE
+import com.github.grishberg.profiler.ui.Main
+import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -17,6 +21,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import java.util.ArrayList
 import kotlin.math.min
 
 interface View {
@@ -35,7 +40,15 @@ interface View {
     fun fitZoom(rect: Rectangle2D.Double)
     fun showDialog()
     fun hideDialog()
+    fun requestFocus()
 }
+
+interface DialogView {
+    fun hideInfoPanel()
+    fun exitFromSearching()
+}
+
+private const val NOT_FOUND_ITEM_DARKEN_FACTOR = 0.5
 
 class FlameChartController(
     private val methodsColor: MethodsColor,
@@ -51,6 +64,15 @@ class FlameChartController(
                 initView(it)
             }
         }
+    var foundInfoListener: FoundInfoListener? = null
+    var dialogView: DialogView? = null
+
+    private val textUtils = TextUtils()
+
+    private val colorBuffer = ElementColor()
+    private var isSearchingInProgress = false
+    private val foundItems = ArrayList<FlameRectangle>()
+    private var currentFocusedFoundElement: Int = -1
 
     private var currentSelectedElement: FlameRectangle? = null
     private val rectangles = mutableListOf<FlameRectangle>()
@@ -58,6 +80,13 @@ class FlameChartController(
     private val defaultFillColor = Color(0xD7AE65)
     private val selectedElementFillColor = Color(115, 238, 46);
     private val selectedElementEdgesColor = Color(0xE2CF95)
+
+    private val selectedBookmarkBorderColor = Color(246, 255, 241)
+    private val selectionColor = Color(115, 238, 46)
+    private val foundColor = Color(70, 238, 220)
+    private val focusedFoundColor = Color(171, 238, 221)
+    private val selectedFoundColor = Color(110, 238, 161)
+
     private var topOffset = 0.0
     private var selectedElements: List<ProfileData> = emptyList()
     var isViewVisible = false
@@ -112,7 +141,7 @@ class FlameChartController(
         val data = coroutineScope.async(dispatchers.worker) {
             val calculator = FlameCalculator(
                 methodsColor,
-                settings.getBoolValueOrDefault(SETTINGS_THREAD_TIME_MODE),
+                settings.getBoolValueOrDefault(Main.SETTINGS_THREAD_TIME_MODE),
                 levelHeight
             )
             if (selectedElements.size == 1) {
@@ -266,15 +295,45 @@ class FlameChartController(
                 if (element.width < minimumSizeInMs) {
                     continue
                 }
-                var fillColor = element.color ?: defaultFillColor
-                var borderColor = edgesColor
-                if (currentSelectedElement == element) {
-                    fillColor = selectedElementFillColor
-                    borderColor = selectedElementEdgesColor
-                }
-                v.drawRect(g, fm, element, topOffset, borderColor, fillColor)
+                val color = calculateColor(element)
+                v.drawRect(g, fm, element, topOffset, color.borderColor, color.fillColor)
             }
         }
+    }
+
+    private fun calculateColor(element: FlameRectangle): ElementColor {
+        val isSelectedElement = element == currentSelectedElement
+
+        if (isSearchingInProgress) {
+            if (element.isFoundElement) {
+                val isFocusedElement =
+                    currentFocusedFoundElement >= 0 && element === foundItems[currentFocusedFoundElement]
+                var color: Color = if (isSelectedElement) selectedFoundColor else foundColor
+                if (isFocusedElement && !isSelectedElement) {
+                    color = focusedFoundColor
+                }
+                val borderColor = if (isFocusedElement) selectedBookmarkBorderColor else edgesColor
+                colorBuffer.set(color, borderColor)
+                return colorBuffer
+            } else {
+                if (isSelectedElement) {
+                    colorBuffer.set(selectionColor, edgesColor)
+                }
+                val color: Color = element.color ?: defaultFillColor
+                colorBuffer.set(color.darker(NOT_FOUND_ITEM_DARKEN_FACTOR), edgesColor)
+                return colorBuffer
+            }
+        }
+
+        if (isSelectedElement) {
+            colorBuffer.set(selectionColor, edgesColor)
+            return colorBuffer
+        }
+
+        val color: Color = element.color ?: defaultFillColor
+        colorBuffer.set(color, edgesColor)
+
+        return colorBuffer
     }
 
     fun showDialog() {
@@ -298,16 +357,117 @@ class FlameChartController(
         view?.redraw()
     }
 
-    fun removeSelection() {
+    fun onEscape() {
+        disableSearching()
         currentSelectedElement = null
         view?.redraw()
     }
 
+    fun onMouseClickedToEmptySpace() {
+        currentSelectedElement = null
+        view?.redraw()
+    }
+
+    fun onSearchTextRemoved() {
+        disableSearching()
+        view?.redraw()
+    }
+
+    private fun disableSearching() {
+        if (!isSearchingInProgress) {
+            return
+        }
+        dialogView?.exitFromSearching()
+        isSearchingInProgress = false
+        for (foundElement in foundItems) {
+            foundElement.isFoundElement = false
+        }
+        foundItems.clear()
+    }
+
     fun copySelectedToClipboard() {
         currentSelectedElement?.let {
-            val stringSelection = StringSelection(it.name)
-            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            clipboard.setContents(stringSelection, null)
+            copyToClipboard(it.name)
+        }
+    }
+
+    fun copyShortClassNameToClipboard() {
+        currentSelectedElement?.let {
+            copyToClipboard(textUtils.shortClassMethodName(it.name))
+        }
+    }
+
+    fun copyShortClassNameWithoutMethodToClipboard() {
+        currentSelectedElement?.let {
+            copyToClipboard(textUtils.shortClassName(it.name))
+        }
+    }
+
+    private fun copyToClipboard(text: String) {
+        val stringSelection = StringSelection(text)
+        val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+        clipboard.setContents(stringSelection, null)
+    }
+
+    fun onFindInMethodsPressed(text: String, ignoreCase: Boolean = false) {
+        view?.requestFocus()
+        val shouldEndsWithText = text.endsWith("()")
+        val textToFind = if (shouldEndsWithText) {
+            text.substring(0, text.length - 2)
+        } else text
+        isSearchingInProgress = true
+        val targetString = if (ignoreCase) textToFind.toLowerCase() else textToFind
+
+        foundItems.clear()
+
+        for (element in rectangles) {
+            val lowerCasedName = if (ignoreCase) element.name.toLowerCase() else element.name
+            val isEquals = if (shouldEndsWithText)
+                lowerCasedName.endsWith(targetString)
+            else
+                lowerCasedName.contains(targetString)
+            if (isEquals) {
+                foundItems.add(element)
+                element.isFoundElement = true
+            } else {
+                element.isFoundElement = false
+            }
+        }
+        if (foundItems.isEmpty()) {
+            foundInfoListener?.onNotFound(text, ignoreCase)
+            isSearchingInProgress = false
+            view?.redraw()
+            return
+        }
+        currentFocusedFoundElement = 0
+        foundInfoListener?.onFound(foundItems.size, currentFocusedFoundElement)
+        val element: FlameRectangle = foundItems[currentFocusedFoundElement]
+        view?.fitZoom(element)
+    }
+
+    fun focusNextFoundItem() {
+        dialogView?.hideInfoPanel()
+
+        if (foundItems.size > 0) {
+            currentFocusedFoundElement++
+            if (currentFocusedFoundElement >= foundItems.size) {
+                currentFocusedFoundElement = 0
+            }
+            view?.fitZoom(foundItems[currentFocusedFoundElement])
+            foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement)
+        }
+    }
+
+    fun focusPrevFoundItem() {
+        dialogView?.hideInfoPanel()
+
+        if (foundItems.size > 0) {
+            currentFocusedFoundElement--
+            if (currentFocusedFoundElement < 0) {
+                currentFocusedFoundElement = foundItems.size - 1
+            }
+            view?.fitZoom(foundItems[currentFocusedFoundElement])
+            foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement)
         }
     }
 

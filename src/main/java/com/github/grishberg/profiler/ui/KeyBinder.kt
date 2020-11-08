@@ -41,9 +41,10 @@ class KeyBinder(
         addKeyMap(KeyEvent.VK_UP, UpAction())
         addKeyMap(KeyEvent.VK_DOWN, DownAction())
 
-        val focusNextAction = EAction()
+        val focusNextAction = FocusNextAction()
         addKeyMap(KeyEvent.VK_E, focusNextAction)
         addKeyMap(KeyEvent.VK_ENTER, focusNextAction)
+        addKeyMap(KeyEvent.VK_F3, focusNextAction)
         addKeyMap(KeyEvent.VK_Q, QAction())
         addKeyMap(KeyEvent.VK_ESCAPE, RemoveSelectionAction())
 
@@ -198,10 +199,7 @@ class KeyBinder(
 
     private inner class RemoveSelectionAction : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
-            profilerView.disableSearching()
-            profilerView.removeSelection()
-            profilerView.requestFocus()
-            main.exitFromSearching()
+            main.exitFromSearching(true)
         }
     }
 
@@ -212,7 +210,7 @@ class KeyBinder(
         }
     }
 
-    private inner class EAction : SmartAction() {
+    private inner class FocusNextAction : SmartAction() {
         override fun actionPerformed() {
             profilerView.focusNextFoundItem()
             hoverInfoPanel.hidePanel()

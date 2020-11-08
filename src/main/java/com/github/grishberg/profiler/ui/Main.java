@@ -36,7 +36,7 @@ import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        ProfilerPanel.FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
+        FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -60,7 +60,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public static final String SETTINGS_MAPPINGS_FILE_DIALOG_DIRECTORY = "Main.mappingsFileDialogDirectory";
     public static final String SETTINGS_REPORTS_FILE_DIALOG_DIRECTORY = "Main.reportsFileDialogDirectory";
     public static final String SETTINGS_SHOW_BOOKMARKS = "Char.showBookmarks";
-    private static final String DEFAULT_FOUND_INFO_MESSAGE = "";
+    public static final String DEFAULT_FOUND_INFO_MESSAGE = "";
     private static final String TITLE = "YAMP v";
     public static final String SETTINGS_GRID = "Main.enableGrid";
     private final TimeFormatter timeFormatter = new TimeFormatter();
@@ -255,6 +255,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         flameChartController = new FlameChartController(methodsColor, settings, log,
                 coroutineScope, coroutinesDispatchers);
         FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
+        flameChartController.setFoundInfoListener(flameChartDialog);
+        flameChartController.setDialogView(flameChartDialog);
 
         pluginsFacade = new PluginsFacade(frame,
                 stagesFacade,
@@ -687,6 +689,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         Finder finder = new Finder(resultContainer.getResult());
         Finder.FindResult result = finder.findInThread(text, ignoreCase, thread.getThreadId());
         if (result.getFoundResult().isEmpty()) {
+            JOptionPane.showMessageDialog(chart, "Not found");
             return;
         }
 
@@ -699,6 +702,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
         ThreadItem foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
         if (foundThreadItem == null) {
+            JOptionPane.showMessageDialog(chart, "Not found");
             return;
         }
 
@@ -852,7 +856,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
-    public void exitFromSearching() {
+    public void exitFromSearching(boolean removeSelection) {
+        if (removeSelection) {
+            chart.removeSelection();
+        }
+        chart.disableSearching();
+        chart.requestFocus();
         foundInfo.setText(DEFAULT_FOUND_INFO_MESSAGE);
     }
 
@@ -968,7 +977,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         @Override
         public void removeUpdate(DocumentEvent e) {
             if (findClassText.getText().length() == 0) {
-                exitFromSearching();
+                exitFromSearching(false);
             }
         }
 
