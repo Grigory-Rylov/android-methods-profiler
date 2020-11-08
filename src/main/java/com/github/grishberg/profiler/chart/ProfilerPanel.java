@@ -233,6 +233,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     }
 
     public void openTraceResult(TraceContainer trace) {
+        disableSearching();
+
         cellPaintDelegate.resetFontSize();
         stagesFacade.onOpenNewTrace(trace.getResult());
 
