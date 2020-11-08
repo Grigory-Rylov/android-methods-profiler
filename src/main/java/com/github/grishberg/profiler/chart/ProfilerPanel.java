@@ -86,6 +86,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     @Nullable
     private OnRightClickListener rightClickListener;
     private final MethodsNameDrawer cellPaintDelegate = new MethodsNameDrawer(leftSymbolOffset);
+    private final ElementColor colorBuffer = new ElementColor();
 
     public ProfilerPanel(TimeFormatter timeFormatter,
                          MethodsColorImpl methodsColor,
@@ -454,8 +455,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             }
 
             Shape transformedShape = at.createTransformedShape(element);
-            ElementColor colorProfileData = getColorProfileData(element, objectsForThread);
-            drawElement(g, transformedShape, colorProfileData);
+            calculateColorProfileData(element, objectsForThread);
+            drawElement(g, transformedShape, colorBuffer);
             g.setColor(Color.BLACK);
         }
 
@@ -577,9 +578,10 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         }
     }
 
-    private ElementColor getColorProfileData(ProfileRectangle element, List<ProfileRectangle> objects) {
+    private void calculateColorProfileData(
+            ProfileRectangle element,
+            List<ProfileRectangle> objects) {
         boolean isSelectedElement = currentSelectedElement >= 0 && element == objects.get(currentSelectedElement);
-        ProfileData profile = element.profileData;
 
         if (isSearchingInProgress) {
             if (element.isFoundElement) {
@@ -589,28 +591,31 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
                     color = focusedFoundColor;
                 }
                 Color borderColor = isFocusedElement ? selectedBookmarkBorderColor : edgesColor;
-                return new ElementColor(color, borderColor);
+                colorBuffer.set(color, borderColor);
+                return;
             } else {
                 if (isSelectedElement) {
-                    return new ElementColor(selectionColor, edgesColor);
+                    colorBuffer.set(selectionColor, edgesColor);
                 }
                 Color color = getColorForMethod(element);
-                return new ElementColor(darker(color), edgesColor);
+                colorBuffer.set(darker(color, NOT_FOUND_ITEM_DARKEN_FACTOR), edgesColor);
+                return;
             }
         }
 
         if (isSelectedElement) {
-            return new ElementColor(selectionColor, edgesColor);
+            colorBuffer.set(selectionColor, edgesColor);
+            return;
         }
 
         Color color = getColorForMethod(element);
-        return new ElementColor(color, edgesColor);
+        colorBuffer.set(color, edgesColor);
     }
 
-    private static Color darker(Color color) {
-        return new Color(Math.max((int) (color.getRed() * NOT_FOUND_ITEM_DARKEN_FACTOR), 0),
-                Math.max((int) (color.getGreen() * NOT_FOUND_ITEM_DARKEN_FACTOR), 0),
-                Math.max((int) (color.getBlue() * NOT_FOUND_ITEM_DARKEN_FACTOR), 0),
+    public static Color darker(Color color, Double darkenFactor) {
+        return new Color(Math.max((int) (color.getRed() * darkenFactor), 0),
+                Math.max((int) (color.getGreen() * darkenFactor), 0),
+                Math.max((int) (color.getBlue() * darkenFactor), 0),
                 color.getAlpha());
     }
 
@@ -740,6 +745,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         }
         if (foundItems.isEmpty()) {
             foundInfoListener.onNotFound(textToFind, ignoreCase);
+            isSearchingInProgress = false;
             repaint();
             return;
         }
@@ -842,7 +848,6 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             }
             zoomAndPanDelegate.fitZoom(foundItems.get(currentFocusedFoundElement), FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
             foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement);
-            return;
         }
     }
 
@@ -854,7 +859,6 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
             }
             zoomAndPanDelegate.fitZoom(foundItems.get(currentFocusedFoundElement), FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
             foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement);
-            return;
         }
     }
 
@@ -1044,12 +1048,6 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         result = RESULT_STUB;
         objects.clear();
         repaint();
-    }
-
-    public interface FoundInfoListener {
-        void onFound(int count, int selectedIndex);
-
-        void onNotFound(String text, boolean ignoreCase);
     }
 
     public class ProfilerPanelData {

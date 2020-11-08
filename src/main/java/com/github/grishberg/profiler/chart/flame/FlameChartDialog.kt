@@ -1,12 +1,15 @@
 package com.github.grishberg.profiler.chart.flame
 
+import com.github.grishberg.profiler.chart.FoundInfoListener
 import com.github.grishberg.profiler.common.SimpleMouseListener
+import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.TextUtils
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
@@ -17,16 +20,19 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JLabel
+import javax.swing.JOptionPane
 import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
-
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
 class FlameChartDialog(
-        private val controller: FlameChartController
-) : JFrame("Flame chart") {
+    private val controller: FlameChartController
+) : JFrame("Flame chart"), FoundInfoListener, DialogView {
     private val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
     private val flameChart = FlameChartPanel(this, controller)
     private val inputMap = flameChart.getInputMap(condition)
@@ -37,6 +43,13 @@ class FlameChartDialog(
     private val mainPanel = JPanel(BorderLayout())
     private val statusNameLabel = JLabel()
     private val statusTimeLabel = JLabel()
+    private val findClassText = JTextField("").apply {
+        toolTipText = "Use this field to find elements in trace"
+        document.addDocumentListener(FindTextChangedEvent())
+        addActionListener(FindInMethodsAction())
+    }
+
+    private val foundInfo = JLabel(Main.DEFAULT_FOUND_INFO_MESSAGE)
 
     init {
         hoverInfoPanel = FlameInfoPanel(flameChart)
@@ -69,6 +82,7 @@ class FlameChartDialog(
             }
         })
         controller.view = flameChart
+        createFindPanel()
         mainPanel.add(flameChart, BorderLayout.CENTER)
         createStatusBar()
         contentPane = mainPanel
@@ -86,7 +100,11 @@ class FlameChartDialog(
         addKeyMap(KeyEvent.VK_UP, UpAction())
         addKeyMap(KeyEvent.VK_DOWN, DownAction())
 
-        addKeyMap(KeyEvent.VK_E, EAction())
+        val focusNextAction = FocusNextAction()
+        addKeyMap(KeyEvent.VK_E, focusNextAction)
+        addKeyMap(KeyEvent.VK_ENTER, focusNextAction)
+        addKeyMap(KeyEvent.VK_F3, focusNextAction)
+
         addKeyMap(KeyEvent.VK_Q, QAction())
         addKeyMap(KeyEvent.VK_ESCAPE, RemoveSelectionAction())
 
@@ -94,6 +112,7 @@ class FlameChartDialog(
         addKeyMap(KeyEvent.VK_G, GlobalTimeModeAction())
 
         addKeyMapWithCtrl(KeyEvent.VK_C, CopySelectedFullClassNameAction())
+        addKeyMapWithCtrl(KeyEvent.VK_F, GoToSearchField())
         addKeyMap(KeyEvent.VK_C, CenterSelectedElementAction())
         addKeyMap(KeyEvent.VK_Z, ResetZoomAction())
         addKeyMap(KeyEvent.VK_F, FitSelectedElementAction())
@@ -111,6 +130,7 @@ class FlameChartDialog(
                 controller.onDialogClosed()
             }
         })
+        flameChart.requestFocus()
     }
 
     private fun selectElement(e: MouseEvent) {
@@ -122,8 +142,15 @@ class FlameChartDialog(
             val end = selectedData.maxX
             statusTimeLabel.text = " duration: ${String.format("%.3f ms", end - start)}"
         } else {
-            controller.removeSelection()
+            controller.onMouseClickedToEmptySpace()
         }
+    }
+
+    private fun createFindPanel() {
+        val findPanel = JPanel(BorderLayout(2, 2))
+        findPanel.add(findClassText, BorderLayout.CENTER)
+        findPanel.add(foundInfo, BorderLayout.LINE_END)
+        mainPanel.add(findPanel, BorderLayout.NORTH)
     }
 
     private fun createStatusBar() {
@@ -164,6 +191,23 @@ class FlameChartDialog(
         val keyStroke: KeyStroke = KeyStroke.getKeyStroke(keyCode, modifiers)
         inputMap.put(keyStroke, keyStroke.toString())
         actionMap.put(keyStroke.toString(), action)
+    }
+
+    override fun exitFromSearching() {
+        foundInfo.text = ""
+    }
+
+    override fun onFound(count: Int, selectedIndex: Int) {
+        foundInfo.text = String.format("found %d, current %d", count, selectedIndex)
+    }
+
+    override fun onNotFound(text: String, ignoreCase: Boolean) {
+        foundInfo.text = ""
+        JOptionPane.showMessageDialog(flameChart, "Not found `$text`")
+    }
+
+    override fun hideInfoPanel() {
+        hoverInfoPanel.hidePanel()
     }
 
     private inner class WAction : SmartAction() {
@@ -209,47 +253,45 @@ class FlameChartDialog(
         }
     }
 
+    private inner class GoToSearchField : SmartAction() {
+        override fun actionPerformed() {
+            findClassText.requestFocus()
+        }
+    }
+
     private inner class CopySelectedFullClassNameAction : SmartAction() {
         override fun actionPerformed() {
-            //val stringSelection = StringSelection(copySource.text)
-            //val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            //clipboard.setContents(stringSelection, null)
+            controller.copySelectedToClipboard()
         }
     }
 
     private inner class CopySelectedShortClassNameAction : SmartAction() {
         override fun actionPerformed() {
-            //val stringSelection = StringSelection(textUtils.shortClassMethodName(copySource.text))
-            //val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            //clipboard.setContents(stringSelection, null)
+            controller.copyShortClassNameToClipboard()
         }
     }
 
     private inner class CopySelectedShortClassNameWithoutMethodAction : SmartAction() {
         override fun actionPerformed() {
-            //val stringSelection = StringSelection(textUtils.shortClassName(copySource.text))
-            //val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            //clipboard.setContents(stringSelection, null)
+            controller.copyShortClassNameWithoutMethodToClipboard()
         }
     }
 
     private inner class RemoveSelectionAction : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
-            flameChart.removeSelection()
+            controller.onEscape()
         }
     }
 
     private inner class QAction : SmartAction() {
         override fun actionPerformed() {
-            //profilerView.focusPrevFoundItem()
-            //hoverInfoPanel.hidePanel()
+            controller.focusPrevFoundItem()
         }
     }
 
-    private inner class EAction : SmartAction() {
+    private inner class FocusNextAction : SmartAction() {
         override fun actionPerformed() {
-            //profilerView.focusNextFoundItem()
-            //hoverInfoPanel.hidePanel()
+            controller.focusNextFoundItem()
         }
     }
 
@@ -278,7 +320,7 @@ class FlameChartDialog(
     }
 
     private inner class ChangeFontSizeAction(
-            private val increase: Boolean
+        private val increase: Boolean
     ) : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
             if (increase) {
@@ -314,4 +356,27 @@ class FlameChartDialog(
 
         abstract fun actionPerformed()
     }
+
+    private inner class FindTextChangedEvent : DocumentListener {
+        override fun insertUpdate(e: DocumentEvent) = Unit
+
+        override fun removeUpdate(e: DocumentEvent) {
+            if (findClassText.text.isEmpty()) {
+                controller.onSearchTextRemoved()
+            }
+        }
+
+        override fun changedUpdate(e: DocumentEvent) = Unit
+    }
+
+    private inner class FindInMethodsAction : ActionListener {
+        override fun actionPerformed(e: ActionEvent) {
+            val textToFind: String = findClassText.text
+            if (textToFind != null && textToFind.length > 0) {
+                controller.onFindInMethodsPressed(textToFind)
+                return
+            }
+        }
+    }
+
 }

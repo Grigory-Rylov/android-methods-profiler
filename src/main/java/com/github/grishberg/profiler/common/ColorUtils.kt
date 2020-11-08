@@ -1,6 +1,7 @@
 package com.github.grishberg.profiler.common
 
 import java.awt.Color
+import kotlin.math.max
 
 fun hexToColor(colorInHex: String): Color {
     val colorInt = java.lang.Long.parseLong(colorInHex, 16)
@@ -26,4 +27,13 @@ fun colorToHex(color: Color): String {
 fun contrastColor(c: Color): Color {
     val y = (299 * c.red + 587 * c.green + 114 * c.blue) / 1000.toDouble()
     return if (y >= 128) Color.black else Color.white
+}
+
+fun Color.darker(darkenFactor: Double): Color {
+    return Color(
+        max((this.red * darkenFactor).toInt(), 0),
+        max((this.green * darkenFactor).toInt(), 0),
+        max((this.blue * darkenFactor).toInt(), 0),
+        this.alpha
+    )
 }

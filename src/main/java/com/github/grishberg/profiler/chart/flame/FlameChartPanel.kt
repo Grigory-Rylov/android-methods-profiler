@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.chart.flame
 
+import com.github.grishberg.profiler.chart.MethodsNameDrawer
 import com.github.grishberg.profiler.chart.ProfilerPanel.TOP_OFFSET
 import com.github.grishberg.profiler.ui.ZoomAndPanDelegate
 import java.awt.Color
@@ -8,7 +9,6 @@ import java.awt.FontMetrics
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.Shape
 import java.awt.Toolkit
@@ -20,6 +20,8 @@ import java.awt.geom.Rectangle2D
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
+import kotlin.math.max
+import kotlin.math.min
 
 private const val MINIMUM_WIDTH_IN_PX = 1.0
 private const val FIT_PADDING = 8
@@ -35,6 +37,7 @@ class FlameChartPanel(
     private val fontTopOffset = 4
     private val zoomAndPanDelegate = ZoomAndPanDelegate(this, TOP_OFFSET, ZoomAndPanDelegate.LeftBottomBounds())
     private var init = true
+    private val methodsNameDrawer = MethodsNameDrawer(leftSymbolOffset)
 
     override var bounds: Rectangle2D.Double = Rectangle2D.Double()
         set(value) {
@@ -117,30 +120,9 @@ class FlameChartPanel(
         g.draw(transformedShape)
 
         g.color = Color.BLACK
-        drawLabel(g, fm, element.name, bounds, bounds.y + bounds.height - fontTopOffset)
-
-    }
-
-    private fun drawLabel(
-        g: Graphics2D,
-        fm: FontMetrics,
-        name: String,
-        horizontalBounds: Rectangle,
-        topPosition: Int
-    ) {
-        var leftPosition: Int = horizontalBounds.x + leftSymbolOffset
-        if (leftPosition < 0) {
-            leftPosition = 0
-        }
-        for (element in name) {
-            val c = element
-            val w = fm.charWidth(c)
-            if (leftPosition + w > horizontalBounds.x + horizontalBounds.width) {
-                break
-            }
-            g.drawString(c.toString(), leftPosition, topPosition)
-            leftPosition += w
-        }
+        val left = max(0, bounds.x).toDouble()
+        val right = min(width, bounds.x + bounds.width).toDouble()
+        methodsNameDrawer.drawLabel(g, fm, element.name, left, right, bounds.y + bounds.height - fontTopOffset)
     }
 
     override fun drawRect(g: Graphics2D, rect: Rectangle2D, color: Color) {
@@ -175,10 +157,6 @@ class FlameChartPanel(
     }
 
     fun scrollDown() {
-
-    }
-
-    fun removeSelection() {
 
     }
 
