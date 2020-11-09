@@ -2,15 +2,8 @@ package com.github.grishberg.profiler.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -102,7 +95,6 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         }
         targetComponent.repaint();
     }
-
 
     private boolean isCtrlShiftPressed(MouseEvent e) {
         return isShiftPressed(e) && isCtrlPressed(e);
@@ -222,7 +214,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         Point2D.Double rightBottom = new Point2D.Double();
         inverse.transform(new Point2D.Double(rectSrc.getX(), rectSrc.getY()), leftTop);
         inverse.transform(new Point2D.Double(rectSrc.getMaxX(), rectSrc.getMaxY()), rightBottom);
-        return new Rectangle2D.Double(leftTop.x, leftTop.y, rightBottom.x, rightBottom.y);
+        return new Rectangle2D.Double(leftTop.x, leftTop.y, rightBottom.x - leftTop.x, rightBottom.y - leftTop.y);
     }
 
     public Point2D.Float transformPoint(Point2D.Double p1) throws NoninvertibleTransformException {
@@ -380,7 +372,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         @Override
         public double calculateNavigationDy(Rectangle2D transformedScreen, Rectangle2D targetElement) {
             Point.Double targetElementCenter = new Point.Double(targetElement.getCenterX(), targetElement.getCenterY());
-            return transformedScreen.getCenterY() - targetElementCenter.getY();
+            return ((transformedScreen.getMinY() + transformedScreen.getMaxY()) / 2) - targetElementCenter.getY();
         }
     }
 

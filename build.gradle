@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'com.github.grishberg'
-version '20.11.08.1'
+version '20.11.09.0'
 def use_jdk8 = project.hasProperty("use_jdk8")
 
 if (use_jdk8) {
