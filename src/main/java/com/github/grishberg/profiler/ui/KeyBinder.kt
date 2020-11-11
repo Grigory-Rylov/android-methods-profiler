@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui
 
-import com.github.grishberg.profiler.chart.ProfilerPanel
+import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
@@ -14,7 +14,7 @@ import javax.swing.JTextField
 import javax.swing.KeyStroke
 
 class KeyBinder(
-    private val profilerView: ProfilerPanel,
+    private val profilerView: CallTracePanel,
     private val copySource: JTextField,
     private val searchField: JTextField,
     private val dialogDelegate: ShowDialogDelegate,

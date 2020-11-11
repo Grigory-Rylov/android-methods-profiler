@@ -26,7 +26,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
 
-public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
+public class CallTracePanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
     public static final int TOP_OFFSET = 20;
     public static final String SETTINGS_FONT_NAME = "Chart.fontName";
     public static final String SETTINGS_CELL_FONT_SIZE = "Chart.cellsFontSize";
@@ -88,15 +88,15 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private final MethodsNameDrawer cellPaintDelegate = new MethodsNameDrawer(leftSymbolOffset);
     private final ElementColor colorBuffer = new ElementColor();
 
-    public ProfilerPanel(TimeFormatter timeFormatter,
-                         MethodsColorImpl methodsColor,
-                         FoundInfoListener foundInfoListener,
-                         SettingsRepository settings,
-                         AppLogger logger,
-                         DependenciesFoundAction dependenciesFoundAction,
-                         StagesFacade stagesFacade,
-                         SystraceStagesFacade systraceStagesFacade,
-                         Bookmarks bookmarks) {
+    public CallTracePanel(TimeFormatter timeFormatter,
+                          MethodsColorImpl methodsColor,
+                          FoundInfoListener foundInfoListener,
+                          SettingsRepository settings,
+                          AppLogger logger,
+                          DependenciesFoundAction dependenciesFoundAction,
+                          StagesFacade stagesFacade,
+                          SystraceStagesFacade systraceStagesFacade,
+                          Bookmarks bookmarks) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
@@ -134,7 +134,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         addComponentListener(new SimpleComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
-                screenSize = ProfilerPanel.this.getSize();
+                screenSize = CallTracePanel.this.getSize();
             }
         });
         labelFont = new Font(Font.SANS_SERIF, Font.PLAIN, SCALE_FONT_SIZE);

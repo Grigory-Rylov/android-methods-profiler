@@ -3,13 +3,12 @@ package com.github.grishberg.profiler.chart.flame
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.ElementColor
 import com.github.grishberg.profiler.chart.FoundInfoListener
-import com.github.grishberg.profiler.chart.ProfilerPanel
+import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsRepository
-import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -93,10 +92,10 @@ class FlameChartController(
         private set
 
     private fun initView(view: View) {
-        view.fontName = settings.getStringValueOrDefault(ProfilerPanel.SETTINGS_FONT_NAME, "Arial")
-        settings.setStringValue(ProfilerPanel.SETTINGS_FONT_NAME, view.fontName)
+        view.fontName = settings.getStringValueOrDefault(CallTracePanel.SETTINGS_FONT_NAME, "Arial")
+        settings.setStringValue(CallTracePanel.SETTINGS_FONT_NAME, view.fontName)
         val cellFontSize =
-            settings.getIntValueOrDefault(ProfilerPanel.SETTINGS_CELL_FONT_SIZE, ProfilerPanel.DEFAULT_CELL_FONT_SIZE)
+            settings.getIntValueOrDefault(CallTracePanel.SETTINGS_CELL_FONT_SIZE, CallTracePanel.DEFAULT_CELL_FONT_SIZE)
         view.levelHeight = cellFontSize + 3.0
     }
 

@@ -36,7 +36,7 @@ import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
+        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener {
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -70,7 +70,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JTextField selectedClassNameLabel;
     private final JTextField findClassText;
     private final JLabel selectedDurationLabel;
-    private final ProfilerPanel chart;
+    private final CallTracePanel chart;
     private final InfoPanel hoverInfoPanel;
     private final JLabel foundInfo;
     private final NewBookmarkDialog newBookmarkDialog;
@@ -210,7 +210,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         systraceStagesFacade = new SystraceStagesFacade(log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
-        chart = new ProfilerPanel(
+        chart = new CallTracePanel(
                 timeFormatter,
                 methodsColor,
                 this,
