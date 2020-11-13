@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.ui;
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult;
 import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
@@ -8,8 +9,13 @@ import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
+import com.github.grishberg.profiler.chart.preview.PreviewImageFactory;
+import com.github.grishberg.profiler.chart.preview.PreviewImageFactoryImpl;
+import com.github.grishberg.profiler.chart.preview.PreviewImageRepository;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
+import com.github.grishberg.profiler.chart.theme.DarkPalette;
+import com.github.grishberg.profiler.chart.theme.Palette;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
@@ -93,6 +99,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final StagesFacade stagesFacade;
     private final SystraceStagesFacade systraceStagesFacade;
     private final Bookmarks bookmarks;
+    private final CallTracePreviewPanel previewPanel;
+    private final PreviewImageRepository previewImageRepository;
+    private final Palette palette;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -150,9 +159,19 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         foundInfo = new JLabel(DEFAULT_FOUND_INFO_MESSAGE);
         topControls.add(foundInfo, BorderLayout.LINE_END);
 
+        previewPanel = new CallTracePreviewPanel(log);
+
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.PAGE_START;
+        gbc.gridwidth = 0;
+        controls.add(previewPanel, gbc);
+
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.PAGE_START;
         gbc.gridwidth = 0;
@@ -160,7 +179,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 1;
         gbc.gridwidth = 2;
 
@@ -210,6 +229,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         systraceStagesFacade = new SystraceStagesFacade(log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
+        palette = new DarkPalette();
+
+        PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(palette, methodsColor);
+        previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
+                coroutineScope, coroutinesDispatchers);
+
         chart = new CallTracePanel(
                 timeFormatter,
                 methodsColor,
@@ -219,7 +244,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 dependenciesDialog,
                 stagesFacade,
                 systraceStagesFacade,
-                bookmarks);
+                bookmarks,
+                previewImageRepository,
+                previewPanel);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -950,12 +977,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 resultContainer = result.traceContainer;
                 frame.setTitle(TITLE + getClass().getPackage().getImplementationVersion() + " " + ": " + traceFile.getName());
                 chart.openTraceResult(result.traceContainer);
+                AnalyzerResult traceContainerResult = result.traceContainer.getResult();
                 if (systraceRecords != null) {
                     systraceStagesFacade.setSystraceStages(
-                            result.traceContainer.getResult(),
+                            traceContainerResult,
                             systraceRecords);
                 }
-                pluginsFacade.setCurrentTraceProfiler(result.traceContainer.getResult());
+                pluginsFacade.setCurrentTraceProfiler(traceContainerResult);
 
                 threadsComboBox.removeAllItems();
                 for (ThreadItem thread : resultContainer.getResult().getThreads()) {
