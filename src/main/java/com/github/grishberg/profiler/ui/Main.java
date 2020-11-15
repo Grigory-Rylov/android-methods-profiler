@@ -4,7 +4,6 @@ import com.github.grishberg.android.profiler.core.AnalyzerResult;
 import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.analyzer.ThreadItemImpl;
 import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
@@ -16,6 +15,8 @@ import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.chart.theme.DarkPalette;
 import com.github.grishberg.profiler.chart.theme.Palette;
+import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
+import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
@@ -35,7 +36,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URI;
@@ -83,7 +86,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final LoadingDialog loadingDialog;
     private final JavaMethodsRecorderDialog methodTraceRecordDialog;
     private final ScaleRangeDialog scaleRangeDialog;
-    private final JComboBox threadsComboBox;
+    private final SwitchThreadButton switchThreadsButton;
     private final JCheckBoxMenuItem showBookmarks;
     private final AppLogger log;
     private FramesManager framesManager;
@@ -130,24 +133,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JPanel topControls = new JPanel(new BorderLayout(2, 2));
         topControls.setBorder(new EmptyBorder(0, 4, 0, 4));
 
-        threadsComboBox = new JComboBox<ThreadItemImpl>();
-        threadsComboBox.setToolTipText("Threads switcher");
-        threadsComboBox.setPrototypeDisplayValue(new ThreadItemImpl("XXXXXXXXXXXXXXX", 0));
-        threadsComboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() != ItemEvent.SELECTED) {
-                    return;
-                }
-                ThreadItem thread = (ThreadItem) threadsComboBox.getSelectedItem();
-                if (thread == null) {
-                    return;
-                }
-                chart.switchThread(thread.getThreadId());
-                pluginsFacade.setCurrentThread(thread);
-            }
-        });
-        topControls.add(threadsComboBox, BorderLayout.LINE_START);
+        switchThreadsButton = new SwitchThreadButton();
+        switchThreadsButton.addActionListener(e -> showThreadsDialog());
+        topControls.add(switchThreadsButton, BorderLayout.LINE_START);
 
         findClassText = new JTextField("");
         findClassText.setToolTipText("Use this field to find elements in trace");
@@ -231,7 +219,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
         palette = new DarkPalette();
 
-        PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(palette, methodsColor);
+        PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(palette, methodsColor, bookmarks);
         previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
                 coroutineScope, coroutinesDispatchers);
 
@@ -321,6 +309,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 framesManager.onFrameClosed();
             }
         });
+    }
+
+    private void switchThread(ThreadItem thread) {
+        switchThreadsButton.switchThread(thread);
+        chart.switchThread(thread.getThreadId());
+        pluginsFacade.setCurrentThread(thread);
     }
 
     private String timeModeAsString() {
@@ -451,7 +445,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menuHistoryItems.remove(currentOpenedFile);
         currentOpenedFile = null;
         chart.closeTrace();
-        threadsComboBox.removeAllItems();
+        switchThreadsButton.clear();
     }
 
     private JMenu createViewMenu() {
@@ -502,6 +496,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JMenuItem showFlameChart = new JMenuItem("Show Flame Chart");
         viewMenu.add(showFlameChart);
         showFlameChart.addActionListener(a -> showFlameChartDialog());
+
+        JMenuItem showThreadsDialog = new JMenuItem("Show threads dialog");
+        viewMenu.add(showThreadsDialog);
+        showThreadsDialog.addActionListener(a -> showThreadsDialog());
+        showThreadsDialog.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator(KeyEvent.VK_T));
 
         viewMenu.addSeparator();
 
@@ -565,9 +564,26 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return viewMenu;
     }
 
+    public void showThreadsDialog() {
+        if (resultContainer == null) {
+            return;
+        }
+
+        ThreadsSelectionController controller = new ThreadsSelectionController();
+        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log);
+        dialog.showThreads(resultContainer.getResult().getThreads());
+        dialog.setLocationRelativeTo(chart);
+        dialog.setVisible(true);
+        ThreadItem selected = dialog.getSelectedThreadItem();
+        if (selected == null) {
+            return;
+        }
+        switchThread(selected);
+    }
+
     public void switchMainThread() {
-        if (threadsComboBox.getItemCount() > 0) {
-            threadsComboBox.setSelectedIndex(0);
+        if (resultContainer != null) {
+            switchThread(resultContainer.getResult().getThreads().get(0));
             hoverInfoPanel.hidePanel();
         }
     }
@@ -711,7 +727,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void onNotFound(String text, boolean ignoreCase) {
         foundInfo.setText("not found");
 
-        ThreadItemImpl thread = (ThreadItemImpl) threadsComboBox.getSelectedItem();
+        ThreadItem thread = switchThreadsButton.getCurrentThread();
         if (resultContainer == null || thread == null) {
             return;
         }
@@ -740,7 +756,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 "Found in another thread", JOptionPane.YES_NO_OPTION) == 0;
 
         if (shouldSwitchThread) { //The ISSUE is here
-            threadsComboBox.setSelectedIndex(threadIndex);
+            switchThreadsButton.switchThread(foundThreadItem);
             chart.requestFocus();
             chart.findItems(text, ignoreCase);
         }
@@ -888,9 +904,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void exitFromSearching(boolean removeSelection) {
         if (removeSelection) {
             chart.removeSelection();
+        } else {
+            chart.requestFocus();
         }
         chart.disableSearching();
-        chart.requestFocus();
         foundInfo.setText(DEFAULT_FOUND_INFO_MESSAGE);
     }
 
@@ -984,13 +1001,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                             systraceRecords);
                 }
                 pluginsFacade.setCurrentTraceProfiler(traceContainerResult);
-
-                threadsComboBox.removeAllItems();
-                for (ThreadItem thread : resultContainer.getResult().getThreads()) {
-                    threadsComboBox.addItem(thread);
-                }
-                threadsComboBox.setSelectedIndex(0);
-                pluginsFacade.setCurrentThread((ThreadItem) threadsComboBox.getItemAt(0));
+                ThreadItem firstThread = resultContainer.getResult().getThreads().get(0);
+                switchThreadsButton.switchThread(firstThread);
+                pluginsFacade.setCurrentThread(firstThread);
             } catch (Exception e) {
                 e.printStackTrace();
                 log.e("Parse trace file exception: ", e);

@@ -2,6 +2,7 @@ package com.github.grishberg.profiler.chart.preview
 
 import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.chart.Bookmarks
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.chart.theme.Palette
 import java.awt.Color
@@ -10,38 +11,40 @@ import java.awt.image.BufferedImage
 
 class PreviewImageFactoryImpl(
     private val palette: Palette,
-    private val methodsColor: MethodsColor
+    private val methodsColor: MethodsColor,
+    private val bookmarks: Bookmarks
 ) : PreviewImageFactory {
-    private val methodHeight = 1
+    private val methodHeight = 2
 
     override fun createPreview(
         width: Int,
         height: Int,
         result: AnalyzerResult,
         threadId: Int,
-        isThreadTime: Boolean
+        previewType: PreviewType
     ): BufferedImage {
         val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
 
         val g = image.createGraphics()
-        drawMethods(result, threadId, isThreadTime, g, width, height)
+        drawMethods(result, threadId, previewType, g, width, height)
         return image
     }
 
     private fun drawMethods(
         result: AnalyzerResult,
         threadId: Int,
-        isThreadTime: Boolean,
+        previewType: PreviewType,
         g: Graphics2D, width: Int, height: Int
     ) {
         g.color = palette.traceBackgroundColor
-        g.scale(1.0, 0.5)
         g.fillRect(0, 0, width, height)
 
-        val maxRight = if (isThreadTime)
-            result.threadTimeBounds.getValue(threadId).maxTime
-        else
-            result.globalTimeBounds.getValue(threadId).maxTime
+        g.scale(1.0, 0.5)
+        val maxRight = when (previewType) {
+            PreviewType.PREVIEW_GLOBAL -> result.globalTimeBounds.getValue(threadId).maxTime
+            PreviewType.PREVIEW_THREAD -> result.threadTimeBounds.getValue(threadId).maxTime
+            PreviewType.THREAD_SWITCHER -> result.globalTimeBounds.getValue(result.mainThreadId).maxTime
+        }
 
         val widthFactor: Double = maxRight / width
 
@@ -52,21 +55,46 @@ class PreviewImageFactoryImpl(
             val top = method.level * methodHeight
             val bottom = top + methodHeight
 
-            val left = if (isThreadTime)
-                method.threadStartTimeInMillisecond
-            else
-                method.globalStartTimeInMillisecond
+            val left = when (previewType) {
+                PreviewType.PREVIEW_GLOBAL -> method.globalStartTimeInMillisecond
+                PreviewType.PREVIEW_THREAD -> method.threadStartTimeInMillisecond
+                PreviewType.THREAD_SWITCHER -> method.globalStartTimeInMillisecond
+            }
 
-            val right = if (isThreadTime)
-                method.threadEndTimeInMillisecond
-            else
-                method.globalEndTimeInMillisecond
-            val w = (right - left) * widthFactor
+            val right = when (previewType) {
+                PreviewType.PREVIEW_THREAD -> method.threadEndTimeInMillisecond
+                PreviewType.PREVIEW_GLOBAL -> method.globalEndTimeInMillisecond
+                PreviewType.THREAD_SWITCHER -> method.globalEndTimeInMillisecond
+            }
+
+            val w = (right - left) / widthFactor
             val h = bottom - top
 
             val l = left / widthFactor
 
             g.fillRect(l.toInt(), top, w.toInt(), h)
+        }
+
+        for (i in bookmarks.size() - 1 downTo 0) {
+            val bookmark = bookmarks.bookmarkAt(i)
+            val left = when (previewType) {
+                PreviewType.PREVIEW_THREAD -> bookmark.threadTimeStart
+                PreviewType.PREVIEW_GLOBAL -> bookmark.globalTimeTimeStart
+                PreviewType.THREAD_SWITCHER -> bookmark.globalTimeTimeStart
+            }
+
+            val right = when (previewType) {
+                PreviewType.PREVIEW_THREAD -> bookmark.threadTimeEnd
+                PreviewType.PREVIEW_GLOBAL -> bookmark.globalTimeTimeEnd
+                PreviewType.THREAD_SWITCHER -> bookmark.globalTimeTimeEnd
+            }
+
+            val w = (right - left) / widthFactor
+            val h = result.maxLevel * methodHeight
+
+            val l = left / widthFactor
+            g.color = bookmark.color
+            g.fillRect(l.toInt(), 0, w.toInt(), h)
         }
     }
 

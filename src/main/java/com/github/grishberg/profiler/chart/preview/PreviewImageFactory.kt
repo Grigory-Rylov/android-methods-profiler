@@ -8,6 +8,6 @@ interface PreviewImageFactory {
         width: Int, height: Int,
         result: AnalyzerResult,
         threadId: Int,
-        isThreadTime: Boolean
+        previewType: PreviewType
     ): BufferedImage
 }

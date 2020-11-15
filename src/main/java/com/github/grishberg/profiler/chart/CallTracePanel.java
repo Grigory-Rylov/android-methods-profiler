@@ -6,6 +6,7 @@ import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.chart.preview.PreviewImageRepository;
+import com.github.grishberg.profiler.chart.preview.PreviewType;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.common.AppLogger;
@@ -37,13 +38,13 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private static final int FIT_PADDING = 80;
     private static final int SCALE_FONT_SIZE = 13;
     private static final double NOT_FOUND_ITEM_DARKEN_FACTOR = 0.5;
-    private static final double MINIMUM_WIDTH_IN_PX = 3;
+    private static final double MINIMUM_WIDTH_IN_PX = 1;
     private static final AnalyzerResultImpl RESULT_STUB = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
 
     private final FoundInfoListener foundInfoListener;
     private boolean init = true;
 
-    private Bookmarks bookmarks;
+    private final Bookmarks bookmarks;
     private int currentThreadId = -1;
     private AnalyzerResult result = RESULT_STUB;
     private final Map<Integer, List<ProfileRectangle>> objects = new HashMap<>();
@@ -166,13 +167,13 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (result == RESULT_STUB) {
             return;
         }
-        previewImageRepository.preparePreview(screenSize.width, result, currentThreadId, isThreadTime, new PreviewImageRepository.Callback() {
-            @Override
-            public void onImageReady(@NotNull BufferedImage image, int threadId, boolean isThreadTime) {
-                previewPanel.setImage(image);
-                previewPanel.repaint();
-            }
+        PreviewType previewType = isThreadTime ? PreviewType.PREVIEW_THREAD : PreviewType.PREVIEW_GLOBAL;
+        BufferedImage cachedImage = previewImageRepository.preparePreview(currentThreadId, previewType, (image, threadId) -> {
+            previewPanel.setImage(image);
         });
+        if (cachedImage != null) {
+            previewPanel.setImage(cachedImage);
+        }
     }
 
     private boolean checkBookmarkHeaderClicked(Point point) {
@@ -274,13 +275,13 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         this.minTime = 0;
 
         maxBottomOffset = calculateTopForLevel(result.getMaxLevel()) + levelHeight;
-        bookmarks = trace.getBookmarks();
+        bookmarks.set(trace.getBookmarks());
         bookmarks.setup(maxBottomOffset, isThreadTime);
 
         zoomAndPanDelegate.setTransform(new AffineTransform());
         zoomAndPanDelegate.fitZoom(new Rectangle.Double(0, 0, maxRightOffset, maxBottomOffset), 0, ZoomAndPanDelegate.VerticalAlign.NONE);
         removeSelection();
-        previewImageRepository.resetCache();
+        previewImageRepository.setAnalyzerResult(result);
         updatePreviewImage();
     }
 
@@ -295,11 +296,13 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         currentThreadId = threadId;
 
         updateMarkersState();
+        updatePreviewImage();
 
         List<ProfileRectangle> objectsForThread = objects.get(currentThreadId);
         if (objectsForThread != null) {
             // there is data.
             repaint();
+            updateStages(threadId, objectsForThread);
             return;
         }
 
@@ -307,9 +310,12 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         objectsForThread = new ArrayList<>();
         objects.put(threadId, objectsForThread);
 
+        updateStages(threadId, objectsForThread);
         rebuildData(objectsForThread);
         repaint();
+    }
 
+    private void updateStages(int threadId, List<ProfileRectangle> objectsForThread) {
         stagesFacade.onThreadSwitched(objectsForThread,
                 threadId == result.getMainThreadId(),
                 isThreadTime,
@@ -318,7 +324,6 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
                 threadId == result.getMainThreadId(),
                 isThreadTime,
                 TOP_OFFSET);
-        updatePreviewImage();
     }
 
     private void updateBounds(int threadId) {
@@ -448,6 +453,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         double screenTop = 0;
         double screenRight = 0;
         double screenBottom = 0;
+        g.setColor(bgColor);
+        g.fillRect(0, 0, getWidth(), getHeight());
 
         try {
             Point2D.Float leftTop = zoomAndPanDelegate.transformPoint(new Point(0, 0));
@@ -809,6 +816,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
                         isThreadTime
                 )
         );
+        previewImageRepository.clear();
+        updatePreviewImage();
     }
 
     public void addBookmarkAtSelectedElement(BookMarkInfo bookMarkInfo) {
@@ -915,11 +924,15 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     public void removeCurrentBookmark() {
         bookmarks.removeCurrentBookmark();
         repaint();
+        previewImageRepository.clear();
+        updatePreviewImage();
     }
 
     public void removeBookmark(@NotNull BookmarksRectangle selectedBookmark) {
         bookmarks.remove(selectedBookmark);
         repaint();
+        previewImageRepository.clear();
+        updatePreviewImage();
     }
 
     public void centerSelectedElement() {

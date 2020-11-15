@@ -60,6 +60,7 @@ class KeyBinder(
         addKeyMapWithCtrlShift(KeyEvent.VK_N, NewTraceNewWindowAction())
 
         addKeyMapWithCtrl(KeyEvent.VK_M, FoundToMarker())
+        addKeyMapWithCtrl(KeyEvent.VK_T, ShowThreadSwitcher())
         addKeyMapWithCtrl(KeyEvent.VK_0, SwitchToMainThread())
         addKeyMapWithCtrl(KeyEvent.VK_I, FindAllChildren())
         addKeyMap(KeyEvent.VK_M, AddBookmarkAction())
@@ -261,6 +262,12 @@ class KeyBinder(
     private inner class SwitchToMainThread : SmartAction() {
         override fun actionPerformed() {
             main.switchMainThread()
+        }
+    }
+
+    private inner class ShowThreadSwitcher : SmartAction() {
+        override fun actionPerformed() {
+            main.showThreadsDialog()
         }
     }
 

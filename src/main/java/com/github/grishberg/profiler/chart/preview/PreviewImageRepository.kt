@@ -9,8 +9,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 
-const val PREVIEW_IMAGE_HEIGHT = 32
-const val PREVIEW_IMAGE_WIDTH = 800
+const val PREVIEW_IMAGE_HEIGHT = 64
+const val PREVIEW_IMAGE_WIDTH = 700
 
 class PreviewImageRepository(
     private val imageFactory: PreviewImageFactory,
@@ -20,37 +20,43 @@ class PreviewImageRepository(
     private val dispatchers: CoroutinesDispatchers
 ) {
     private val cache = mutableMapOf<ThreadInfoKey, BufferedImage>()
+    private var traceData: AnalyzerResult? = null
 
-    fun resetCache() {
+    fun clear() {
         cache.clear()
     }
 
+    fun setAnalyzerResult(newTrace: AnalyzerResult) {
+        cache.clear()
+        traceData = newTrace
+    }
+
     fun preparePreview(
-        width: Int,
-        result: AnalyzerResult,
         threadId: Int,
-        isThreadTime: Boolean,
+        previewType: PreviewType,
         callback: Callback
-    ) {
-        val key = ThreadInfoKey(threadId, isThreadTime)
+    ): BufferedImage? {
+        val result = traceData ?: return null
+        val key = ThreadInfoKey(threadId, previewType)
         val image = cache[key]
         image?.let {
-            callback.onImageReady(image, threadId, isThreadTime)
-            return
+            return image
         }
 
         coroutineScope.launch {
             val image = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
-                imageFactory.createPreview(PREVIEW_IMAGE_WIDTH, PREVIEW_IMAGE_HEIGHT, result, threadId, isThreadTime)
+                imageFactory.createPreview(PREVIEW_IMAGE_WIDTH, PREVIEW_IMAGE_HEIGHT, result, threadId, previewType)
             }
 
-            callback.onImageReady(image, threadId, isThreadTime)
+            cache[key] = image
+            callback.onImageReady(image, threadId)
         }
+        return null
     }
 
     interface Callback {
-        fun onImageReady(image: BufferedImage, threadId: Int, isThreadTime: Boolean)
+        fun onImageReady(image: BufferedImage, threadId: Int)
     }
 
-    private data class ThreadInfoKey(val threadId: Int, val isThreadTime: Boolean)
+    private data class ThreadInfoKey(val threadId: Int, val previewType: PreviewType)
 }
