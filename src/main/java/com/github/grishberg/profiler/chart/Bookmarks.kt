@@ -24,7 +24,7 @@ const val BOOKMARK_EXTENSION = "bookmark"
 class Bookmarks {
     private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
 
-    private val bookmarkFileName: String?
+    private var bookmarkFileName: String?
     private val settings: SettingsRepository
 
     @JvmField
@@ -235,5 +235,12 @@ class Bookmarks {
         if (bookmarkFileName.exists()) {
             bookmarkFileName.delete()
         }
+    }
+
+    fun set(other: Bookmarks) {
+        bookmarkFileName = other.bookmarkFileName
+        bookmarks.clear()
+        bookmarks.addAll(other.bookmarks)
+        currentSelectedBookmark = other.currentSelectedBookmark
     }
 }

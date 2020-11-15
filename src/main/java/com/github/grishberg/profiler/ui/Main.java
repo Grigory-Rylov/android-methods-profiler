@@ -1,15 +1,22 @@
 package com.github.grishberg.profiler.ui;
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult;
 import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.analyzer.ThreadItemImpl;
 import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
+import com.github.grishberg.profiler.chart.preview.PreviewImageFactory;
+import com.github.grishberg.profiler.chart.preview.PreviewImageFactoryImpl;
+import com.github.grishberg.profiler.chart.preview.PreviewImageRepository;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
+import com.github.grishberg.profiler.chart.theme.DarkPalette;
+import com.github.grishberg.profiler.chart.theme.Palette;
+import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
+import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
@@ -29,14 +36,16 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundInfoListener, ActionListener, ShowDialogDelegate, ProfilerPanel.OnRightClickListener {
+        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener {
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -70,14 +79,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JTextField selectedClassNameLabel;
     private final JTextField findClassText;
     private final JLabel selectedDurationLabel;
-    private final ProfilerPanel chart;
+    private final CallTracePanel chart;
     private final InfoPanel hoverInfoPanel;
     private final JLabel foundInfo;
     private final NewBookmarkDialog newBookmarkDialog;
     private final LoadingDialog loadingDialog;
     private final JavaMethodsRecorderDialog methodTraceRecordDialog;
     private final ScaleRangeDialog scaleRangeDialog;
-    private final JComboBox threadsComboBox;
+    private final SwitchThreadButton switchThreadsButton;
     private final JCheckBoxMenuItem showBookmarks;
     private final AppLogger log;
     private FramesManager framesManager;
@@ -93,6 +102,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final StagesFacade stagesFacade;
     private final SystraceStagesFacade systraceStagesFacade;
     private final Bookmarks bookmarks;
+    private final CallTracePreviewPanel previewPanel;
+    private final PreviewImageRepository previewImageRepository;
+    private final Palette palette;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -121,24 +133,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JPanel topControls = new JPanel(new BorderLayout(2, 2));
         topControls.setBorder(new EmptyBorder(0, 4, 0, 4));
 
-        threadsComboBox = new JComboBox<ThreadItemImpl>();
-        threadsComboBox.setToolTipText("Threads switcher");
-        threadsComboBox.setPrototypeDisplayValue(new ThreadItemImpl("XXXXXXXXXXXXXXX", 0));
-        threadsComboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() != ItemEvent.SELECTED) {
-                    return;
-                }
-                ThreadItem thread = (ThreadItem) threadsComboBox.getSelectedItem();
-                if (thread == null) {
-                    return;
-                }
-                chart.switchThread(thread.getThreadId());
-                pluginsFacade.setCurrentThread(thread);
-            }
-        });
-        topControls.add(threadsComboBox, BorderLayout.LINE_START);
+        switchThreadsButton = new SwitchThreadButton();
+        switchThreadsButton.addActionListener(e -> showThreadsDialog());
+        topControls.add(switchThreadsButton, BorderLayout.LINE_START);
 
         findClassText = new JTextField("");
         findClassText.setToolTipText("Use this field to find elements in trace");
@@ -150,9 +147,19 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         foundInfo = new JLabel(DEFAULT_FOUND_INFO_MESSAGE);
         topControls.add(foundInfo, BorderLayout.LINE_END);
 
+        previewPanel = new CallTracePreviewPanel(log);
+
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.PAGE_START;
+        gbc.gridwidth = 0;
+        controls.add(previewPanel, gbc);
+
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.PAGE_START;
         gbc.gridwidth = 0;
@@ -160,7 +167,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 1;
         gbc.gridwidth = 2;
 
@@ -210,7 +217,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         systraceStagesFacade = new SystraceStagesFacade(log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
-        chart = new ProfilerPanel(
+        palette = new DarkPalette();
+
+        PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(palette, methodsColor, bookmarks);
+        previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
+                coroutineScope, coroutinesDispatchers);
+
+        chart = new CallTracePanel(
                 timeFormatter,
                 methodsColor,
                 this,
@@ -219,7 +232,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 dependenciesDialog,
                 stagesFacade,
                 systraceStagesFacade,
-                bookmarks);
+                bookmarks,
+                previewImageRepository,
+                previewPanel);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -294,6 +309,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 framesManager.onFrameClosed();
             }
         });
+    }
+
+    private void switchThread(ThreadItem thread) {
+        switchThreadsButton.switchThread(thread);
+        chart.switchThread(thread.getThreadId());
+        pluginsFacade.setCurrentThread(thread);
     }
 
     private String timeModeAsString() {
@@ -424,7 +445,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menuHistoryItems.remove(currentOpenedFile);
         currentOpenedFile = null;
         chart.closeTrace();
-        threadsComboBox.removeAllItems();
+        switchThreadsButton.clear();
     }
 
     private JMenu createViewMenu() {
@@ -475,6 +496,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JMenuItem showFlameChart = new JMenuItem("Show Flame Chart");
         viewMenu.add(showFlameChart);
         showFlameChart.addActionListener(a -> showFlameChartDialog());
+
+        JMenuItem showThreadsDialog = new JMenuItem("Show threads dialog");
+        viewMenu.add(showThreadsDialog);
+        showThreadsDialog.addActionListener(a -> showThreadsDialog());
+        showThreadsDialog.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator(KeyEvent.VK_T));
 
         viewMenu.addSeparator();
 
@@ -538,9 +564,26 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return viewMenu;
     }
 
+    public void showThreadsDialog() {
+        if (resultContainer == null) {
+            return;
+        }
+
+        ThreadsSelectionController controller = new ThreadsSelectionController();
+        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log);
+        dialog.showThreads(resultContainer.getResult().getThreads());
+        dialog.setLocationRelativeTo(chart);
+        dialog.setVisible(true);
+        ThreadItem selected = dialog.getSelectedThreadItem();
+        if (selected == null) {
+            return;
+        }
+        switchThread(selected);
+    }
+
     public void switchMainThread() {
-        if (threadsComboBox.getItemCount() > 0) {
-            threadsComboBox.setSelectedIndex(0);
+        if (resultContainer != null) {
+            switchThread(resultContainer.getResult().getThreads().get(0));
             hoverInfoPanel.hidePanel();
         }
     }
@@ -684,7 +727,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void onNotFound(String text, boolean ignoreCase) {
         foundInfo.setText("not found");
 
-        ThreadItemImpl thread = (ThreadItemImpl) threadsComboBox.getSelectedItem();
+        ThreadItem thread = switchThreadsButton.getCurrentThread();
         if (resultContainer == null || thread == null) {
             return;
         }
@@ -713,7 +756,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 "Found in another thread", JOptionPane.YES_NO_OPTION) == 0;
 
         if (shouldSwitchThread) { //The ISSUE is here
-            threadsComboBox.setSelectedIndex(threadIndex);
+            switchThreadsButton.switchThread(foundThreadItem);
             chart.requestFocus();
             chart.findItems(text, ignoreCase);
         }
@@ -861,9 +904,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void exitFromSearching(boolean removeSelection) {
         if (removeSelection) {
             chart.removeSelection();
+        } else {
+            chart.requestFocus();
         }
         chart.disableSearching();
-        chart.requestFocus();
         foundInfo.setText(DEFAULT_FOUND_INFO_MESSAGE);
     }
 
@@ -950,19 +994,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 resultContainer = result.traceContainer;
                 frame.setTitle(TITLE + getClass().getPackage().getImplementationVersion() + " " + ": " + traceFile.getName());
                 chart.openTraceResult(result.traceContainer);
+                AnalyzerResult traceContainerResult = result.traceContainer.getResult();
                 if (systraceRecords != null) {
                     systraceStagesFacade.setSystraceStages(
-                            result.traceContainer.getResult(),
+                            traceContainerResult,
                             systraceRecords);
                 }
-                pluginsFacade.setCurrentTraceProfiler(result.traceContainer.getResult());
-
-                threadsComboBox.removeAllItems();
-                for (ThreadItem thread : resultContainer.getResult().getThreads()) {
-                    threadsComboBox.addItem(thread);
-                }
-                threadsComboBox.setSelectedIndex(0);
-                pluginsFacade.setCurrentThread((ThreadItem) threadsComboBox.getItemAt(0));
+                pluginsFacade.setCurrentTraceProfiler(traceContainerResult);
+                ThreadItem firstThread = resultContainer.getResult().getThreads().get(0);
+                switchThreadsButton.switchThread(firstThread);
+                pluginsFacade.setCurrentThread(firstThread);
             } catch (Exception e) {
                 e.printStackTrace();
                 log.e("Parse trace file exception: ", e);

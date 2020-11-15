@@ -18,7 +18,7 @@ import javax.swing.JPopupMenu
 class MethodsPopupMenu(
     private val main: Main,
     private val frame: Frame,
-    private val chart: ProfilerPanel,
+    private val chart: CallTracePanel,
     private val selectedMethod: ProfileData,
     private val stagesFacade: StagesFacade
 ) : JPopupMenu() {

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui
 
-import com.github.grishberg.profiler.chart.ProfilerPanel
+import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
@@ -14,7 +14,7 @@ import javax.swing.JTextField
 import javax.swing.KeyStroke
 
 class KeyBinder(
-    private val profilerView: ProfilerPanel,
+    private val profilerView: CallTracePanel,
     private val copySource: JTextField,
     private val searchField: JTextField,
     private val dialogDelegate: ShowDialogDelegate,
@@ -60,6 +60,7 @@ class KeyBinder(
         addKeyMapWithCtrlShift(KeyEvent.VK_N, NewTraceNewWindowAction())
 
         addKeyMapWithCtrl(KeyEvent.VK_M, FoundToMarker())
+        addKeyMapWithCtrl(KeyEvent.VK_T, ShowThreadSwitcher())
         addKeyMapWithCtrl(KeyEvent.VK_0, SwitchToMainThread())
         addKeyMapWithCtrl(KeyEvent.VK_I, FindAllChildren())
         addKeyMap(KeyEvent.VK_M, AddBookmarkAction())
@@ -261,6 +262,12 @@ class KeyBinder(
     private inner class SwitchToMainThread : SmartAction() {
         override fun actionPerformed() {
             main.switchMainThread()
+        }
+    }
+
+    private inner class ShowThreadSwitcher : SmartAction() {
+        override fun actionPerformed() {
+            main.showThreadsDialog()
         }
     }
 
