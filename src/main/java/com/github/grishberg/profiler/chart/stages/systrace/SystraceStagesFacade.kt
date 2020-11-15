@@ -4,7 +4,7 @@ import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
 import com.github.grishberg.profiler.chart.ChartPaintDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle
-import com.github.grishberg.profiler.chart.ProfilerPanel
+import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.chart.RepaintDelegate
 import com.github.grishberg.profiler.chart.stages.MethodsListIterator
 import com.github.grishberg.profiler.common.AppLogger
@@ -131,11 +131,11 @@ class SystraceStagesFacade(
             val name = stageRectangle.name
 
             val cx = rect.x + rect.width / 2
-            val labelTextWidth = max(fm.stringWidth(name), ProfilerPanel.MARKER_LABEL_TEXT_MIN_WIDTH)
+            val labelTextWidth = max(fm.stringWidth(name), CallTracePanel.MARKER_LABEL_TEXT_MIN_WIDTH)
 
             // background
             g.color = stageRectangle.color
-            g.fillRect(rect.x, 0, rect.width, ProfilerPanel.TOP_OFFSET)
+            g.fillRect(rect.x, 0, rect.width, CallTracePanel.TOP_OFFSET)
 
             g.color = stageRectangle.headerTitleColor
             if (name.isNotEmpty()) {

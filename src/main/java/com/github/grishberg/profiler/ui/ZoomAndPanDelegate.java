@@ -250,6 +250,11 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         moveCameraHorizontal(MOVE_BY_KEYBOARD_OFFSET);
     }
 
+    public void scrollTo(double offsetX) {
+        Rectangle2D.Double rect = new Rectangle2D.Double(offsetX, 0, 0, 0);
+        navigateToRectangle(rect, VerticalAlign.NONE);
+    }
+
     public void zoomOut() {
         Point center = new Point(targetComponent.getWidth() / 2, targetComponent.getHeight() / 2);
 

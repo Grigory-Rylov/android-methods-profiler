@@ -43,13 +43,19 @@ class TraceAnalyzer(
         val sortedThreads = ArrayList<ThreadItemImpl>()
 
         var threadIndex = 0
-        for (e in vmTraceHandler.threads) {
-            val threadName = if (e.value == null) "Thread-$threadIndex" else e.value!!
-            if (e.key != vmTraceHandler.mainThreadId) {
-                sortedThreads.add(ThreadItemImpl(threadName, e.key))
-                threadIndex++
+        for (threadEntity in vmTraceHandler.globalTimeBounds) {
+            val id = threadEntity.key
+            if (id == vmTraceHandler.mainThreadId) {
+                continue
             }
+
+            val thread = vmTraceHandler.threads[id]
+            val threadName = if (thread == null) "Thread-$threadIndex" else thread!!
+
+            sortedThreads.add(ThreadItemImpl(threadName, id))
+            threadIndex++
         }
+
         sortedThreads.sortBy { it.name }
 
         sortedThreads.add(

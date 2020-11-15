@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.chart.flame
 
 import com.github.grishberg.profiler.chart.MethodsNameDrawer
-import com.github.grishberg.profiler.chart.ProfilerPanel.TOP_OFFSET
+import com.github.grishberg.profiler.chart.CallTracePanel.TOP_OFFSET
 import com.github.grishberg.profiler.ui.ZoomAndPanDelegate
 import java.awt.Color
 import java.awt.Component

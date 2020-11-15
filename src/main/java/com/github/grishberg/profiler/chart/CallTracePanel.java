@@ -5,6 +5,8 @@ import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
+import com.github.grishberg.profiler.chart.preview.PreviewImageRepository;
+import com.github.grishberg.profiler.chart.preview.PreviewType;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.common.AppLogger;
@@ -23,10 +25,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
 
-public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
+public class CallTracePanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
     public static final int TOP_OFFSET = 20;
     public static final String SETTINGS_FONT_NAME = "Chart.fontName";
     public static final String SETTINGS_CELL_FONT_SIZE = "Chart.cellsFontSize";
@@ -35,13 +38,13 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private static final int FIT_PADDING = 80;
     private static final int SCALE_FONT_SIZE = 13;
     private static final double NOT_FOUND_ITEM_DARKEN_FACTOR = 0.5;
-    private static final double MINIMUM_WIDTH_IN_PX = 3;
+    private static final double MINIMUM_WIDTH_IN_PX = 1;
     private static final AnalyzerResultImpl RESULT_STUB = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
 
     private final FoundInfoListener foundInfoListener;
     private boolean init = true;
 
-    private Bookmarks bookmarks;
+    private final Bookmarks bookmarks;
     private int currentThreadId = -1;
     private AnalyzerResult result = RESULT_STUB;
     private final Map<Integer, List<ProfileRectangle>> objects = new HashMap<>();
@@ -79,6 +82,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private final AppLogger logger;
     private StagesFacade stagesFacade;
     private SystraceStagesFacade systraceStagesFacade;
+    private PreviewImageRepository previewImageRepository;
+    private CallTracePreviewPanel previewPanel;
     private boolean isThreadTime;
     private String fontName;
     private final Font labelFont;
@@ -88,15 +93,17 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     private final MethodsNameDrawer cellPaintDelegate = new MethodsNameDrawer(leftSymbolOffset);
     private final ElementColor colorBuffer = new ElementColor();
 
-    public ProfilerPanel(TimeFormatter timeFormatter,
-                         MethodsColorImpl methodsColor,
-                         FoundInfoListener foundInfoListener,
-                         SettingsRepository settings,
-                         AppLogger logger,
-                         DependenciesFoundAction dependenciesFoundAction,
-                         StagesFacade stagesFacade,
-                         SystraceStagesFacade systraceStagesFacade,
-                         Bookmarks bookmarks) {
+    public CallTracePanel(TimeFormatter timeFormatter,
+                          MethodsColorImpl methodsColor,
+                          FoundInfoListener foundInfoListener,
+                          SettingsRepository settings,
+                          AppLogger logger,
+                          DependenciesFoundAction dependenciesFoundAction,
+                          StagesFacade stagesFacade,
+                          SystraceStagesFacade systraceStagesFacade,
+                          Bookmarks bookmarks,
+                          PreviewImageRepository previewImageRepository,
+                          CallTracePreviewPanel previewPanel) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
@@ -104,6 +111,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         this.logger = logger;
         this.stagesFacade = stagesFacade;
         this.systraceStagesFacade = systraceStagesFacade;
+        this.previewImageRepository = previewImageRepository;
+        this.previewPanel = previewPanel;
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         this.bookmarks = bookmarks;
         stagesFacade.setRepaintDelegate(this);
@@ -134,7 +143,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         addComponentListener(new SimpleComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
-                screenSize = ProfilerPanel.this.getSize();
+                screenSize = CallTracePanel.this.getSize();
             }
         });
         labelFont = new Font(Font.SANS_SERIF, Font.PLAIN, SCALE_FONT_SIZE);
@@ -152,6 +161,35 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         ElementsSelectionRenderer renderer = new ElementsSelectionRenderer(this, this);
         calledStacktrace = new CalledStacktrace(renderer, logger);
         calledStacktrace.setDependenciesFoundAction(dependenciesFoundAction);
+        previewPanel.setPreviewClickedAction(new OnPreviewClickedAction() {
+            @Override
+            public void onPreviewClicked(double offsetInPercent) {
+                if (result == RESULT_STUB) {
+                    return;
+                }
+
+                double offset = 0;
+                if (isThreadTime) {
+                    offset = result.getThreadTimeBounds().get(currentThreadId).getMaxTime() * offsetInPercent;
+                } else {
+                    offset = result.getGlobalTimeBounds().get(currentThreadId).getMaxTime() * offsetInPercent;
+                }
+                zoomAndPanDelegate.scrollTo(offset);
+            }
+        });
+    }
+
+    private void updatePreviewImage() {
+        if (result == RESULT_STUB) {
+            return;
+        }
+        PreviewType previewType = isThreadTime ? PreviewType.PREVIEW_THREAD : PreviewType.PREVIEW_GLOBAL;
+        BufferedImage cachedImage = previewImageRepository.preparePreview(currentThreadId, previewType, (image, threadId) -> {
+            previewPanel.setImage(image);
+        });
+        if (cachedImage != null) {
+            previewPanel.setImage(cachedImage);
+        }
     }
 
     private boolean checkBookmarkHeaderClicked(Point point) {
@@ -230,6 +268,7 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         updateData();
         repaint();
         stagesFacade.onThreadModeSwitched(isThreadTime);
+        updatePreviewImage();
     }
 
     public void openTraceResult(TraceContainer trace) {
@@ -252,12 +291,14 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         this.minTime = 0;
 
         maxBottomOffset = calculateTopForLevel(result.getMaxLevel()) + levelHeight;
-        bookmarks = trace.getBookmarks();
+        bookmarks.set(trace.getBookmarks());
         bookmarks.setup(maxBottomOffset, isThreadTime);
 
         zoomAndPanDelegate.setTransform(new AffineTransform());
         zoomAndPanDelegate.fitZoom(new Rectangle.Double(0, 0, maxRightOffset, maxBottomOffset), 0, ZoomAndPanDelegate.VerticalAlign.NONE);
         removeSelection();
+        previewImageRepository.setAnalyzerResult(result);
+        updatePreviewImage();
     }
 
     public void switchThread(int threadId) {
@@ -271,11 +312,13 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         currentThreadId = threadId;
 
         updateMarkersState();
+        updatePreviewImage();
 
         List<ProfileRectangle> objectsForThread = objects.get(currentThreadId);
         if (objectsForThread != null) {
             // there is data.
             repaint();
+            updateStages(threadId, objectsForThread);
             return;
         }
 
@@ -283,9 +326,12 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         objectsForThread = new ArrayList<>();
         objects.put(threadId, objectsForThread);
 
+        updateStages(threadId, objectsForThread);
         rebuildData(objectsForThread);
         repaint();
+    }
 
+    private void updateStages(int threadId, List<ProfileRectangle> objectsForThread) {
         stagesFacade.onThreadSwitched(objectsForThread,
                 threadId == result.getMainThreadId(),
                 isThreadTime,
@@ -423,6 +469,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
         double screenTop = 0;
         double screenRight = 0;
         double screenBottom = 0;
+        g.setColor(bgColor);
+        g.fillRect(0, 0, getWidth(), getHeight());
 
         try {
             Point2D.Float leftTop = zoomAndPanDelegate.transformPoint(new Point(0, 0));
@@ -784,6 +832,8 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
                         isThreadTime
                 )
         );
+        previewImageRepository.clear();
+        updatePreviewImage();
     }
 
     public void addBookmarkAtSelectedElement(BookMarkInfo bookMarkInfo) {
@@ -890,11 +940,15 @@ public class ProfilerPanel extends JPanel implements ProfileDataDimensionDelegat
     public void removeCurrentBookmark() {
         bookmarks.removeCurrentBookmark();
         repaint();
+        previewImageRepository.clear();
+        updatePreviewImage();
     }
 
     public void removeBookmark(@NotNull BookmarksRectangle selectedBookmark) {
         bookmarks.remove(selectedBookmark);
         repaint();
+        previewImageRepository.clear();
+        updatePreviewImage();
     }
 
     public void centerSelectedElement() {

@@ -2,14 +2,14 @@ package com.github.grishberg.profiler.analyzer
 
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.BookmarksRectangle
-import com.github.grishberg.profiler.chart.ProfilerPanel
+import com.github.grishberg.profiler.chart.CallTracePanel
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 
 class FlatMethodsReportGenerator(
-    private val data: ProfilerPanel.ProfilerPanelData
+    private val data: CallTracePanel.ProfilerPanelData
 ) : ReportGenerator {
 
     override fun generate(file: File, onlyConstructor: Boolean, minimumDurationInMs: Int) {

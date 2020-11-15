@@ -5,7 +5,7 @@ import javax.swing.JMenuItem
 import javax.swing.JPopupMenu
 
 class BookmarkPopupMenu(
-    private val chart: ProfilerPanel,
+    private val chart: CallTracePanel,
     private val newBookmarkDialog: NewBookmarkDialog,
     private val selectedBookmark: BookmarksRectangle
 ) : JPopupMenu() {
