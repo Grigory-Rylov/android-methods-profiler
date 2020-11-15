@@ -161,6 +161,22 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         ElementsSelectionRenderer renderer = new ElementsSelectionRenderer(this, this);
         calledStacktrace = new CalledStacktrace(renderer, logger);
         calledStacktrace.setDependenciesFoundAction(dependenciesFoundAction);
+        previewPanel.setPreviewClickedAction(new OnPreviewClickedAction() {
+            @Override
+            public void onPreviewClicked(double offsetInPercent) {
+                if (result == RESULT_STUB) {
+                    return;
+                }
+
+                double offset = 0;
+                if (isThreadTime) {
+                    offset = result.getThreadTimeBounds().get(currentThreadId).getMaxTime() * offsetInPercent;
+                } else {
+                    offset = result.getGlobalTimeBounds().get(currentThreadId).getMaxTime() * offsetInPercent;
+                }
+                zoomAndPanDelegate.scrollTo(offset);
+            }
+        });
     }
 
     private void updatePreviewImage() {
