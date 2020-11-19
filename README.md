@@ -3,6 +3,8 @@ This is tool for analyzing method trace files `.trace` files like [Android Profi
 
 ![preview](docs/assets/preview.png)
 
+![threads](docs/assets/threads-list.png)
+
 ![find in trace](docs/assets/find.png)
 
 For Russian speaking developers there is a video [guide](https://youtu.be/epJNlw6ez-A)

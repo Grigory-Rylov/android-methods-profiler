@@ -756,7 +756,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 "Found in another thread", JOptionPane.YES_NO_OPTION) == 0;
 
         if (shouldSwitchThread) { //The ISSUE is here
-            switchThreadsButton.switchThread(foundThreadItem);
+            switchThread(foundThreadItem);
             chart.requestFocus();
             chart.findItems(text, ignoreCase);
         }

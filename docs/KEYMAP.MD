@@ -41,6 +41,8 @@
 
 **Ctrl + 0** Switch to main thread.
 
+**Ctrl + t** Open thread switcher.
+
 ### Find / Bookmarks
 **Ctrl + f** - Focus to the Find element field, to find elements press **Enter**
 
