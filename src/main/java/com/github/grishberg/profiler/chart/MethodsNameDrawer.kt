@@ -66,7 +66,7 @@ class MethodsNameDrawer(
             g: Graphics2D,
             left: Int, right: Int, top: Int
         ) {
-            val visibleWidth = right - left
+            val visibleWidth = right - left - leftSymbolOffset
             var leftPosition: Int = left + leftSymbolOffset
             if (leftPosition < 0) {
                 leftPosition = 0
@@ -114,13 +114,14 @@ class MethodsNameDrawer(
                     }
                 }
             }
-            g.drawChars(buffer.buf, buffer.startIndex, buffer.length, leftPosition, top)
+            g.drawChars(buffer.buf, buffer.startIndex, buffer.size, leftPosition, top)
         }
     }
 
-    class NameBuffer : CharSequence {
+    class NameBuffer {
         val buf: CharArray = CharArray(1024) { ' ' }
-        private var size: Int = 0
+        var size: Int = 0
+            private set
         var startIndex = 0
 
         fun reset() {
@@ -149,15 +150,8 @@ class MethodsNameDrawer(
             size++
         }
 
-        override val length: Int
-            get() = size
-
-        override fun get(index: Int): Char {
+        fun get(index: Int): Char {
             return buf[index]
-        }
-
-        override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-            return this
         }
 
         fun append(last: String) {
