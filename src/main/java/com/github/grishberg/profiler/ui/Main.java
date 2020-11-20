@@ -904,7 +904,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void exitFromSearching(boolean removeSelection) {
         if (removeSelection) {
             chart.removeSelection();
-        } else {
             chart.requestFocus();
         }
         chart.disableSearching();

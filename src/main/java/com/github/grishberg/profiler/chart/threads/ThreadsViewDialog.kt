@@ -16,6 +16,7 @@ import javax.swing.AbstractAction
 import javax.swing.JScrollPane
 import javax.swing.JTable
 import javax.swing.KeyStroke
+import javax.swing.ListSelectionModel
 import kotlin.math.max
 
 
@@ -64,6 +65,7 @@ class ThreadsViewDialog(
         val enter: KeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
         table.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, SELECT_ACTION)
         table.actionMap.put(SELECT_ACTION, EnterAction())
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
 
         val scrollPane = JScrollPane(table)
         scrollPane.preferredSize = Dimension(PREVIEW_IMAGE_WIDTH + THREAD_NAME_WIDTH + 32, 600)
