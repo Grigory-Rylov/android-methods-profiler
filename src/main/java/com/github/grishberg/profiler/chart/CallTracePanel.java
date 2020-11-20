@@ -646,6 +646,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             } else {
                 if (isSelectedElement) {
                     colorBuffer.set(selectionColor, edgesColor);
+                    return;
                 }
                 Color color = getColorForMethod(element);
                 colorBuffer.set(darker(color, NOT_FOUND_ITEM_DARKEN_FACTOR), edgesColor);
