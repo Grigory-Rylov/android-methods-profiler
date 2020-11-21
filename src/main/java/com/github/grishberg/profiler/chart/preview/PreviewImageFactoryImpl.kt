@@ -8,6 +8,7 @@ import com.github.grishberg.profiler.chart.theme.Palette
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
+import kotlin.math.ceil
 
 class PreviewImageFactoryImpl(
     private val palette: Palette,
@@ -94,7 +95,7 @@ class PreviewImageFactoryImpl(
 
             val l = left / widthFactor
             g.color = bookmark.color
-            g.fillRect(l.toInt(), 0, w.toInt(), h)
+            g.fillRect(l.toInt(), 0, ceil(w).toInt(), h)
         }
     }
 
