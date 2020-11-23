@@ -440,6 +440,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (currentOpenedFile == null) {
             return;
         }
+        boolean shouldDelete = JOptionPane.showConfirmDialog(frame, "Are you wanted to delete: \n\"" + currentOpenedFile.getName() +
+                        "\" ?",
+                "Delete current file", JOptionPane.YES_NO_OPTION) == 0;
+
+        if (!shouldDelete) {
+            return;
+        }
         currentOpenedFile.delete();
         bookmarks.clear();
         menuHistoryItems.remove(currentOpenedFile);
