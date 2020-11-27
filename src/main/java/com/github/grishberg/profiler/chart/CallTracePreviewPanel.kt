@@ -18,7 +18,6 @@ interface OnPreviewClickedAction {
 class CallTracePreviewPanel(
     private val logger: AppLogger
 ) : JPanel() {
-    val currentWindow = Rectangle2D.Double()
     var previewClickedAction: OnPreviewClickedAction? = null
 
     var image: BufferedImage? = null
@@ -42,5 +41,10 @@ class CallTracePreviewPanel(
         image?.let {
             graphics.drawImage(it, 0, 0, width, PANEL_HEIGHT, null)
         }
+    }
+
+    fun clear() {
+        image = null
+        repaint()
     }
 }
