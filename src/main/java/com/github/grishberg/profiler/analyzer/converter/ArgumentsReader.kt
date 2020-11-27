@@ -54,10 +54,15 @@ class ArgumentsReader {
                 if (hasSlashes) {
                     readType = readType.replace("/", ".")
                 }
+                val type = when {
+                    readType.indexOf("$") > 0 -> Type.OBFUSCATED
+                    hasSlashes -> Type.OBJECT
+                    else -> Type.OBFUSCATED
+
+                }
                 result.add(
                     TypeHolder(
-                        readType + if (isArray) "[]" else "",
-                        if (hasSlashes) Type.OBJECT else Type.OBFUSCATED
+                        readType + if (isArray) "[]" else "", type
                     )
                 )
             } else {

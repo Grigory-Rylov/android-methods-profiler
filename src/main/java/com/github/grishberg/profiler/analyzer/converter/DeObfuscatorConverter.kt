@@ -32,7 +32,13 @@ class DeObfuscatorConverter(
             }
         }
 
-        return deObfuscator.originalMethodName(className, sourceMethodName, typeFromSignature, argumentsFromSignature)
+        val originalMethodName =
+            deObfuscator.originalMethodName(className, sourceMethodName, typeFromSignature, argumentsFromSignature)
+        if (originalMethodName == sourceMethodName && originalMethodName.length < 2 && className.endsWith("Kt")) {
+            val javaClassName = className.substring(0, className.length - 2)
+            return deObfuscator.originalMethodName(javaClassName, sourceMethodName, typeFromSignature, argumentsFromSignature)
+        }
+        return originalMethodName
     }
 
     private fun decodeArguments(argumentSignature: String): String? {
