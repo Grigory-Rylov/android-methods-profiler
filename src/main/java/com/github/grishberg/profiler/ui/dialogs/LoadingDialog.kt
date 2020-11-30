@@ -12,7 +12,7 @@ class LoadingDialog(owner: Frame) : JDialog(owner, true) {
         panel.border = BorderFactory.createEmptyBorder(32, 32, 32, 32)
 
         val cldr = this.javaClass.classLoader
-        val imageURL = cldr.getResource("icons/loading.gif")
+        val imageURL = cldr.getResource("images/loading.gif")
         val imageIcon = ImageIcon(imageURL)
         val iconLabel = JLabel()
         iconLabel.setIcon(imageIcon)
