@@ -6,6 +6,7 @@ import com.github.grishberg.profiler.chart.preview.PREVIEW_IMAGE_WIDTH
 import com.github.grishberg.profiler.chart.preview.PreviewImageRepository
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.event.ActionEvent
@@ -48,7 +49,6 @@ class ThreadsViewDialog(
         controller.view = this
         val renderer = ThreadListRenderer()
         table.setDefaultRenderer(ThreadListModel.ImageHolder::class.java, renderer)
-        table.setShowGrid(true)
         table.columnModel.getColumn(0).preferredWidth = THREAD_NAME_WIDTH
         table.columnModel.getColumn(1).preferredWidth = PREVIEW_IMAGE_WIDTH
         table.addMouseListener(object : MouseAdapter() {
@@ -66,6 +66,8 @@ class ThreadsViewDialog(
         table.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, SELECT_ACTION)
         table.actionMap.put(SELECT_ACTION, EnterAction())
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        table.showHorizontalLines = true
+        table.gridColor = Color.GRAY
 
         val scrollPane = JScrollPane(table)
         scrollPane.preferredSize = Dimension(PREVIEW_IMAGE_WIDTH + THREAD_NAME_WIDTH + 32, 600)
