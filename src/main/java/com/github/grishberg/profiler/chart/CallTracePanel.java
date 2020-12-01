@@ -14,6 +14,7 @@ import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.ui.*;
+import com.github.grishberg.profiler.ui.theme.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +64,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private final Color edgesColor = new Color(0, 0, 0, 131);
     private final Color selectedBookmarkBorderColor = new Color(246, 255, 241);
 
-    private final Color bgColor = new Color(65, 65, 65);
-    private final Color toolbarColor = bgColor.darker();
+    private final Color toolbarColor = new Color(65, 65, 65).darker();
 
     private final ZoomAndPanDelegate zoomAndPanDelegate;
     private boolean isSearchingInProgress;
@@ -84,6 +84,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private SystraceStagesFacade systraceStagesFacade;
     private PreviewImageRepository previewImageRepository;
     private CallTracePreviewPanel previewPanel;
+    private Palette palette;
     private boolean isThreadTime;
     private String fontName;
     private final Font labelFont;
@@ -103,7 +104,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
                           SystraceStagesFacade systraceStagesFacade,
                           Bookmarks bookmarks,
                           PreviewImageRepository previewImageRepository,
-                          CallTracePreviewPanel previewPanel) {
+                          CallTracePreviewPanel previewPanel,
+                          Palette palette) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
@@ -113,6 +115,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         this.systraceStagesFacade = systraceStagesFacade;
         this.previewImageRepository = previewImageRepository;
         this.previewPanel = previewPanel;
+        this.palette = palette;
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         this.bookmarks = bookmarks;
         stagesFacade.setRepaintDelegate(this);
@@ -139,7 +142,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             }
         });
         screenSize = getSize();
-        setBackground(bgColor);
+        setBackground(palette.getTraceBackgroundColor());
         addComponentListener(new SimpleComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -179,7 +182,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         });
     }
 
-    private void updatePreviewImage() {
+    public void updatePreviewImage() {
         if (result == RESULT_STUB) {
             return;
         }
@@ -469,7 +472,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         double screenTop = 0;
         double screenRight = 0;
         double screenBottom = 0;
-        g.setColor(bgColor);
+        g.setColor(palette.getTraceBackgroundColor());
         g.fillRect(0, 0, getWidth(), getHeight());
 
         try {

@@ -4,14 +4,7 @@ import com.github.grishberg.android.profiler.core.AnalyzerResult;
 import com.github.grishberg.android.profiler.core.ProfileData;
 import com.github.grishberg.android.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
-import com.github.grishberg.profiler.chart.Bookmarks;
-import com.github.grishberg.profiler.chart.BookmarksRectangle;
-import com.github.grishberg.profiler.chart.CallTracePanel;
-import com.github.grishberg.profiler.chart.CallTracePreviewPanel;
-import com.github.grishberg.profiler.chart.Finder;
-import com.github.grishberg.profiler.chart.FoundInfoListener;
-import com.github.grishberg.profiler.chart.MethodsPopupMenu;
+import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
@@ -20,62 +13,28 @@ import com.github.grishberg.profiler.chart.preview.PreviewImageFactoryImpl;
 import com.github.grishberg.profiler.chart.preview.PreviewImageRepository;
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
-import com.github.grishberg.profiler.chart.theme.DarkPalette;
-import com.github.grishberg.profiler.chart.theme.Palette;
 import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
 import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
-import com.github.grishberg.profiler.common.AppLogger;
-import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
-import com.github.grishberg.profiler.common.FileSystem;
-import com.github.grishberg.profiler.common.MainScope;
-import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
-import com.github.grishberg.profiler.common.TraceContainer;
+import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
-import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
-import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
-import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog;
-import com.github.grishberg.profiler.ui.dialogs.ReportsGeneratorDialog;
-import com.github.grishberg.profiler.ui.dialogs.ScaleRangeDialog;
-import com.github.grishberg.profiler.ui.dialogs.SetAndroidHomeDialog;
+import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
 import com.github.grishberg.profiler.ui.dialogs.recorder.RecordedResult;
+import com.github.grishberg.profiler.ui.theme.ThemeController;
 import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.AbstractButton;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.SwingWorker;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Point;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -144,7 +103,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final Bookmarks bookmarks;
     private final CallTracePreviewPanel previewPanel;
     private final PreviewImageRepository previewImageRepository;
-    private final Palette palette;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -152,10 +110,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public Main(StartMode startMode,
                 SettingsRepository settings,
                 AppLogger log,
-                FramesManager framesManager) {
+                FramesManager framesManager,
+                ThemeController themeController) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
+        themeController.applyTheme();
+
         frame = new JFrame(TITLE + getClass().getPackage().getImplementationVersion());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         fileSystem = new FileSystem(frame, settings, log);
@@ -257,9 +218,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         systraceStagesFacade = new SystraceStagesFacade(log);
         methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
-        palette = new DarkPalette();
 
-        PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(palette, methodsColor, bookmarks);
+        PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(themeController.getPalette(),
+                methodsColor, bookmarks);
         previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
                 coroutineScope, coroutinesDispatchers);
 
@@ -274,7 +235,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 systraceStagesFacade,
                 bookmarks,
                 previewImageRepository,
-                previewPanel);
+                previewPanel,
+                themeController.getPalette());
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -309,7 +271,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         flameChartController = new FlameChartController(methodsColor, settings, log,
                 coroutineScope, coroutinesDispatchers);
-        FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
+        FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController, themeController.getPalette());
         flameChartController.setFoundInfoListener(flameChartDialog);
         flameChartController.setDialogView(flameChartDialog);
 
@@ -329,7 +291,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         showBookmarks = new JCheckBoxMenuItem("Show bookmarks");
         showBookmarks.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('B'));
         fileMenu = createFileMenu();
-        createMenu(fileMenu);
+        createMenu(fileMenu, themeController);
         menuHistoryItems = new MenuHistoryItems(fileMenu, settings, this::openTraceFile);
 
         if (startMode == StartMode.DEFAULT) {
@@ -347,6 +309,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 coroutineScope.destroy();
                 framesManager.onFrameClosed();
+            }
+        });
+
+        themeController.addThemeSwitchedCallback(new Runnable() {
+            @Override
+            public void run() {
+                previewImageRepository.clear();
+                chart.updatePreviewImage();
+                chart.repaint();
+                flameChartDialog.refreshFlameChart();
             }
         });
     }
@@ -412,12 +384,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return button;
     }
 
-    private void createMenu(JMenu fileMenu) {
+    private void createMenu(JMenu fileMenu, ThemeController themeController) {
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(fileMenu);
         menuBar.add(createViewMenu());
         menuBar.add(createSettingsMenu());
         pluginsFacade.createPluginsMenu(menuBar);
+        themeController.addToMenu(menuBar);
         menuBar.add(createHelpMenu());
         frame.setJMenuBar(menuBar);
     }

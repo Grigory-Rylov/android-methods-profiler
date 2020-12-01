@@ -3,6 +3,7 @@ package com.github.grishberg.profiler.chart.flame
 import com.github.grishberg.profiler.chart.MethodsNameDrawer
 import com.github.grishberg.profiler.chart.CallTracePanel.TOP_OFFSET
 import com.github.grishberg.profiler.ui.ZoomAndPanDelegate
+import com.github.grishberg.profiler.ui.theme.Palette
 import java.awt.Color
 import java.awt.Component
 import java.awt.FontMetrics
@@ -28,10 +29,9 @@ private const val FIT_PADDING = 8
 
 class FlameChartPanel(
     private val parentDialog: Component,
-    private val controller: FlameChartController
+    private val controller: FlameChartController,
+    private val palette: Palette
 ) : JPanel(), View {
-    private val bgColor = Color(65, 65, 65)
-
 
     private val leftSymbolOffset = 4
     private val fontTopOffset = 4
@@ -48,7 +48,7 @@ class FlameChartPanel(
     override var fontName: String = ""
 
     init {
-        background = bgColor
+        background = palette.traceBackgroundColor
         val copyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().menuShortcutKeyMask, false)
         registerKeyboardAction(CopyAction(), "Copy", copyStroke, JComponent.WHEN_FOCUSED)
         componentPopupMenu = ElementPopupMenu(controller)
