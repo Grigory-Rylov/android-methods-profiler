@@ -1,4 +1,4 @@
-package com.github.grishberg.profiler.chart.theme
+package com.github.grishberg.profiler.ui.theme
 
 import java.awt.Color
 

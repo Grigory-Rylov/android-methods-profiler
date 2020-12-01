@@ -4,7 +4,7 @@ import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.Bookmarks
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
-import com.github.grishberg.profiler.chart.theme.Palette
+import com.github.grishberg.profiler.ui.theme.Palette
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage

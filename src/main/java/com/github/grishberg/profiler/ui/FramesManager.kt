@@ -2,6 +2,7 @@ package com.github.grishberg.profiler.ui
 
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.ui.theme.StandaloneAppThemeController
 import kotlin.system.exitProcess
 
 class FramesManager {
@@ -13,7 +14,7 @@ class FramesManager {
         log: AppLogger
     ): Main {
         frameInstancesCount++
-        return Main(startMode, settings, log, this)
+        return Main(startMode, settings, log, this,  StandaloneAppThemeController(settings))
     }
 
     fun onFrameClosed() {
