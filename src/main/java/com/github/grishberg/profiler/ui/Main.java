@@ -271,7 +271,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         flameChartController = new FlameChartController(methodsColor, settings, log,
                 coroutineScope, coroutinesDispatchers);
-        FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController);
+        FlameChartDialog flameChartDialog = new FlameChartDialog(flameChartController, themeController.getPalette());
         flameChartController.setFoundInfoListener(flameChartDialog);
         flameChartController.setDialogView(flameChartDialog);
 
@@ -318,7 +318,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 previewImageRepository.clear();
                 chart.updatePreviewImage();
                 chart.repaint();
-                flameChartDialog.repaint();
+                flameChartDialog.refreshFlameChart();
             }
         });
     }

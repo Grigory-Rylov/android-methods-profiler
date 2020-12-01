@@ -4,6 +4,7 @@ import com.github.grishberg.profiler.chart.FoundInfoListener
 import com.github.grishberg.profiler.common.SimpleMouseListener
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.TextUtils
+import com.github.grishberg.profiler.ui.theme.Palette
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -31,10 +32,11 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 class FlameChartDialog(
-    private val controller: FlameChartController
+    private val controller: FlameChartController,
+    private val palette: Palette
 ) : JFrame("Flame chart"), FoundInfoListener, DialogView {
     private val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
-    private val flameChart = FlameChartPanel(this, controller)
+    private val flameChart = FlameChartPanel(this, controller, palette)
     private val inputMap = flameChart.getInputMap(condition)
     private val actionMap = flameChart.actionMap
     private val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -208,6 +210,11 @@ class FlameChartDialog(
 
     override fun hideInfoPanel() {
         hoverInfoPanel.hidePanel()
+    }
+
+    fun refreshFlameChart() {
+        flameChart.background = palette.traceBackgroundColor
+        flameChart.repaint()
     }
 
     private inner class WAction : SmartAction() {
