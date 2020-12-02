@@ -20,7 +20,7 @@ public class Launcher {
     private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
     private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
     private static boolean sMainWidowStarted = false;
-    private static final FramesManager sFramesManager = new FramesManager();
+    private static final FramesManager sFramesManager = new FramesManager(settings, log);
 
     static {
         initDefaultSettings(settings, log);
@@ -34,7 +34,7 @@ public class Launcher {
     }
 
     public static void main(String[] args) {
-        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
+        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
         sMainWidowStarted = true;
         if (sPendingFile != null) {
             app.openTraceFile(sPendingFile);
@@ -63,7 +63,7 @@ public class Launcher {
                     log.d("setupMacOpenFileHandler: pending file: " + file.getPath());
                     return;
                 }
-                Main newWindow = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
+                Main newWindow = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
                 newWindow.openTraceFile(file);
             }
         });

@@ -17,6 +17,9 @@ import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
 import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
+import com.github.grishberg.profiler.common.updates.ReleaseVersion;
+import com.github.grishberg.profiler.common.updates.UpdatesChecker;
+import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
@@ -44,7 +47,7 @@ import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener {
+        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -111,7 +114,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 SettingsRepository settings,
                 AppLogger log,
                 FramesManager framesManager,
-                ThemeController themeController) {
+                ThemeController themeController,
+                UpdatesChecker updatesChecker) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
@@ -321,6 +325,18 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 flameChartDialog.refreshFlameChart();
             }
         });
+
+        updatesChecker.checkForUpdates(this);
+    }
+
+    @Override
+    public void onUpdatesFound(@NotNull ReleaseVersion version) {
+        log.i("New version '" + version.getVersionName() + "' found, get on " + version.getRepositoryUrl());
+        UpdatesInfoPanel updatesInfoPanel = new UpdatesInfoPanel(chart, version,
+                () -> chart.getRootPane().setGlassPane(hoverInfoPanel),
+                () -> openWebPageInExternalBrowser("https://github.com/Grigory-Rylov/android-methods-profiler/releases"));
+        chart.getRootPane().setGlassPane(updatesInfoPanel);
+        updatesInfoPanel.showUpdate();
     }
 
     private void switchThread(ThreadItem thread) {
@@ -668,7 +684,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             dialog.setVisible(true);
         });
         homePage.addActionListener(args -> {
-            openWebpage("https://github.com/Grigory-Rylov/android-methods-profiler");
+            openWebPageInExternalBrowser("https://github.com/Grigory-Rylov/android-methods-profiler");
         });
         return help;
     }
@@ -803,7 +819,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     @Override
     public void showOpenFileChooser(boolean inNewWindow) {
         if (inNewWindow) {
-            framesManager.createMainFrame(StartMode.OPEN_TRACE_FILE, settings, log);
+            framesManager.createMainFrame(StartMode.OPEN_TRACE_FILE);
             return;
         }
 
@@ -841,7 +857,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     @Override
     public void showNewTraceDialog(boolean inNewWindow) {
         if (inNewWindow) {
-            framesManager.createMainFrame(StartMode.RECORD_NEW_TRACE, settings, log);
+            framesManager.createMainFrame(StartMode.RECORD_NEW_TRACE);
             return;
         }
 
@@ -952,7 +968,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 
-    public static boolean openWebpage(String uri) {
+    public static boolean openWebPageInExternalBrowser(String uri) {
         Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
         if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
             try {
