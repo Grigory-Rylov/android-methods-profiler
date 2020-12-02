@@ -26,6 +26,9 @@ class GithubReleaseChecker(
 
         try {
             val loadedRelease: ResponseModel = gson.fromJson(json, responseType)
+            if (loadedRelease.draft || loadedRelease.prerelease) {
+                return null
+            }
             return ReleaseVersion(
                 loadedRelease.versionName,
                 loadedRelease.htmlUrl,

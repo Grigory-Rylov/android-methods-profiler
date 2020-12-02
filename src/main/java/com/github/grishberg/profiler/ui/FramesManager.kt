@@ -8,7 +8,10 @@ import com.github.grishberg.profiler.common.updates.StandaloneAppUpdatesChecker
 import com.github.grishberg.profiler.ui.theme.StandaloneAppThemeController
 import kotlin.system.exitProcess
 
-class FramesManager(settings: SettingsRepository, log: AppLogger) {
+class FramesManager(
+    private val settings: SettingsRepository,
+    private val log: AppLogger
+) {
     private var frameInstancesCount = 0
     private val versionsChecker = StandaloneAppUpdatesChecker(
         settings,
@@ -18,9 +21,7 @@ class FramesManager(settings: SettingsRepository, log: AppLogger) {
     )
 
     fun createMainFrame(
-        startMode: Main.StartMode,
-        settings: SettingsRepository,
-        log: AppLogger
+        startMode: Main.StartMode
     ): Main {
         frameInstancesCount++
         return Main(

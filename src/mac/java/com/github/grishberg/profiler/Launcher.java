@@ -34,7 +34,7 @@ public class Launcher {
     }
 
     public static void main(String[] args) {
-        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
+        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
         sMainWidowStarted = true;
         if (sPendingFile != null) {
             app.openTraceFile(sPendingFile);
@@ -63,7 +63,7 @@ public class Launcher {
                     log.d("setupMacOpenFileHandler: pending file: " + file.getPath());
                     return;
                 }
-                Main newWindow = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
+                Main newWindow = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
                 newWindow.openTraceFile(file);
             }
         });
