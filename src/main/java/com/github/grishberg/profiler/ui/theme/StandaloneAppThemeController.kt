@@ -68,18 +68,20 @@ class StandaloneAppThemeController(
     }
 
     private fun setDarkTheme(set: Boolean = false) {
+        theme = Theme.DARK
         palette.currentPalette = DarkPalette()
         if (set) {
             //TODO: UIManager.setLookAndFeel(FlatDarculaLaf())
             return
         }
-        settings.setStringValue(SETTINGS_THEME, theme.name)
         //TODO: UIManager.setLookAndFeel(FlatDarculaLaf())
         //TODO: SwingUtilities.updateComponentTreeUI(owner)
+        settings.setStringValue(SETTINGS_THEME, theme.name)
         themeSwitchCallbacks.forEach { it.run() }
     }
 
     private fun setLiteTheme(set: Boolean = false) {
+        theme = Theme.LIGHT
         palette.currentPalette = LightPalette()
         if (set) {
             //TODO: UIManager.setLookAndFeel(FlatLightLaf())
@@ -87,6 +89,7 @@ class StandaloneAppThemeController(
         }
         //TODO: UIManager.setLookAndFeel(FlatLightLaf())
         //TODO: SwingUtilities.updateComponentTreeUI(owner)
+        settings.setStringValue(SETTINGS_THEME, theme.name)
         themeSwitchCallbacks.forEach { it.run() }
     }
 }
