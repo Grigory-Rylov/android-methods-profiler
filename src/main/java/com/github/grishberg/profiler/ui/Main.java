@@ -17,6 +17,8 @@ import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
 import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
 import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
+import com.github.grishberg.profiler.common.updates.ReleaseVersion;
+import com.github.grishberg.profiler.common.updates.UpdatesChecker;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
@@ -44,7 +46,7 @@ import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener {
+        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
     public static final String SETTINGS_ANDROID_HOME = "androidHome";
     private static final String DEFAULT_DIR = "android-methods-profiler";
     public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
@@ -111,7 +113,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 SettingsRepository settings,
                 AppLogger log,
                 FramesManager framesManager,
-                ThemeController themeController) {
+                ThemeController themeController,
+                UpdatesChecker updatesChecker) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
@@ -321,6 +324,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 flameChartDialog.refreshFlameChart();
             }
         });
+
+        updatesChecker.checkForUpdates(this);
     }
 
     private void switchThread(ThreadItem thread) {
@@ -950,6 +955,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
         MethodsPopupMenu menu = new MethodsPopupMenu(this, frame, chart, selected, stagesFacade);
         menu.show(chart, clickedPoint.x, clickedPoint.y);
+    }
+
+    @Override
+    public void onUpdatesFound(@NotNull ReleaseVersion version) {
+        log.i("New version '" + version.getVersionName() + "' found, get on " + version.getRepositoryUrl());
     }
 
     public static boolean openWebpage(String uri) {

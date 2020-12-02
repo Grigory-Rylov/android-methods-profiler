@@ -20,7 +20,7 @@ public class Launcher {
     private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
     private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
     private static boolean sMainWidowStarted = false;
-    private static final FramesManager sFramesManager = new FramesManager();
+    private static final FramesManager sFramesManager = new FramesManager(settings, log);
 
     static {
         initDefaultSettings(settings, log);
