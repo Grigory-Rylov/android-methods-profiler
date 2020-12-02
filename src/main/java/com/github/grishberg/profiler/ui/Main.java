@@ -19,6 +19,7 @@ import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsRepository;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
+import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
@@ -326,6 +327,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         });
 
         updatesChecker.checkForUpdates(this);
+    }
+
+    @Override
+    public void onUpdatesFound(@NotNull ReleaseVersion version) {
+        log.i("New version '" + version.getVersionName() + "' found, get on " + version.getRepositoryUrl());
+        UpdatesInfoPanel updatesInfoPanel = new UpdatesInfoPanel(chart, version,
+                () -> chart.getRootPane().setGlassPane(hoverInfoPanel),
+                () -> openWebPageInExternalBrowser("https://github.com/Grigory-Rylov/android-methods-profiler/releases"));
+        chart.getRootPane().setGlassPane(updatesInfoPanel);
+        updatesInfoPanel.showUpdate();
     }
 
     private void switchThread(ThreadItem thread) {
@@ -673,7 +684,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             dialog.setVisible(true);
         });
         homePage.addActionListener(args -> {
-            openWebpage("https://github.com/Grigory-Rylov/android-methods-profiler");
+            openWebPageInExternalBrowser("https://github.com/Grigory-Rylov/android-methods-profiler");
         });
         return help;
     }
@@ -957,12 +968,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 
-    @Override
-    public void onUpdatesFound(@NotNull ReleaseVersion version) {
-        log.i("New version '" + version.getVersionName() + "' found, get on " + version.getRepositoryUrl());
-    }
-
-    public static boolean openWebpage(String uri) {
+    public static boolean openWebPageInExternalBrowser(String uri) {
         Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
         if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
             try {

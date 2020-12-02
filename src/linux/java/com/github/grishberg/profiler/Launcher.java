@@ -15,14 +15,13 @@ import static com.github.grishberg.profiler.ui.Main.*;
  * Launcher without mac os x specific files
  */
 public class Launcher {
-    private static final FramesManager sFramesManager = new FramesManager();
+    private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
+    private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
+    private static final FramesManager sFramesManager = new FramesManager(settings, log);
 
     public static void main(String[] args) {
-        SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
-        JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
         initDefaultSettings(settings, log);
-
-        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT, settings, log);
+        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
 
         if (args.length > 0) {
             File f = new File(args[0]);
