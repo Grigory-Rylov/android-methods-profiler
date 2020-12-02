@@ -295,7 +295,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         showBookmarks = new JCheckBoxMenuItem("Show bookmarks");
         showBookmarks.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('B'));
         fileMenu = createFileMenu();
-        createMenu(fileMenu, themeController);
+        createMenu(fileMenu, themeController, updatesChecker);
         menuHistoryItems = new MenuHistoryItems(fileMenu, settings, this::openTraceFile);
 
         if (startMode == StartMode.DEFAULT) {
@@ -400,11 +400,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return button;
     }
 
-    private void createMenu(JMenu fileMenu, ThemeController themeController) {
+    private void createMenu(JMenu fileMenu, ThemeController themeController, UpdatesChecker updatesChecker) {
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(fileMenu);
         menuBar.add(createViewMenu());
-        menuBar.add(createSettingsMenu());
+        menuBar.add(createSettingsMenu(updatesChecker));
         pluginsFacade.createPluginsMenu(menuBar);
         themeController.addToMenu(menuBar);
         menuBar.add(createHelpMenu());
@@ -654,7 +654,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.onBookmarksStateChanged();
     }
 
-    private JMenu createSettingsMenu() {
+    private JMenu createSettingsMenu(UpdatesChecker updatesChecker) {
         JMenu help = new JMenu("Settings");
         JMenuItem openAndroidHomeDir = new JMenuItem("Set Android SDK path");
         help.add(openAndroidHomeDir);
@@ -662,6 +662,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         openAndroidHomeDir.addActionListener(arg0 -> {
             setupAndroidHome();
         });
+
+        if (updatesChecker.shouldAddToMenu()) {
+            JCheckBoxMenuItem checkForUpdates = new JCheckBoxMenuItem("Check for updates on start");
+            help.add(checkForUpdates);
+            checkForUpdates.setState(updatesChecker.getCheckForUpdatesState());
+            checkForUpdates.addActionListener(arg0 -> {
+                boolean newState = checkForUpdates.getState();
+                updatesChecker.setCheckForUpdatesState(newState);
+            });
+        }
         return help;
     }
 

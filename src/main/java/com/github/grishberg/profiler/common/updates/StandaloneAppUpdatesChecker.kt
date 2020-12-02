@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
-private const val SETTINGS_CHECK_FOR_UPDATES = "Main.checkForUpdates"
+const val SETTINGS_CHECK_FOR_UPDATES = "Main.checkForUpdates"
 
 class StandaloneAppUpdatesChecker(
     private val settingsRepository: SettingsRepository,
@@ -15,13 +15,20 @@ class StandaloneAppUpdatesChecker(
     private val dispatchers: CoroutinesDispatchers,
     private val logger: AppLogger
 ) : UpdatesChecker {
-    private var shouldCheck = true
+
+    override var checkForUpdatesState: Boolean
+        get() = settingsRepository.getBoolValueOrDefault(SETTINGS_CHECK_FOR_UPDATES, true)
+        set(value) {
+            settingsRepository.setBoolValue(SETTINGS_CHECK_FOR_UPDATES, value)
+        }
+
+    private var alreadyChecked = true
     private val githubReleaseChecker = GithubReleaseChecker(logger)
-    private val currentVersion = javaClass.getPackage().implementationVersion ?: "99.99.99.99"
+    private val currentVersion = javaClass.getPackage().implementationVersion ?: "00.00.00.00"
     private val versionParser = VersionParser(currentVersion)
 
     override fun checkForUpdates(callback: UpdatesChecker.UpdatesFoundAction) {
-        if (!shouldCheck || !settingsRepository.getBoolValueOrDefault(SETTINGS_CHECK_FOR_UPDATES, true)) {
+        if (!alreadyChecked || !checkForUpdatesState) {
             return
         }
 
@@ -35,4 +42,6 @@ class StandaloneAppUpdatesChecker(
             }
         }
     }
+
+    override fun shouldAddToMenu(): Boolean = true
 }
