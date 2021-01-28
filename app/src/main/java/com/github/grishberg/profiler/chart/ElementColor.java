@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart;
 
-import java.awt.Color;
+import java.awt.*;
 
 public class ElementColor {
     public Color fillColor = Color.WHITE;

@@ -18,8 +18,6 @@ import com.github.grishberg.profiler.ui.theme.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -28,7 +26,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.*;
 
 public class CallTracePanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
     public static final int TOP_OFFSET = 20;

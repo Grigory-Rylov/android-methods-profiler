@@ -2,8 +2,6 @@ package com.github.grishberg.profiler.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;

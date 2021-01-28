@@ -8,7 +8,6 @@ import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.util.List;
 

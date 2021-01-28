@@ -1,15 +1,10 @@
-package com.github.grishberg.profiler.chart.flame;
+package com.github.grishberg.profiler.ui;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
+import com.github.grishberg.android.profiler.core.ProfileData;
+
 import java.awt.geom.Rectangle2D;
 
-public class FlameInfoPanel extends JComponent {
+public class InfoPanel extends JComponent {
     private static final int PADDING = 10;
     private static final int TEXT_INNER_SPACE = 4;
     private static final int TOP_PANEL_OFFSET = PADDING;
@@ -24,18 +19,23 @@ public class FlameInfoPanel extends JComponent {
     private final Color backgroundColor = new Color(47, 47, 47);
     private final Color labelColor = new Color(191, 198, 187);
     private final Font font;
+    private boolean isThreadTime;
+    private final FontMetrics fontMetrics;
     private int rectHeight;
     private int rectWidth;
     private Rectangle2D classNameRect = new Rectangle2D.Double();
     private Rectangle2D rangeRect = new Rectangle2D.Double();
     private Rectangle2D durationRect = new Rectangle2D.Double();
-    private final FontMetrics fontMetrics;
 
-    public FlameInfoPanel(JPanel chart) {
+    public InfoPanel(JPanel chart) {
         parent = chart;
         hidePanel();
         font = new Font("Arial", Font.BOLD, textSize);
         fontMetrics = getFontMetrics(font);
+    }
+
+    public void changeTimeMode(boolean isThreadTime) {
+        this.isThreadTime = isThreadTime;
     }
 
     public void hidePanel() {
@@ -65,19 +65,25 @@ public class FlameInfoPanel extends JComponent {
         g.drawString(durationText, x + PADDING, durationTextY);
     }
 
-    public void setText(Point point, FlameRectangle selectedData) {
+    public void setText(Point point, ProfileData selectedData) {
         Point parentLocation = parent.getLocation();
         int topOffset = parentLocation.y;
         int horizontalOffset = parentLocation.x;
 
-        double start = selectedData.getX();
-        double end = selectedData.getMaxX();
+        double start;
+        double end;
 
+        if (isThreadTime) {
+            start = selectedData.getThreadStartTimeInMillisecond();
+            end = selectedData.getThreadEndTimeInMillisecond();
+        } else {
+            start = selectedData.getGlobalStartTimeInMillisecond();
+            end = selectedData.getGlobalEndTimeInMillisecond();
+        }
         rangeText = String.format("%.3f ms - %.3f ms", start, end);
         durationText = String.format("%.3f ms", end - start);
 
-        classNameText = "(" + selectedData.getCount() + ") " + selectedData.getName();
-
+        classNameText = selectedData.getName();
         classNameRect = fontMetrics.getStringBounds(classNameText, null);
         rangeRect = fontMetrics.getStringBounds(rangeText, null);
         durationRect = fontMetrics.getStringBounds(durationText, null);
@@ -101,6 +107,7 @@ public class FlameInfoPanel extends JComponent {
         if (y + rectHeight - topOffset > parent.getHeight()) {
             y = point.y + topOffset - rectHeight;
         }
+
         setVisible(true);
         repaint();
     }

@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.BufferOverflowException;
-import java.nio.channels.*;
-import java.util.*;
 
 /**
  * Monitor open connections.
