@@ -1,2 +1,9 @@
 rootProject.name = 'AndroidProfilerViewer'
+def plugin = rootProject.hasProperty("build_type") && rootProject.property("build_type") == "plugin"
 
+include ':core'
+if (plugin) {
+    include ':plugin'
+} else {
+    include ':app'
+}

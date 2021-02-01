@@ -1,0 +1,17 @@
+plugins {
+    id 'idea'
+}
+
+group 'com.github.grishberg'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+allprojects {
+    task hello doLast { task -> println "I'm $task.project.name" }
+}

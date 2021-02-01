@@ -1,0 +1,107 @@
+import org.gradle.internal.os.OperatingSystem
+
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+}
+
+group 'com.github.grishberg'
+version '20.12.01.0'
+def use_jdk8 = project.hasProperty("use_jdk8")
+
+if (use_jdk8) {
+    sourceCompatibility = 8
+} else {
+    sourceCompatibility = 9
+    idea.project.jdkName = '9'
+}
+
+sourceSets {
+    main {
+        java {
+            if (use_jdk8) {
+                srcDir 'src/linux/java'
+            } else {
+                srcDir 'src/mac/java'
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.github.Grishberg:mvtrace-dependencies:1.0.1'
+    implementation 'com.github.Grigory-Rylov:andoid_method_trace_recorder:1.8.0'
+    implementation 'com.github.Grigory-Rylov:proguard-deobfuscator:0.3.0'
+    implementation 'com.github.Grigory-Rylov:android-methods-profiler-core:1.1.0'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.3.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
+    implementation 'com.github.Grishberg:tree-table:0.1.1'
+
+    compile "org.slf4j:slf4j-api:1.7.25"
+    compile "org.slf4j:slf4j-log4j12:1.7.25"
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testImplementation "junit:junit:4.12"
+    testImplementation 'org.mockito:mockito-core:2.23.0'
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.2"
+}
+compileJava {
+    options.compilerArgs << "-XDignore.symbol.file=true"
+    options.fork = true
+    options.forkOptions.executable = 'javac'
+}
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.github.grishberg.profiler.Launcher',
+                'Implementation-Title': 'Android Methods Profiler',
+                'Implementation-Version': version
+    }
+    baseName = 'android-methods-profiler'
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "MaterialUISwingDemo*.class" exclude "module-info.class"
+    }
+    with jar
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url 'https://jitpack.io' }
+    }
+}
+String installerScript = ""
+
+if (OperatingSystem.current().isLinux()) {
+    installerScript = "buildScripts/linuxApplication"
+} else if (OperatingSystem.current().isWindows()) {
+    installerScript = ""
+} else if (OperatingSystem.current().isMacOsX()) {
+    installerScript = "buildScripts/macOsApplication"
+}
+
+// ./gradlew clean buildInstaller
+task buildInstaller(type: Exec) {
+    dependsOn fatJar
+    workingDir '.'
+    commandLine "./${installerScript}"
+    args version
+}
