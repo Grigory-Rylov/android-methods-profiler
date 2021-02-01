@@ -2,6 +2,7 @@ package com.github.grishberg.profiler.chart;
 
 import com.github.grishberg.android.profiler.core.ProfileData;
 
+import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 
 public class ProfileRectangle extends Rectangle2D.Double {

@@ -1,0 +1,10 @@
+plugins {
+    id 'idea'
+}
+
+allprojects {
+    //Put instructions for each sub project
+}
+subprojects {
+    //Put instructions for each sub project
+}

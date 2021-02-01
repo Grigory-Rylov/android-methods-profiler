@@ -8,10 +8,13 @@ import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.util.List;
 
-import static com.github.grishberg.profiler.ui.Main.*;
+import static com.github.grishberg.profiler.ui.Main.APP_FILES_DIR_NAME;
+import static com.github.grishberg.profiler.ui.Main.SETTINGS_ANDROID_HOME;
+import static com.github.grishberg.profiler.ui.Main.SETTINGS_SHOW_BOOKMARKS;
 
 public class Launcher {
     @Nullable

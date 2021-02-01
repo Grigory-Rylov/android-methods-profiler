@@ -2,6 +2,13 @@ package com.github.grishberg.profiler.ui;
 
 import com.github.grishberg.android.profiler.core.ProfileData;
 
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 
 public class InfoPanel extends JComponent {
