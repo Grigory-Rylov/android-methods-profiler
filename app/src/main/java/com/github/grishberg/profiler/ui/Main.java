@@ -901,6 +901,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             File file = fileChooser.getSelectedFile();
             settings.setStringValue(SETTINGS_MAPPINGS_FILE_DIALOG_DIRECTORY, file.getParent());
             fileSystem.openMappingFile(file);
+
+            if (currentOpenedFile != null) {
+                openTraceFile(currentOpenedFile);
+            }
         }
     }
 
