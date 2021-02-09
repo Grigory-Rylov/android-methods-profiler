@@ -33,14 +33,18 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.Grishberg:mvtrace-dependencies:1.0.1'
-    implementation 'com.github.Grigory-Rylov:andoid_method_trace_recorder:1.8.0'
-    implementation 'com.github.Grigory-Rylov:proguard-deobfuscator:0.3.0'
+    implementation project(':core')
+    implementation 'com.github.Grigory-Rylov:adb-facade-core:0.1.8'
+    implementation 'com.github.Grigory-Rylov:adb-facade-ddmlib:0.1.2'
+    implementation 'com.github.Grigory-Rylov:andoid_method_trace_recorder:2.1.0'
+
     implementation 'com.github.Grigory-Rylov:android-methods-profiler-core:1.1.0'
-    implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.3.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
     implementation 'com.github.Grishberg:tree-table:0.1.1'
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
+
+    implementation group: 'com.android.tools.ddms', name: 'ddmlib', version: '26.6.3'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     compile "org.slf4j:slf4j-api:1.7.25"
     compile "org.slf4j:slf4j-log4j12:1.7.25"
@@ -81,13 +85,6 @@ task fatJar(type: Jar) {
     with jar
 }
 
-allprojects {
-    repositories {
-        google()
-        jcenter()
-        maven { url 'https://jitpack.io' }
-    }
-}
 String installerScript = ""
 
 if (OperatingSystem.current().isLinux()) {
