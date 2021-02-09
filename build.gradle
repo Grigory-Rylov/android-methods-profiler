@@ -3,7 +3,11 @@ plugins {
 }
 
 allprojects {
-    //Put instructions for each sub project
+    repositories {
+        google()
+        jcenter()
+        maven { url 'https://jitpack.io' }
+    }
 }
 subprojects {
     //Put instructions for each sub project

@@ -68,7 +68,7 @@ internal class FlameChartControllerTest {
     }
 
     private val methodsColor = object : MethodsColor {
-        override fun getColorForMethod(profile: ProfileRectangle) = Color.YELLOW
+        override fun getColorForMethod(profile: _root_ide_package_.com.github.grishberg.profiler.chart.ProfileRectangle) = Color.YELLOW
         override fun getColorForMethod(name: String) = Color.YELLOW
     }
 

@@ -3,16 +3,31 @@ package com.github.grishberg.profiler.ui.dialogs.recorder
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.JNumberField
-import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.ui.LabeledGridBuilder
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import com.github.grishberg.tracerecorder.RecordMode
 import kotlinx.coroutines.CoroutineScope
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Frame
+import java.awt.Label
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JOptionPane
+import javax.swing.JPanel
+import javax.swing.JTextField
+import javax.swing.SwingUtilities
+import javax.swing.WindowConstants
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 import javax.swing.border.EtchedBorder
@@ -26,7 +41,7 @@ class JavaMethodsRecorderDialog(
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
     owner: Frame,
-    private val settings: SettingsRepository,
+    private val settings: SettingsFacade,
     private val logger: AppLogger
 ) : CloseByEscapeDialog(
     owner,
@@ -54,6 +69,10 @@ class JavaMethodsRecorderDialog(
     private val logic: JavaMethodsDialogLogic
     private val recordModeComBox =
         JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
+
+    init {
+        pack()
+    }
 
     override var packageName: String
         get() = packageNameField.text.trim()
@@ -164,7 +183,10 @@ class JavaMethodsRecorderDialog(
         additionalPanel.border = EmptyBorder(8, 8, 8, 8)
         additionalPanel.add(JLabel("Sampling in microseconds:"), BorderLayout.LINE_START)
 
-        logic = JavaMethodsDialogLogic(coroutineScope, dispatchers, this, settings, logger)
+        logic = JavaMethodsDialogLogic(
+            coroutineScope, dispatchers, this, settings, logger,
+            MethodTraceRecorderFactoryImpl(logger, settings)
+        )
 
         recordModeComBox.addItemListener {
             if (it.stateChange != ItemEvent.SELECTED) {
@@ -342,9 +364,9 @@ class JavaMethodsRecorderDialog(
         logger.d("$TAG: dialog closed")
     }
 
-    fun getResult(): RecordedResult? = logic.result
+    override fun getResult(): RecordedResult? = logic.result
 
-    fun showDialog() {
+    override fun showDialog() {
         logger.d("$TAG: dialog shown")
         logic.onDialogShown()
         isVisible = true
@@ -414,5 +436,9 @@ class JavaMethodsRecorderDialog(
         packageNameField.isEnabled = false
         activityNameField.isEnabled = false
         recordModeComBox.isEditable = false
+    }
+
+    override fun setLocationRelativeTo(frame: JFrame) {
+        super.setLocationRelativeTo(frame)
     }
 }

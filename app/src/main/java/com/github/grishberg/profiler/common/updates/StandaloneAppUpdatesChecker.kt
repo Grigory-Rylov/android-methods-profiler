@@ -2,7 +2,7 @@ package com.github.grishberg.profiler.common.updates
 
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
-import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.common.settings.SettingsFacade
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -10,16 +10,16 @@ import kotlinx.coroutines.launch
 const val SETTINGS_CHECK_FOR_UPDATES = "Main.checkForUpdates"
 
 class StandaloneAppUpdatesChecker(
-    private val settingsRepository: SettingsRepository,
+    private val settings: SettingsFacade,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
     private val logger: AppLogger
 ) : UpdatesChecker {
 
     override var checkForUpdatesState: Boolean
-        get() = settingsRepository.getBoolValueOrDefault(SETTINGS_CHECK_FOR_UPDATES, true)
+        get() = settings.isCheckForUpdatesEnabled
         set(value) {
-            settingsRepository.setBoolValue(SETTINGS_CHECK_FOR_UPDATES, value)
+            settings.isCheckForUpdatesEnabled = value
         }
 
     private var alreadyChecked = true

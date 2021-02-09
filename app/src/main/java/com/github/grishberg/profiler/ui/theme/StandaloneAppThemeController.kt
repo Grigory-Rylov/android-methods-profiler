@@ -2,14 +2,12 @@ package com.github.grishberg.profiler.ui.theme
 
 import com.github.grishberg.profiler.chart.theme.DarkPalette
 import com.github.grishberg.profiler.chart.theme.LightPalette
-import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.common.settings.SettingsFacade
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JMenu
 import javax.swing.JMenuBar
 import javax.swing.JMenuItem
-
-const val SETTINGS_THEME = "Main.theme"
 
 enum class Theme(val palette: Palette) {
     LIGHT(DarkPalette()),
@@ -17,7 +15,7 @@ enum class Theme(val palette: Palette) {
 }
 
 class StandaloneAppThemeController(
-    private val settings: SettingsRepository
+    private val settings: SettingsFacade
 ) : ThemeController {
 
     override val palette: PaletteProxy
@@ -25,7 +23,7 @@ class StandaloneAppThemeController(
     private val themeSwitchCallbacks = mutableListOf<Runnable>()
 
     init {
-        val themeName = settings.getStringValueOrDefault(SETTINGS_THEME, Theme.LIGHT.name)
+        val themeName = settings.theme
         theme = Theme.valueOf(themeName)
         palette = PaletteProxy(theme.palette)
     }
@@ -76,7 +74,7 @@ class StandaloneAppThemeController(
         }
         //TODO: UIManager.setLookAndFeel(FlatDarculaLaf())
         //TODO: SwingUtilities.updateComponentTreeUI(owner)
-        settings.setStringValue(SETTINGS_THEME, theme.name)
+        settings.theme = theme.name
         themeSwitchCallbacks.forEach { it.run() }
     }
 
@@ -89,7 +87,7 @@ class StandaloneAppThemeController(
         }
         //TODO: UIManager.setLookAndFeel(FlatLightLaf())
         //TODO: SwingUtilities.updateComponentTreeUI(owner)
-        settings.setStringValue(SETTINGS_THEME, theme.name)
+        settings.theme = theme.name
         themeSwitchCallbacks.forEach { it.run() }
     }
 }
