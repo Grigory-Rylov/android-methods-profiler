@@ -11,6 +11,8 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 
 interface ViewFactory {
+    val title: String
+
     fun createJavaMethodsRecorderDialog(
         coroutineScope: MainScope,
         coroutinesDispatchers: CoroutinesDispatchersImpl,

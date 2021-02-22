@@ -102,7 +102,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public static final String DEFAULT_FOUND_INFO_MESSAGE = "";
-    private static final String TITLE = "YAMP v";
     private final TimeFormatter timeFormatter = new TimeFormatter();
     private final JFrame frame;
     private final JLabel timeModeLabel;
@@ -157,7 +156,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         this.urlOpener = urlOpener;
         themeController.applyTheme();
 
-        frame = new JFrame(TITLE + getClass().getPackage().getImplementationVersion());
+        String title = viewFactory.getTitle();
+        frame = new JFrame(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         fileSystem = new FileSystem(frame, settings, log);
 

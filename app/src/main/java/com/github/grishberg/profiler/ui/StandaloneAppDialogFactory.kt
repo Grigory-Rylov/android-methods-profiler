@@ -12,6 +12,9 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 
 class StandaloneAppDialogFactory : ViewFactory {
+    override val title: String
+        get() = "YAMP v" + javaClass.getPackage().implementationVersion
+
     override fun createJavaMethodsRecorderDialog(
         coroutineScope: MainScope,
         coroutinesDispatchers: CoroutinesDispatchersImpl,
