@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.ui.dialogs.recorder
 
+import com.github.grishberg.android.adb.AdbWrapper
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.JNumberField
@@ -7,6 +8,7 @@ import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.ui.LabeledGridBuilder
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import com.github.grishberg.tracerecorder.RecordMode
+import com.intellij.openapi.ui.ComboBox
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.Color
@@ -20,7 +22,6 @@ import java.awt.event.ItemEvent
 import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JCheckBox
-import javax.swing.JComboBox
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JOptionPane
@@ -37,7 +38,8 @@ private const val TEXT_PADDING = 8
 private const val TITLE = "Record new trace"
 private const val FIELD_LENGTH = 30
 
-class JavaMethodsRecorderDialog(
+class PluginMethodsRecorderDialog(
+    private val adbWrapper: AdbWrapper,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
     owner: Frame,
@@ -68,7 +70,7 @@ class JavaMethodsRecorderDialog(
     private val profilerBufferSizeField = JNumberField(10)
     private val logic: JavaMethodsDialogLogic
     private val recordModeComBox =
-        JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
+        ComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
 
     init {
         pack()
@@ -185,7 +187,7 @@ class JavaMethodsRecorderDialog(
 
         logic = JavaMethodsDialogLogic(
             coroutineScope, dispatchers, this, settings, logger,
-            MethodTraceRecorderFactoryImpl(logger, settings)
+            PluginMethodTraceRecorderFactory(adbWrapper, logger, settings)
         )
 
         recordModeComBox.addItemListener {
@@ -379,9 +381,9 @@ class JavaMethodsRecorderDialog(
     }
 
     override fun showErrorDialogWhenActivityIsEntered(title: String) {
-        showErrorDialog(
-            message = "This can happens when Android Studio is opened, try to close it and try again.",
-            title
+        val message = "Please try again"
+        JOptionPane.showMessageDialog(
+            this, message, title, JOptionPane.ERROR_MESSAGE
         )
     }
 

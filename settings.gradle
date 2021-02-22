@@ -1,9 +1,64 @@
 rootProject.name = 'AndroidProfilerViewer'
-def plugin = rootProject.hasProperty("build_type") && rootProject.property("build_type") == "plugin"
+
+enum BuildType {
+    PLUGIN,
+    APP,
+    ALL
+}
+
+class BuildParams {
+    private static final String LOCAL_PROPERTIES = 'local.properties'
+    private static final String BUILD_TYPE_PROPERTY = 'build_type'
+    private static final String BUILD_TYPE_PLUGIN = 'plugin'
+    private static final String BUILD_TYPE_APP = 'app'
+
+    private final Properties localProperties = new Properties()
+    private final Map<String, String> startProperties
+
+    BuildParams(Gradle gradle, File rootDir) {
+        startProperties = gradle.getStartParameter().getProjectProperties()
+
+        File localPropsFile = new File(rootDir, LOCAL_PROPERTIES)
+        if (localPropsFile.exists()) {
+            localPropsFile.withReader { BufferedReader reader ->
+                localProperties.load(reader)
+            }
+        }
+    }
+
+    private String getBuildParam(String name, Object defaultVal) {
+        // command line
+        String paramString = startProperties.get(name)
+        if (paramString != null) {
+            return paramString
+        }
+        //local.properties
+        paramString = localProperties.getProperty(name)
+        if (paramString != null) {
+            return paramString
+        }
+
+        return defaultVal
+    }
+
+    BuildType buildType() {
+        return BuildType.valueOf(getBuildParam(BUILD_TYPE_PROPERTY, BUILD_TYPE_APP).toUpperCase())
+    }
+}
+
+BuildParams buildParams = new BuildParams(gradle, rootDir)
+println("build type : " + buildParams.buildType())
 
 include ':core'
-if (plugin) {
-    include ':plugin'
-} else {
-    include ':app'
+switch (buildParams.buildType()) {
+    case BuildType.PLUGIN:
+        include ':plugin'
+        break
+    case BuildType.APP:
+        include ':app'
+        break;
+    case BuildType.ALL:
+        include ':plugin'
+        include ':app'
+        break;
 }

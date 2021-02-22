@@ -2,7 +2,7 @@ import org.gradle.internal.os.OperatingSystem
 
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 group 'com.github.grishberg'
@@ -13,7 +13,6 @@ if (use_jdk8) {
     sourceCompatibility = 8
 } else {
     sourceCompatibility = 9
-    idea.project.jdkName = '9'
 }
 
 sourceSets {
@@ -50,7 +49,6 @@ dependencies {
     compile "org.slf4j:slf4j-log4j12:1.7.25"
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation "junit:junit:4.12"
     testImplementation 'org.mockito:mockito-core:2.23.0'
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
@@ -61,13 +59,6 @@ compileJava {
     options.fork = true
     options.forkOptions.executable = 'javac'
 }
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
 
 task fatJar(type: Jar) {
     manifest {

@@ -43,6 +43,7 @@ interface JavaMethodsRecorderDialogView {
     var serialNumber: String?
 
     fun showErrorDialog(message: String, title: String = "Method trace recording error")
+    fun showErrorDialogWhenActivityIsEntered(title: String)
     fun showInfoDialog(message: String)
     fun setStatusTextAndColor(text: String, color: Color)
     fun focusStopButton()
@@ -405,15 +406,17 @@ class JavaMethodsDialogLogic(
             view.initialState()
 
             if (throwable is AppTimeoutException) {
-                val msg = if (stateMachine.currentActivityName == null) {
-                    "Did you started application manually? Or enter activity name and try again"
+                if (stateMachine.currentActivityName == null) {
+                    val msg = "Did you started application manually? Or enter activity name and try again"
+                    view.showErrorDialog(
+                        message = msg,
+                        title = "Cant find process '${stateMachine.currentPackageName}'"
+                    )
                 } else {
-                    "This can happens when Android Studio is opened, try to close it and try again."
+                    view.showErrorDialogWhenActivityIsEntered(
+                        title = "Cant find process '${stateMachine.currentPackageName}'"
+                    )
                 }
-                view.showErrorDialog(
-                    message = msg,
-                    title = "Cant find process '${stateMachine.currentPackageName}'"
-                )
                 return
             }
 

@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.common.settings
 
 interface SettingsFacade {
-    fun filesDir(): String?
+    fun filesDir(): String
     fun save() = Unit
 
     var timeoutBeforeRecording: Long
@@ -18,7 +18,7 @@ interface SettingsFacade {
     var sampling: Int
     var activityName: String
     var packageName: String
-    var androidHome: String?
+    var androidHome: String
     var recentFiles: List<String>
     var traceFileDialogDir: String?
     var reportsFileDialogDir: String?

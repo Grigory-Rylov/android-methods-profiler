@@ -1,14 +1,45 @@
+buildscript {
+    ext.kotlin_version = '1.4.30'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 plugins {
     id 'idea'
 }
 
+def use_jdk8 = project.hasProperty("use_jdk8")
+
+if (!use_jdk8) {
+    idea.project.jdkName = '9'
+}
+
 allprojects {
+    apply plugin: "kotlin"
+    apply plugin: "idea"
     repositories {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
     }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    }
+
+    compileKotlin {
+        kotlinOptions {
+            jvmTarget = "1.8"
+            javaParameters = true
+        }
+    }
 }
 subprojects {
-    //Put instructions for each sub project
+    apply plugin: 'idea'
 }
