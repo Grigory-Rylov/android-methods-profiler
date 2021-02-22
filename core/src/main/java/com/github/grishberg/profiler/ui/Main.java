@@ -1068,7 +1068,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                     return;
                 }
                 resultContainer = result.traceContainer;
-                frame.setTitle(TITLE + getClass().getPackage().getImplementationVersion() + " " + ": " + traceFile.getName());
+                frame.setTitle(dialogFactory.getShortTitle() + " : " + traceFile.getName());
                 chart.openTraceResult(result.traceContainer);
                 AnalyzerResult traceContainerResult = result.traceContainer.getResult();
                 if (systraceRecords != null) {

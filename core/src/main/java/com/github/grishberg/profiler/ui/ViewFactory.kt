@@ -12,6 +12,7 @@ import javax.swing.JPanel
 
 interface ViewFactory {
     val title: String
+    val shortTitle: String
 
     fun createJavaMethodsRecorderDialog(
         coroutineScope: MainScope,

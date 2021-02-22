@@ -15,7 +15,8 @@ import javax.swing.JPanel
 class PluginDialogFactory(
     private val adbWrapper: AdbWrapper
 ) : ViewFactory {
-    override val title: String = "YAMP"
+    override val shortTitle: String = "YAMP"
+    override val title: String = shortTitle
 
     override fun createJavaMethodsRecorderDialog(
         coroutineScope: MainScope,
