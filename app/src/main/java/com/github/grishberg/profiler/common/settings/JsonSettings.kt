@@ -239,8 +239,8 @@ class JsonSettings(
             setIntValue(SAMPLING_NAME_SETTINGS, value)
         }
 
-    override var androidHome: String?
-        get() = getStringValue(SETTINGS_ANDROID_HOME)
+    override var androidHome: String
+        get() = getStringValueOrDefault(SETTINGS_ANDROID_HOME, "")
         set(value) {
             setStringValue(SETTINGS_ANDROID_HOME, value ?: "")
         }

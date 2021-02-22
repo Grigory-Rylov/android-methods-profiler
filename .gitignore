@@ -5,7 +5,6 @@
 build/
 out
 local.properties
-
 ### Java template
 # Compiled class file
 *.class

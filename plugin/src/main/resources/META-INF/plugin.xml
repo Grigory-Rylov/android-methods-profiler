@@ -1,0 +1,50 @@
+<idea-plugin>
+    <id>com.github.grishberg.android.yamp</id>
+    <name>YAMP</name>
+    <vendor email="grishberg@gmail.com" url="http://github.com/Grigory-Rylov">Grigory Rylov</vendor>
+
+    <description><![CDATA[
+    Yet Another Methods Profiler for Android.<br/>
+    This is analog of Android Studio Profiler but works much faster<br/>
+    Also you can mark some elements in tree with bookmarks<br/>
+    <br/>
+    There are two basic ways to open YAMP:
+        <ul>
+            <li>Through the Tools->Launch YAMP menu</li>
+            <li>By searching for "Launch YAMP" in "Find Actions" (osx: cmd+shift+a, windows/linux: ctrl+shift+a)</li>
+        </ul>
+
+    <br/>
+    ]]></description>
+
+    <!-- Android Studio 4.0+ -->
+    <!-- see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html -->
+    <idea-version since-build="201"/>
+
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>org.jetbrains.android</depends>
+    <depends>com.intellij.modules.androidstudio</depends>
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.github.grishberg.profiler.androidstudio.StorageService"/>
+    </extensions>
+
+    <actions>
+        <group id="YAMP.TopMenu"
+               text="YAMP"
+               description="YAMP Toolbar Menu">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="ShowProfilerAction"
+                    class="com.github.grishberg.profiler.androidstudio.ShowProfilerAction"
+                    text="_Launch YAMP"
+                    description="Launch Yet Another Profiler for Android"/>
+        </group>
+    </actions>
+    <project-components>
+        <component>
+            <implementation-class>com.github.grishberg.profiler.androidstudio.PluginContext</implementation-class>
+        </component>
+    </project-components>
+</idea-plugin>

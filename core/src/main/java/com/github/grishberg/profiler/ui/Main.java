@@ -28,6 +28,7 @@ import com.github.grishberg.profiler.common.FileSystem;
 import com.github.grishberg.profiler.common.MainScope;
 import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
 import com.github.grishberg.profiler.common.TraceContainer;
+import com.github.grishberg.profiler.common.UrlOpener;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
@@ -76,13 +77,11 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.net.URI;
 import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
@@ -139,6 +138,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final CallTracePreviewPanel previewPanel;
     private final PreviewImageRepository previewImageRepository;
     private final ViewFactory dialogFactory;
+    private UrlOpener urlOpener;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -149,19 +149,21 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 FramesManager framesManager,
                 ThemeController themeController,
                 UpdatesChecker updatesChecker,
-                ViewFactory dialogFactory) {
+                ViewFactory dialogFactory,
+                UrlOpener urlOpener,
+                AppIconDelegate appIconDelegate) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
         this.dialogFactory = dialogFactory;
+        this.urlOpener = urlOpener;
         themeController.applyTheme();
 
         frame = new JFrame(TITLE + getClass().getPackage().getImplementationVersion());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         fileSystem = new FileSystem(frame, settings, log);
 
-        URL icon = ClassLoader.getSystemResource("images/icon.png");
-        frame.setIconImage(Toolkit.getDefaultToolkit().getImage(icon));
+        appIconDelegate.updateFrameIcon(frame);
 
         JPanel ui = new JPanel(new BorderLayout(2, 2));
         ui.setBorder(new EmptyBorder(0, 4, 0, 4));
@@ -300,7 +302,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         newBookmarkDialog = new NewBookmarkDialog(frame);
         newBookmarkDialog.pack();
 
-        loadingDialog = new LoadingDialog(frame);
+        loadingDialog = new LoadingDialog(frame, appIconDelegate);
         loadingDialog.pack();
 
         methodTraceRecordDialog = dialogFactory.createJavaMethodsRecorderDialog(
@@ -374,7 +376,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 chart,
                 version,
                 () -> chart.getRootPane().setGlassPane(hoverInfoPanel),
-                () -> openWebPageInExternalBrowser("https://github.com/Grigory-Rylov/android-methods-profiler/releases")
+                () -> urlOpener.openUrl("https://github.com/Grigory-Rylov/android-methods-profiler/releases")
         );
         chart.getRootPane().setGlassPane(updatesInfoPanel);
         updatesInfoPanel.showUpdate();
@@ -722,7 +724,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             dialog.setVisible(true);
         });
         homePage.addActionListener(args -> {
-            openWebPageInExternalBrowser("https://github.com/Grigory-Rylov/android-methods-profiler");
+            urlOpener.openUrl("https://github.com/Grigory-Rylov/android-methods-profiler");
         });
         return help;
     }
@@ -1008,19 +1010,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
         MethodsPopupMenu menu = new MethodsPopupMenu(this, frame, chart, selected, stagesFacade);
         menu.show(chart, clickedPoint.x, clickedPoint.y);
-    }
-
-    public static boolean openWebPageInExternalBrowser(String uri) {
-        Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-        if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
-            try {
-                desktop.browse(URI.create(uri));
-                return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return false;
     }
 
     private class FindInMethodsAction implements ActionListener {
