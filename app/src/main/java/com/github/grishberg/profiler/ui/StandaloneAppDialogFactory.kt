@@ -30,4 +30,6 @@ class StandaloneAppDialogFactory : ViewFactory {
     ): UpdatesInfoPanel {
         return UpdatesInfoPanel(parent, version, closeCallback, linkClickCallback)
     }
+
+    override fun shouldAddToolBar() = false
 }

@@ -25,4 +25,6 @@ interface ViewFactory {
         closeCallback: Runnable,
         linkClickCallback: Runnable
     ): UpdatesInfoPanel
+
+    fun shouldAddToolBar(): Boolean
 }

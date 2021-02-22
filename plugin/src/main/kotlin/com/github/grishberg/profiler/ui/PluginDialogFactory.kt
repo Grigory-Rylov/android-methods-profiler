@@ -37,4 +37,6 @@ class PluginDialogFactory(
     ): UpdatesInfoPanel {
         throw IllegalStateException("Updates via idea plugins")
     }
+
+    override fun shouldAddToolBar() = true
 }

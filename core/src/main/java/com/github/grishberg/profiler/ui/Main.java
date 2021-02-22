@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -82,7 +81,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.net.URL;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
@@ -149,13 +147,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 FramesManager framesManager,
                 ThemeController themeController,
                 UpdatesChecker updatesChecker,
-                ViewFactory dialogFactory,
+                ViewFactory viewFactory,
                 UrlOpener urlOpener,
                 AppIconDelegate appIconDelegate) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
-        this.dialogFactory = dialogFactory;
+        this.dialogFactory = viewFactory;
         this.urlOpener = urlOpener;
         themeController.applyTheme();
 
@@ -190,10 +188,23 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         topControls.add(foundInfo, BorderLayout.LINE_END);
 
         previewPanel = new CallTracePreviewPanel(log);
+        int gridY = 0;
+        if (viewFactory.shouldAddToolBar()) {
+            JToolBar toolBar = new JToolBar();
+            toolBar.setFloatable(false);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.gridx = 0;
+            gbc.gridy = gridY++;
+            gbc.weightx = 1;
+            gbc.anchor = GridBagConstraints.PAGE_START;
+            gbc.gridwidth = 0;
+            controls.add(toolBar, gbc);
+            addToolbarButtons(toolBar, appIconDelegate);
+        }
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridy = gridY++;
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.PAGE_START;
         gbc.gridwidth = 0;
@@ -201,7 +212,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = gridY++;
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.PAGE_START;
         gbc.gridwidth = 0;
@@ -209,7 +220,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = gridY++;
         gbc.weightx = 1;
         gbc.gridwidth = 2;
 
@@ -305,7 +316,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         loadingDialog = new LoadingDialog(frame, appIconDelegate);
         loadingDialog.pack();
 
-        methodTraceRecordDialog = dialogFactory.createJavaMethodsRecorderDialog(
+        methodTraceRecordDialog = viewFactory.createJavaMethodsRecorderDialog(
                 coroutineScope, coroutinesDispatchers, frame, settings, log);
 
         scaleRangeDialog = new ScaleRangeDialog(frame);
@@ -365,7 +376,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 flameChartDialog.refreshFlameChart();
             }
         });
-
         updatesChecker.checkForUpdates(this);
     }
 
@@ -406,17 +416,20 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
-    private void addToolbarButtons(JToolBar toolBar) {
+    private void addToolbarButtons(JToolBar toolBar,
+                                   AppIconDelegate appIconDelegate) {
         JButton button;
 
         button = makeToolbarButton("Open", "openfile",
                 Actions.OPEN_TRACE_FILE,
-                "Open .trace file");
+                "Open .trace file",
+                appIconDelegate);
         toolBar.add(button);
 
         button = makeToolbarButton("New", "newfile",
                 Actions.RECORD_NEW_TRACE,
-                "Record new method trace from device");
+                "Record new method trace from device",
+                appIconDelegate);
         toolBar.add(button);
     }
 
@@ -424,21 +437,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             String altText,
             String iconName,
             Actions actionCommand,
-            String toolTipText) {
+            String toolTipText,
+            AppIconDelegate appIconDelegate) {
+
         String imageLocation = "images/" + iconName + ".png";
-        URL icon = ClassLoader.getSystemResource(imageLocation);
 
         JButton button = new JButton();
         button.setActionCommand(actionCommand.name());
         button.setToolTipText(toolTipText);
         button.addActionListener(this);
-        if (icon != null) {
-            button.setIcon(new ImageIcon(icon, altText));
-        } else {
-            button.setText(altText);
-            System.err.println("Resource not found: " + imageLocation);
-        }
-
+        button.setIcon(appIconDelegate.loadIcon(imageLocation, altText));
         return button;
     }
 
@@ -889,7 +897,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            settings.setMappingFileDir( file.getParent());
+            settings.setMappingFileDir(file.getParent());
             fileSystem.openMappingFile(file);
 
             if (currentOpenedFile != null) {
