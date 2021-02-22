@@ -7,8 +7,8 @@ data class ProfileDataImpl(
     override val level: Int,
     override val threadStartTimeInMillisecond: Double,
     override val globalStartTimeInMillisecond: Double,
-    override var threadEndTimeInMillisecond: Double = 0.0,
-    override var globalEndTimeInMillisecond: Double = 0.0,
+    override var threadEndTimeInMillisecond: Double = -1.0,
+    override var globalEndTimeInMillisecond: Double = -1.0,
     override var threadSelfTime: Double = 0.0,
     override var globalSelfTime: Double = 0.0,
     override var parent: ProfileDataImpl? = null

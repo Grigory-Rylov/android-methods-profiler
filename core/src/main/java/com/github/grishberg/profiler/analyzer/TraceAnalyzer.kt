@@ -25,11 +25,11 @@ class TraceAnalyzer(
             val traceDataForThread = vmTraceHandler.traceData.getOrDefault(threadId.key, mutableListOf())
 
             for (duration in traceDataForThread) {
-                if (duration.threadEndTimeInMillisecond == 0.0) {
+                if (duration.threadEndTimeInMillisecond == -1.0) {
                     duration.threadEndTimeInMillisecond =
                         vmTraceHandler.threadTimeBounds.getOrDefault(threadId.key, ThreadTimeBoundsImpl()).maxTime
                 }
-                if (duration.globalEndTimeInMillisecond == 0.0) {
+                if (duration.globalEndTimeInMillisecond == -1.0) {
                     duration.globalEndTimeInMillisecond =
                         vmTraceHandler.globalTimeBounds.getOrDefault(threadId.key, ThreadTimeBoundsImpl()).maxTime
                 }

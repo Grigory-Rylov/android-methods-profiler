@@ -19,7 +19,7 @@ class StandaloneAppIconDelegate : AppIconDelegate {
         imageIcon.imageObserver = label
     }
 
-    override fun loadIcon(name: String): ImageIcon {
+    override fun loadIcon(name: String, altText: String): ImageIcon {
         val imageURL = classLoader.getResource(name)
         return ImageIcon(imageURL)
     }
