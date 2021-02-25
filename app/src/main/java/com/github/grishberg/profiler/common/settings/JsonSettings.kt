@@ -334,6 +334,8 @@ class JsonSettings(
 
     override fun filesDir() = filesDirName
 
+    override var shouldShowToolbar: Boolean = false
+
     private fun initWithDefaults() {
         initWithDefaultStringValue(SETTINGS_FONT_NAME, "Arial")
         initWithDefaultIntValue(SETTINGS_CELL_FONT_SIZE, DEFAULT_CELL_FONT_SIZE)

@@ -15,17 +15,17 @@ class PluginState : SettingsFacade {
     fun updateBaseDir(project: Project) {
         if (project.basePath != null) {
             baseDir = File(project.basePath, PLUGIN_DIR)
-            if(!baseDir.exists()) {
+            if (!baseDir.exists()) {
                 baseDir.mkdirs()
             }
         }
     }
 
     override fun filesDir(): String = baseDir.path
-
+    var methodColors = "[]"
     override var timeoutBeforeRecording: Long = 10
     override var showBookmarks: Boolean = true
-    override var threadTimeMode: Boolean = true
+    override var threadTimeMode: Boolean = false
     override var theme: String = "" // not used
     override var waitForResultTimeout: Int = 20
     override var deviceSerialNumber: String = ""
@@ -49,4 +49,5 @@ class PluginState : SettingsFacade {
     override var isCheckForUpdatesEnabled: Boolean = false
     override var debugPort: Int = 0 // not used
     override var hierarchicalStagesMode: Boolean = true
+    override var shouldShowToolbar: Boolean = true
 }

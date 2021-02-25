@@ -30,5 +30,6 @@ interface SettingsFacade {
     var hierarchicalStagesMode: Boolean
     var isCheckForUpdatesEnabled: Boolean
     var debugPort: Int
+    var shouldShowToolbar: Boolean
 
 }

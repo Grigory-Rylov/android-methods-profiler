@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.github.grishberg'
-version '21.02.22.0'
+version ext.productVersion
 
 sourceCompatibility = 8
 targetCompatibility = 8

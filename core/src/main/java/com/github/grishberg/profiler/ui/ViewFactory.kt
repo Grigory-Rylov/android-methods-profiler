@@ -13,6 +13,7 @@ import javax.swing.JPanel
 interface ViewFactory {
     val title: String
     val shortTitle: String
+    val shouldShowSetAdbMenu: Boolean
 
     fun createJavaMethodsRecorderDialog(
         coroutineScope: MainScope,
@@ -30,4 +31,5 @@ interface ViewFactory {
     ): UpdatesInfoPanel
 
     fun shouldAddToolBar(): Boolean
+
 }

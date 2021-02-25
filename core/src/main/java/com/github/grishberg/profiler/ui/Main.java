@@ -15,6 +15,7 @@ import com.github.grishberg.profiler.chart.MethodsPopupMenu;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
+import com.github.grishberg.profiler.chart.highlighting.MethodsColorRepository;
 import com.github.grishberg.profiler.chart.preview.PreviewImageFactory;
 import com.github.grishberg.profiler.chart.preview.PreviewImageFactoryImpl;
 import com.github.grishberg.profiler.chart.preview.PreviewImageRepository;
@@ -84,9 +85,6 @@ import java.io.File;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
-    private static final String DEFAULT_DIR = "android-methods-profiler";
-    public static final String APP_FILES_DIR_NAME = System.getProperty("user.home") + File.separator + DEFAULT_DIR;
-    private final MethodsColorImpl methodsColor;
     @Nullable
     private File currentOpenedFile;
 
@@ -136,6 +134,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final PreviewImageRepository previewImageRepository;
     private final ViewFactory dialogFactory;
     private UrlOpener urlOpener;
+    private String appFilesDir;
+    private final MethodsColorImpl methodsColor;
+    private JToolBar toolBar = new JToolBar();
 
     @Nullable
     private TraceContainer resultContainer;
@@ -148,12 +149,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 UpdatesChecker updatesChecker,
                 ViewFactory viewFactory,
                 UrlOpener urlOpener,
-                AppIconDelegate appIconDelegate) {
+                AppIconDelegate appIconDelegate,
+                MethodsColorRepository methodsColorRepository,
+                String appFilesDir) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
         this.dialogFactory = viewFactory;
         this.urlOpener = urlOpener;
+        this.appFilesDir = appFilesDir;
         themeController.applyTheme();
 
         String title = viewFactory.getTitle();
@@ -168,6 +172,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         JPanel controls = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+
+        toolBar.setFloatable(false);
 
         // open file button
         JPanel topControls = new JPanel(new BorderLayout(2, 2));
@@ -190,8 +196,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         previewPanel = new CallTracePreviewPanel(log);
         int gridY = 0;
         if (viewFactory.shouldAddToolBar()) {
-            JToolBar toolBar = new JToolBar();
-            toolBar.setFloatable(false);
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.gridx = 0;
             gbc.gridy = gridY++;
@@ -200,6 +204,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             gbc.gridwidth = 0;
             controls.add(toolBar, gbc);
             addToolbarButtons(toolBar, appIconDelegate);
+            toolBar.setVisible(settings.getShouldShowToolbar());
         }
 
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -269,7 +274,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         CoroutinesDispatchersImpl coroutinesDispatchers = new CoroutinesDispatchersImpl();
         stagesFacade = new StagesFacade(coroutineScope, coroutinesDispatchers, log);
         systraceStagesFacade = new SystraceStagesFacade(log);
-        methodsColor = new MethodsColorImpl(APP_FILES_DIR_NAME, log);
+        methodsColor = new MethodsColorImpl(methodsColorRepository);
 
         PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(themeController.getPalette(),
                 methodsColor, bookmarks);
@@ -578,6 +583,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         showThreadsDialog.addActionListener(a -> showThreadsDialog());
         showThreadsDialog.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator(KeyEvent.VK_T));
 
+        JCheckBoxMenuItem showToolbarMenuItem = new JCheckBoxMenuItem("Show toolbar");
+        viewMenu.add(showToolbarMenuItem);
+        showToolbarMenuItem.setState(settings.getShouldShowToolbar());
+        showToolbarMenuItem.addActionListener(a -> showToolbar(showToolbarMenuItem.getState()));
+
         viewMenu.addSeparator();
 
         JMenuItem clearBookmarks = new JMenuItem("Clear bookmarks");
@@ -640,6 +650,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return viewMenu;
     }
 
+    private void showToolbar(boolean show) {
+        settings.setShouldShowToolbar(show);
+        toolBar.setVisible(show);
+    }
+
     public void showThreadsDialog() {
         if (resultContainer == null) {
             return;
@@ -694,12 +709,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private JMenu createSettingsMenu(UpdatesChecker updatesChecker) {
         JMenu help = new JMenu("Settings");
-        JMenuItem openAndroidHomeDir = new JMenuItem("Set Android SDK path");
-        help.add(openAndroidHomeDir);
-
-        openAndroidHomeDir.addActionListener(arg0 -> {
-            setupAndroidHome();
-        });
+        if (dialogFactory.getShouldShowSetAdbMenu()) {
+            JMenuItem openAndroidHomeDir = new JMenuItem("Set Android SDK path");
+            help.add(openAndroidHomeDir);
+            openAndroidHomeDir.addActionListener(arg0 -> {
+                setupAndroidHome();
+            });
+        }
 
         if (updatesChecker.shouldAddToMenu()) {
             JCheckBoxMenuItem checkForUpdates = new JCheckBoxMenuItem("Check for updates on start");
@@ -921,7 +937,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                         frame,
                         "For recording need to set ANDROID_HOME env variable." +
                                 "\nIf value is already defined, start app from terminal 'java -jar android-methods-profiler.jar'" +
-                                "\nOr set 'androidHome' in " + APP_FILES_DIR_NAME + "/.android-methods-profiler-settings.json"
+                                "\nOr set 'androidHome' in " + appFilesDir + "/.android-methods-profiler-settings.json"
                 );
                 return;
             }

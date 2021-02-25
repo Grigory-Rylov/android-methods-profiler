@@ -17,6 +17,7 @@ class PluginDialogFactory(
 ) : ViewFactory {
     override val shortTitle: String = "YAMP"
     override val title: String = shortTitle
+    override val shouldShowSetAdbMenu = false
 
     override fun createJavaMethodsRecorderDialog(
         coroutineScope: MainScope,

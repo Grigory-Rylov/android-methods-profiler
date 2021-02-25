@@ -2,15 +2,7 @@ package com.github.grishberg.profiler.chart.highlighting
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.common.AppLogger
-import com.google.gson.GsonBuilder
-import com.google.gson.stream.JsonReader
 import java.awt.Color
-import java.io.*
-
-private const val TAG = "CustomColorsRepository"
-private const val COLORS_FILE_NAME = "colors.json"
-private const val FILTER_KEY = "filter"
-private const val COLOR_IN_HEX_KEY = "color"
 
 interface MethodsColor {
     fun getColorForMethod(profile: ProfileRectangle): Color
@@ -19,11 +11,9 @@ interface MethodsColor {
 }
 
 class MethodsColorImpl(
-    filesDir: String,
-    private val log: AppLogger
+    private val methodsColors: MethodsColorRepository
 ) : MethodsColor {
-    private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
-    private val colors: List<ColorInfo>
+    private val colors = mutableListOf<ColorInfo>()
 
     private val otherColor = Color(254, 204, 130)
     private val androidColor = Color(255, 191, 160)
@@ -39,63 +29,15 @@ class MethodsColorImpl(
     private val requestLayoutColor = Color(0xFFA7A3)
 
     init {
-        val colorsFile = File(filesDir, COLORS_FILE_NAME)
-        colors = try {
-            val fileReader = FileReader(colorsFile)
-            val reader = JsonReader(fileReader)
-            val data: List<Map<String, String>> = gson.fromJson(reader, List::class.java)
-            recognizeColors(data)
-        } catch (e: FileNotFoundException) {
-            log.d("$TAG: there is no $COLORS_FILE_NAME, create new")
-            val colorsStub = listOf(mapOf(Pair(FILTER_KEY, "ru.yandex"), Pair(COLOR_IN_HEX_KEY, "FF9595")))
-            createEmptyFile(colorsFile, colorsStub)
-            recognizeColors(colorsStub)
-        }
+        colors.addAll(methodsColors.getColors())
     }
 
-    private fun recognizeColors(colors: List<Map<String, String>>): List<ColorInfo> {
-        val result = mutableListOf<ColorInfo>()
-        for (color in colors) {
-            val filter = color[FILTER_KEY]
-            val colorInHex = color[COLOR_IN_HEX_KEY]
-            if (filter == null || filter == "" || colorInHex == null || colorInHex == "") {
-                continue
-            }
-            try {
-                val colorInt = Integer.parseInt(colorInHex, 16)
-                val parsedColor = Color(colorInt) ?: continue
-                result.add(ColorInfo(filter, parsedColor))
-            } catch (e: NumberFormatException) {
-                log.e("$TAG: recognize color error: $filter - $colorInHex")
-            }
-        }
-        return result.toList()
-    }
-
-
-    private fun createEmptyFile(colorsFile: File, colorsStub: List<Any>) {
-        colorsFile.createNewFile()
-        var outputStream: FileOutputStream? = null
-        try {
-            outputStream = FileOutputStream(colorsFile)
-            val bufferedWriter: BufferedWriter
-            bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream, "UTF-8"))
-            gson.toJson(colorsStub, bufferedWriter)
-            bufferedWriter.close()
-            log.d("$TAG settings are saved")
-        } catch (e: FileNotFoundException) {
-            log.e("$TAG: save settings error", e)
-        } catch (e: IOException) {
-            log.e("$TAG: save settings error", e)
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.flush()
-                    outputStream.close()
-                } catch (e: IOException) {
-                }
-            }
-        }
+    /**
+     * Must be called when need to invalidate colors.
+     */
+    fun updateColors() {
+        colors.clear()
+        colors.addAll(methodsColors.getColors())
     }
 
     override fun getColorForMethod(profile: ProfileRectangle): Color {
