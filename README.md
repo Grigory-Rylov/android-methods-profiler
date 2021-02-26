@@ -14,6 +14,13 @@ For Russian speaking developers there is a video [guide](https://youtu.be/epJNlw
 - [Download latest release](https://github.com/Grigory-Rylov/android-methods-profiler/releases)
 
 ## Installation
+### Android Studio plugin marketplace
+1. Find YAMP plugin and install
+2. Start through the `Tools->Launch YAMP` menu or 
+by searching for "Launch YAMP" in "Find Actions" (osx: cmd+shift+a, windows/linux: ctrl+shift+a) 
+
+https://plugins.jetbrains.com/plugin/16167-yamp
+
 ### Mac OS X
 1. Open DMG file
 2. Drag Android Methods Profiler icon into Applications shurtcut 
