@@ -9,11 +9,13 @@ import com.github.grishberg.profiler.common.updates.ReleaseVersion
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialogView
 import com.github.grishberg.profiler.ui.dialogs.recorder.PluginMethodsRecorderDialog
+import com.github.grishberg.profiler.ui.dialogs.recorder.ProjectInfoProvider
 import javax.swing.JFrame
 import javax.swing.JPanel
 
 class PluginDialogFactory(
-    private val adbWrapper: AdbWrapper
+    private val adbWrapper: AdbWrapper,
+    private val projectInfoProvider: ProjectInfoProvider
 ) : ViewFactory {
     override val shortTitle: String = "YAMP"
     override val title: String = shortTitle
@@ -29,7 +31,8 @@ class PluginDialogFactory(
         return PluginMethodsRecorderDialog(
             adbWrapper,
             coroutineScope, coroutinesDispatchers,
-            frame, settings, log
+            frame, settings, log,
+            projectInfoProvider
         )
     }
 

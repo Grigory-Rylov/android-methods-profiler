@@ -65,7 +65,8 @@ class JavaMethodsDialogLogic(
     private val view: JavaMethodsRecorderDialogView,
     private val settings: SettingsFacade,
     private val logger: AppLogger,
-    private val recorderFactory: MethodTraceRecorderFactory
+    private val recorderFactory: MethodTraceRecorderFactory,
+    private val projectInfoProvider: ProjectInfoProvider
 ) : MethodTraceEventListener {
     var selectedMode: RecordMode = RecordMode.METHOD_TRACES
         set(value) {
@@ -83,7 +84,10 @@ class JavaMethodsDialogLogic(
     private var job: Job? = null
     private var methodTraceRecorder: MethodTraceRecorder = MethodTraceRecorderStub()
 
-    private var state: State = Idle(coroutineScope, dispatchers, this, view, settings, logger)
+    private var state: State = Idle(
+        coroutineScope, dispatchers, this, view, settings, logger,
+        projectInfoProvider
+    )
 
     private var currentPackageName: String = ""
     private var currentActivityName: String? = null
@@ -91,8 +95,8 @@ class JavaMethodsDialogLogic(
     init {
         prepareFolder()
 
-        view.packageName = settings.packageName
-        view.activityName = settings.activityName
+        view.packageName = projectInfoProvider.packageName()
+        view.activityName = projectInfoProvider.activityName()
         view.sampling = settings.sampling
         view.profilerBufferSizeInMb = settings.bufferSize
         view.fileNamePrefix = settings.fileNamePrefix
@@ -197,7 +201,7 @@ class JavaMethodsDialogLogic(
     }
 
     private fun idleState() {
-        state = Idle(coroutineScope, dispatchers, this, view, settings, logger)
+        state = Idle(coroutineScope, dispatchers, this, view, settings, logger, projectInfoProvider)
     }
 
     private class Idle(
@@ -206,7 +210,8 @@ class JavaMethodsDialogLogic(
         private val stateMachine: JavaMethodsDialogLogic,
         private val view: JavaMethodsRecorderDialogView,
         private val settings: SettingsFacade,
-        private val logger: AppLogger
+        private val logger: AppLogger,
+        private val projectInfoProvider: ProjectInfoProvider
     ) : State {
         override fun onStartPressed(methodTraceRecorderFactory: MethodTraceRecorderFactory) {
             val pkgName = view.packageName
@@ -223,8 +228,8 @@ class JavaMethodsDialogLogic(
             val fileNamePrefix = view.fileNamePrefix
 
             logger.d("$TAG: start recording pkg=$pkgName, activity=$activity, mode=${stateMachine.selectedMode}")
-            settings.packageName = pkgName
-            settings.activityName = view.activityName
+            projectInfoProvider.updatePackageName(pkgName)
+            projectInfoProvider.updateActivityName(view.activityName)
             settings.sampling = sampling
             settings.fileNamePrefix = fileNamePrefix
             settings.samplingRecordModeEnabled = stateMachine.selectedMode == RecordMode.METHOD_SAMPLE

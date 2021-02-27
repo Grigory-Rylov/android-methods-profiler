@@ -44,7 +44,8 @@ class PluginMethodsRecorderDialog(
     private val dispatchers: CoroutinesDispatchers,
     owner: Frame,
     private val settings: SettingsFacade,
-    private val logger: AppLogger
+    private val logger: AppLogger,
+    private val projectInfoProvider: ProjectInfoProvider
 ) : CloseByEscapeDialog(
     owner,
     TITLE, true
@@ -187,7 +188,8 @@ class PluginMethodsRecorderDialog(
 
         logic = JavaMethodsDialogLogic(
             coroutineScope, dispatchers, this, settings, logger,
-            PluginMethodTraceRecorderFactory(adbWrapper, logger, settings)
+            PluginMethodTraceRecorderFactory(adbWrapper, logger, settings),
+            projectInfoProvider
         )
 
         recordModeComBox.addItemListener {

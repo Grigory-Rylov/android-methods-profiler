@@ -38,11 +38,12 @@ private const val TITLE = "Record new trace"
 private const val FIELD_LENGTH = 30
 
 class JavaMethodsRecorderDialog(
-    private val coroutineScope: CoroutineScope,
-    private val dispatchers: CoroutinesDispatchers,
+    coroutineScope: CoroutineScope,
+    dispatchers: CoroutinesDispatchers,
     owner: Frame,
-    private val settings: SettingsFacade,
-    private val logger: AppLogger
+    settings: SettingsFacade,
+    private val logger: AppLogger,
+    projectInfoProvider: ProjectInfoProvider
 ) : CloseByEscapeDialog(
     owner,
     TITLE, true
@@ -185,7 +186,8 @@ class JavaMethodsRecorderDialog(
 
         logic = JavaMethodsDialogLogic(
             coroutineScope, dispatchers, this, settings, logger,
-            MethodTraceRecorderFactoryImpl(logger, settings)
+            MethodTraceRecorderFactoryImpl(logger, settings),
+            projectInfoProvider
         )
 
         recordModeComBox.addItemListener {

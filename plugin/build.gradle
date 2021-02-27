@@ -60,7 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      YAMP as plugin.<br>
+      Get package name from current project if there is no stored one.<br>
       """
 }
 

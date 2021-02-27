@@ -19,9 +19,8 @@ class StandaloneAppFramesManagerFramesManager(
     private val log: AppLogger,
     private val dialogFactory: ViewFactory
 ) : FramesManager {
-    private val appFilesDir = System.getProperty("user.home") + File.separator + DEFAULT_DIR
 
-    private val methodsColorRepository = StandaloneAppMethodsColorRepository(appFilesDir, ColorInfoAdapter(log), log)
+    private val methodsColorRepository = StandaloneAppMethodsColorRepository(APP_FILES_DIR, ColorInfoAdapter(log), log)
     private val urlOpener = StandaloneAppUrlOpener()
     private val iconDelegate = StandaloneAppIconDelegate()
     private var frameInstancesCount = 0
@@ -44,7 +43,7 @@ class StandaloneAppFramesManagerFramesManager(
             urlOpener,
             iconDelegate,
             methodsColorRepository,
-            appFilesDir
+            APP_FILES_DIR
         )
     }
 
@@ -53,5 +52,9 @@ class StandaloneAppFramesManagerFramesManager(
         if (frameInstancesCount == 0) {
             exitProcess(0)
         }
+    }
+    companion object {
+        @JvmField
+        val APP_FILES_DIR = System.getProperty("user.home") + File.separator + DEFAULT_DIR
     }
 }

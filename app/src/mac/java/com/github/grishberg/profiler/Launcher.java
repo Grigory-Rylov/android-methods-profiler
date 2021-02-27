@@ -15,15 +15,14 @@ import java.awt.Desktop;
 import java.io.File;
 import java.util.List;
 
-import static com.github.grishberg.profiler.ui.Main.APP_FILES_DIR_NAME;
-
 public class Launcher {
     @Nullable
     private static File sPendingFile = null;
+    private static final String APP_FILES_DIR_NAME = StandaloneAppFramesManagerFramesManager.APP_FILES_DIR;
     private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
     private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
     private static boolean sMainWidowStarted = false;
-    private static final ViewFactory sViewFactory = new StandaloneAppDialogFactory();
+    private static final ViewFactory sViewFactory = new StandaloneAppDialogFactory(settings);
     private static final FramesManager sFramesManager = new StandaloneAppFramesManagerFramesManager(
             settings, log, sViewFactory
     );

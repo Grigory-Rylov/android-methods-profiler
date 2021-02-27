@@ -12,15 +12,14 @@ import com.github.grishberg.profiler.ui.ViewFactory;
 
 import java.io.File;
 
-import static com.github.grishberg.profiler.ui.Main.APP_FILES_DIR_NAME;
-
 /**
  * Launcher without mac os x specific files
  */
 public class Launcher {
+    private static final String APP_FILES_DIR_NAME = StandaloneAppFramesManagerFramesManager.APP_FILES_DIR;
     private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
     private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
-    private static final ViewFactory sViewFactory = new StandaloneAppDialogFactory();
+    private static final ViewFactory sViewFactory = new StandaloneAppDialogFactory(settings);
     private static final FramesManager sFramesManager = new StandaloneAppFramesManagerFramesManager(
             settings, log, sViewFactory);
 

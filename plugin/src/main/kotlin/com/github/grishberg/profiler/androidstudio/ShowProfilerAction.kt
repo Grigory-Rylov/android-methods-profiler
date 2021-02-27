@@ -6,6 +6,7 @@ import com.github.grishberg.profiler.ui.PluginDialogFactory
 import com.github.grishberg.profiler.ui.PluginFramesManager
 import com.github.grishberg.profiler.ui.PluginThemeController
 import com.github.grishberg.profiler.ui.ViewFactory
+import com.github.grishberg.profiler.ui.dialogs.recorder.ProjectInfoProvider
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -21,8 +22,10 @@ class ShowProfilerAction : AnAction() {
         val settings: PluginState = StorageService.getInstance().state ?: PluginState()
         settings.updateBaseDir(project)
 
-        val viewFactory: ViewFactory = PluginDialogFactory(project.context().adb)
         val logger = PluginLogger()
+        val projectInfo = PluginProjectInfo(project, logger)
+        val projectInfoProvider = ProjectInfoProvider(projectInfo, settings)
+        val viewFactory: ViewFactory = PluginDialogFactory(project.context().adb, projectInfoProvider)
         val themeController = PluginThemeController()
         val framesManager: FramesManager = PluginFramesManager(
             settings,

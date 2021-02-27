@@ -8,10 +8,15 @@ import com.github.grishberg.profiler.common.updates.ReleaseVersion
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialog
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialogView
+import com.github.grishberg.profiler.ui.dialogs.recorder.NoOpProjectInfo
+import com.github.grishberg.profiler.ui.dialogs.recorder.ProjectInfoProvider
 import javax.swing.JFrame
 import javax.swing.JPanel
 
-class StandaloneAppDialogFactory : ViewFactory {
+class StandaloneAppDialogFactory(
+    settings: SettingsFacade
+) : ViewFactory {
+    private val projectInfoProvider = ProjectInfoProvider(NoOpProjectInfo, settings)
     override val shortTitle: String
         get() = "YAMP"
     override val title: String
@@ -24,7 +29,11 @@ class StandaloneAppDialogFactory : ViewFactory {
         settings: SettingsFacade,
         log: AppLogger
     ): JavaMethodsRecorderDialogView {
-        return JavaMethodsRecorderDialog(coroutineScope, coroutinesDispatchers, frame, settings, log)
+        return JavaMethodsRecorderDialog(
+            coroutineScope, coroutinesDispatchers,
+            frame, settings, log,
+            projectInfoProvider
+        )
     }
 
     override fun createUpdatesInfoPanel(
@@ -37,4 +46,6 @@ class StandaloneAppDialogFactory : ViewFactory {
     }
 
     override fun shouldAddToolBar() = false
+
+    override val shouldShowSetAdbMenu = true
 }
