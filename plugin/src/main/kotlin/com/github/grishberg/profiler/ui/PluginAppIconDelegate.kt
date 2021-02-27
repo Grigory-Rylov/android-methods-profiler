@@ -15,7 +15,11 @@ private const val ICON_SIZE = 18
 class PluginAppIconDelegate(private val iconSize: Int = ICON_SIZE) : AppIconDelegate {
     override fun updateFrameIcon(frame: Frame) = Unit
 
-    override fun updateLoadingIcon(label: JLabel) = Unit
+    override fun updateLoadingIcon(label: JLabel) {
+        val imageIcon = loadIcon("images/loading.gif", "loading...")
+        label.icon = imageIcon
+        imageIcon.imageObserver = label
+    }
 
     override fun loadIcon(path: String, altText: String): ImageIcon {
         val icon = IconLoader.getIcon("/$path")

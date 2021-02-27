@@ -60,7 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Get package name from current project if there is no stored one.<br>
+      Get package name and activity name from current project if there is any stored.<br>
       """
 }
 
