@@ -2,7 +2,7 @@ package com.github.grishberg.profiler.chart
 
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.SimpleMouseListener
-import java.awt.Color
+import com.github.grishberg.profiler.ui.theme.Palette
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.event.MouseEvent
@@ -16,9 +16,9 @@ interface OnPreviewClickedAction {
 }
 
 class CallTracePreviewPanel(
-    private val logger: AppLogger
+    private val logger: AppLogger,
+    private val palette: Palette
 ) : JPanel() {
-    private val bgColor = Color(0, 0, 0)
     var previewClickedAction: OnPreviewClickedAction? = null
 
     var image: BufferedImage? = null
@@ -38,7 +38,7 @@ class CallTracePreviewPanel(
 
     override fun paintComponent(graphics: Graphics) {
         super.paintComponent(graphics)
-        graphics.color = bgColor
+        graphics.color = palette.previewBackgroundColor
         graphics.fillRect(0, 0, width, height)
 
         image?.let {

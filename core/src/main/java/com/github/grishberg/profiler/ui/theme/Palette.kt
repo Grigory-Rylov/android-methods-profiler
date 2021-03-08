@@ -4,4 +4,5 @@ import java.awt.Color
 
 interface Palette {
     val traceBackgroundColor: Color
+    val previewBackgroundColor: Color
 }

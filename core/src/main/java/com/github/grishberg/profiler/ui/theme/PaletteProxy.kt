@@ -7,4 +7,6 @@ class PaletteProxy(
 ) : Palette {
     override val traceBackgroundColor: Color
         get() = currentPalette.traceBackgroundColor
+    override val previewBackgroundColor: Color
+        get() = currentPalette.previewBackgroundColor
 }
