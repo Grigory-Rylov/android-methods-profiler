@@ -60,7 +60,9 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Get package name and activity name from current project if there is any stored.<br>
+      Show methods color dialog.<br>
+      Do not scroll above the lower border in Flame chart.<br>
+      Fixed minor ui issues.<br>
       """
 }
 
