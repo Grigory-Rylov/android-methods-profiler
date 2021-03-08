@@ -393,7 +393,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
 
         @Override
         public Point2D correctOffset(double dx, double dy, Rectangle2D transformedScreenBounds, Point2D dataRightBottom) {
-            double dataBottomDy = transformedScreenBounds.getHeight() - dataRightBottom.getY();
+            double dataBottomDy = (transformedScreenBounds.getY() + transformedScreenBounds.getHeight()) - dataRightBottom.getY();
             if (dx > 0) { // pane right
                 dx = Math.min(dx, transformedScreenBounds.getMinX());
             }

@@ -35,7 +35,7 @@ class FlameChartPanel(
 
     private val leftSymbolOffset = 4
     private val fontTopOffset = 4
-    private val zoomAndPanDelegate = FlameChartZoomAndPanDelegate(this, TOP_OFFSET, FlameChartZoomAndPanDelegate.LeftBottomBounds())
+    private val zoomAndPanDelegate = FlameChartZoomAndPanDelegate(this, TOP_OFFSET)
     private var init = true
     private val methodsNameDrawer = MethodsNameDrawer(leftSymbolOffset)
 

@@ -38,15 +38,13 @@ public class FlameChartZoomAndPanDelegate implements MouseListener, MouseMotionL
     private MouseEventsListener mouseEventsListener = MouseEventsListener.STUB;
     private final Rectangle visibleScreenBounds = new Rectangle();
 
-    private ScrollBoundsStrategy boundsStrategy;
+    private LeftBottomBounds boundsStrategy = new LeftBottomBounds();
     private Point2D dataRightBottomCorner = new Point2D.Double();
 
     public FlameChartZoomAndPanDelegate(
             Component targetComponent,
-            int topOffset,
-            ScrollBoundsStrategy boundsStrategy) {
+            int topOffset) {
         this.targetComponent = targetComponent;
-        this.boundsStrategy = boundsStrategy;
         visibleScreenBounds.setRect(0, topOffset, targetComponent.getWidth(), targetComponent.getHeight());
         targetComponent.addMouseListener(this);
         targetComponent.addMouseMotionListener(this);
@@ -374,7 +372,7 @@ public class FlameChartZoomAndPanDelegate implements MouseListener, MouseMotionL
 
         @Override
         public Point2D correctOffset(double dx, double dy, Rectangle2D transformedScreenBounds, Point2D dataRightBottom) {
-            double dataBottomDy = transformedScreenBounds.getHeight() - dataRightBottom.getY();
+            double dataBottomDy = (transformedScreenBounds.getY() + transformedScreenBounds.getHeight()) - dataRightBottom.getY();
             if (dx > 0) { // pane right
                 dx = Math.min(dx, transformedScreenBounds.getMinX());
             }
