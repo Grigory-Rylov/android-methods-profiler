@@ -35,7 +35,7 @@ class FlameChartPanel(
 
     private val leftSymbolOffset = 4
     private val fontTopOffset = 4
-    private val zoomAndPanDelegate = ZoomAndPanDelegate(this, TOP_OFFSET, ZoomAndPanDelegate.LeftBottomBounds())
+    private val zoomAndPanDelegate = FlameChartZoomAndPanDelegate(this, TOP_OFFSET, FlameChartZoomAndPanDelegate.LeftBottomBounds())
     private var init = true
     private val methodsNameDrawer = MethodsNameDrawer(leftSymbolOffset)
 
@@ -67,8 +67,8 @@ class FlameChartPanel(
     }
 
     override fun fitZoom(rect: Rectangle2D.Double) {
-        zoomAndPanDelegate.setTransform(AffineTransform())
-        zoomAndPanDelegate.fitZoom(rect, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED)
+        zoomAndPanDelegate.transform = AffineTransform()
+        zoomAndPanDelegate.fitZoom(rect, FIT_PADDING, FlameChartZoomAndPanDelegate.VerticalAlign.ENABLED)
         repaint()
     }
 
