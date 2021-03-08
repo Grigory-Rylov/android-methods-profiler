@@ -395,7 +395,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private void updateData() {
         List<ProfileRectangle> objectsForThread = objects.get(currentThreadId);
         if (objectsForThread == null) {
-            // there is data.
+            // there is no data.
             return;
         }
 
@@ -1118,6 +1118,19 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     public void closeTrace() {
         result = RESULT_STUB;
         objects.clear();
+        repaint();
+    }
+
+    public void invalidateHighlighting() {
+        for (Map.Entry<Integer, List<ProfileRectangle>> entry : objects.entrySet()) {
+            List<ProfileRectangle> rectangles = entry.getValue();
+            for (ProfileRectangle rectangle : rectangles) {
+                rectangle.setColor(null);
+            }
+        }
+
+        previewImageRepository.clear();
+        updatePreviewImage();
         repaint();
     }
 

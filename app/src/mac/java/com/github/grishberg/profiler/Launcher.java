@@ -1,5 +1,7 @@
 package com.github.grishberg.profiler;
 
+import com.github.grishberg.profiler.chart.highlighting.ColorInfoAdapter;
+import com.github.grishberg.profiler.chart.highlighting.StandaloneAppMethodsColorRepository;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
@@ -22,10 +24,16 @@ public class Launcher {
     private static final SimpleConsoleLogger log = new SimpleConsoleLogger(APP_FILES_DIR_NAME);
     private static final JsonSettings settings = new JsonSettings(APP_FILES_DIR_NAME, log);
     private static boolean sMainWidowStarted = false;
-    private static final ViewFactory sViewFactory = new StandaloneAppDialogFactory(settings);
-    private static final FramesManager sFramesManager = new StandaloneAppFramesManagerFramesManager(
-            settings, log, sViewFactory
-    );
+    private static final StandaloneAppMethodsColorRepository methodsColorRepository =
+            new StandaloneAppMethodsColorRepository(APP_FILES_DIR_NAME,
+                    new ColorInfoAdapter(log),
+                    log
+            );
+    private static final ViewFactory sViewFactory = new StandaloneAppDialogFactory(settings, methodsColorRepository);
+    private static final FramesManager sFramesManager =
+            new StandaloneAppFramesManagerFramesManager(
+                    settings, log, sViewFactory, methodsColorRepository
+            );
 
     static {
         initDefaultSettings(settings, log);

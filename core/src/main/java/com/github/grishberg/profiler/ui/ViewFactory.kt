@@ -6,11 +6,13 @@ import com.github.grishberg.profiler.common.MainScope
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.common.updates.ReleaseVersion
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel
+import com.github.grishberg.profiler.ui.dialogs.ElementWithColorDialogFactory
+import com.github.grishberg.profiler.ui.dialogs.highlighting.HighlightDialog
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialogView
 import javax.swing.JFrame
 import javax.swing.JPanel
 
-interface ViewFactory {
+interface ViewFactory: ElementWithColorDialogFactory {
     val title: String
     val shortTitle: String
     val shouldShowSetAdbMenu: Boolean
@@ -31,5 +33,5 @@ interface ViewFactory {
     ): UpdatesInfoPanel
 
     fun shouldAddToolBar(): Boolean
-
+    fun createHighlightDialog(frame: JFrame): HighlightDialog
 }

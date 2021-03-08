@@ -17,10 +17,10 @@ private const val DEFAULT_DIR = "android-methods-profiler"
 class StandaloneAppFramesManagerFramesManager(
     private val settings: SettingsFacade,
     private val log: AppLogger,
-    private val dialogFactory: ViewFactory
+    private val dialogFactory: ViewFactory,
+    private val methodsColorRepository: StandaloneAppMethodsColorRepository
 ) : FramesManager {
 
-    private val methodsColorRepository = StandaloneAppMethodsColorRepository(APP_FILES_DIR, ColorInfoAdapter(log), log)
     private val urlOpener = StandaloneAppUrlOpener()
     private val iconDelegate = StandaloneAppIconDelegate()
     private var frameInstancesCount = 0

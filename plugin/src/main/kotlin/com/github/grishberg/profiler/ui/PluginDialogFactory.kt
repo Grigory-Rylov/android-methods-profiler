@@ -1,21 +1,28 @@
 package com.github.grishberg.profiler.ui
 
 import com.github.grishberg.android.adb.AdbWrapper
+import com.github.grishberg.profiler.chart.highlighting.MethodsColorRepository
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl
 import com.github.grishberg.profiler.common.MainScope
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.common.updates.ReleaseVersion
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel
+import com.github.grishberg.profiler.ui.dialogs.ElementWithColorDialog
+import com.github.grishberg.profiler.ui.dialogs.ElementWithColorDialogFactory
+import com.github.grishberg.profiler.ui.dialogs.highlighting.HighlightDialog
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialogView
 import com.github.grishberg.profiler.ui.dialogs.recorder.PluginMethodsRecorderDialog
 import com.github.grishberg.profiler.ui.dialogs.recorder.ProjectInfoProvider
+import java.awt.Dialog
+import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 
 class PluginDialogFactory(
     private val adbWrapper: AdbWrapper,
-    private val projectInfoProvider: ProjectInfoProvider
+    private val projectInfoProvider: ProjectInfoProvider,
+    private val methodsColorRepository: MethodsColorRepository
 ) : ViewFactory {
     override val shortTitle: String = "YAMP"
     override val title: String = shortTitle
@@ -46,4 +53,17 @@ class PluginDialogFactory(
     }
 
     override fun shouldAddToolBar() = true
+
+
+    override fun createHighlightDialog(owner: JFrame): HighlightDialog {
+        return HighlightDialog(owner, methodsColorRepository, this)
+    }
+
+    override fun createElementWithColorDialog(owner: Dialog, title: String): ElementWithColorDialog {
+        return ElementWithColorDialog(owner, title, true)
+    }
+
+    override fun createElementWithColorDialog(owner: JFrame, title: String): ElementWithColorDialog {// not used
+        return ElementWithColorDialog(owner, title, true)
+    }
 }

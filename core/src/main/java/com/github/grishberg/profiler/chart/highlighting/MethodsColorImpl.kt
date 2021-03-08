@@ -45,6 +45,11 @@ class MethodsColorImpl(
     }
 
     override fun getColorForMethod(name: String): Color {
+        for (customColor in colors) {
+            if (name.startsWith(customColor.filter)) {
+                return customColor.color
+            }
+        }
         if (name == "android.view.Choreographer.doFrame") {
             return doFrameColor
         }
@@ -85,11 +90,6 @@ class MethodsColorImpl(
         }
         if (name.startsWith("java.lang.")) {
             return javaLangColor
-        }
-        for (customColor in colors) {
-            if (name.startsWith(customColor.filter)) {
-                return customColor.color
-            }
         }
         return otherColor
     }
