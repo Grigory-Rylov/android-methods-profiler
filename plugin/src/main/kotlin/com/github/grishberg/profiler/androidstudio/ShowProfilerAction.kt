@@ -1,5 +1,7 @@
 package com.github.grishberg.profiler.androidstudio
 
+import com.github.grishberg.profiler.chart.highlighting.ColorInfoAdapter
+import com.github.grishberg.profiler.chart.highlighting.PluginMethodsColorRepository
 import com.github.grishberg.profiler.ui.FramesManager
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.PluginDialogFactory
@@ -25,11 +27,14 @@ class ShowProfilerAction : AnAction() {
         val logger = PluginLogger()
         val projectInfo = PluginProjectInfo(project, logger)
         val projectInfoProvider = ProjectInfoProvider(projectInfo, settings)
-        val viewFactory: ViewFactory = PluginDialogFactory(project.context().adb, projectInfoProvider)
+        val methodsColorRepository = PluginMethodsColorRepository(settings, ColorInfoAdapter(logger))
+        val viewFactory: ViewFactory =
+            PluginDialogFactory(project.context().adb, projectInfoProvider, methodsColorRepository)
         val themeController = PluginThemeController()
         val framesManager: FramesManager = PluginFramesManager(
             settings,
-            logger, themeController, viewFactory
+            logger, themeController, viewFactory,
+            methodsColorRepository
         )
         framesManager.createMainFrame(Main.StartMode.DEFAULT)
     }

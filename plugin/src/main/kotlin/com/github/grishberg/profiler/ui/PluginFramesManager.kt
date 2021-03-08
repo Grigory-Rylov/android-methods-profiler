@@ -12,13 +12,13 @@ class PluginFramesManager(
     private val settingsFacade: PluginState,
     private val logger: AppLogger,
     private val themesController: ThemeController,
-    private val viewFactory: ViewFactory
+    private val viewFactory: ViewFactory,
+    private val methodsColorRepository: PluginMethodsColorRepository
 ) : FramesManager {
     private val urlOpener = object : UrlOpener {
         override fun openUrl(uri: String) = Unit
     }
     private val iconDelegate = PluginAppIconDelegate()
-    private val methodsColorRepository = PluginMethodsColorRepository(settingsFacade, ColorInfoAdapter(logger))
 
     override fun createMainFrame(startMode: Main.StartMode): Main {
         return Main(

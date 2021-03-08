@@ -8,7 +8,7 @@ class PluginMethodsColorRepository(
     private val colorsInfoAdapter: ColorInfoAdapter
 ) : MethodsColorRepository {
     private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
-    private val token: List<Map<String, String>> = emptyList()
+    private val token: List<Map<String, String>> = mutableListOf()
 
     override fun getColors(): List<ColorInfo> {
         val data = gson.fromJson(pluginState.methodColors, token::class.java)
