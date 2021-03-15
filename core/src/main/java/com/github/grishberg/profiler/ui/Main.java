@@ -460,7 +460,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(fileMenu);
         menuBar.add(createViewMenu());
-        menuBar.add(createSettingsMenu(updatesChecker));
+        if (dialogFactory.getShouldShowSetAdbMenu()) {
+            menuBar.add(createSettingsMenu(updatesChecker));
+        }
         pluginsFacade.createPluginsMenu(menuBar);
         themeController.addToMenu(menuBar);
         menuBar.add(createHelpMenu());
