@@ -14,5 +14,7 @@ interface HighlightDialogView {
         fun onClickedAddButton()
         fun onClickedRemoveButton()
         fun onClickedToItem(index: Int)
+        fun onClickedUppButton()
+        fun onClickedDownButton()
     }
 }

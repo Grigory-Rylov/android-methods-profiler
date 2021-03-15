@@ -37,7 +37,7 @@ class HighlightListDialogLogic(
         }
 
         override fun onClickedRemoveButton() {
-            if (methodsColorRepository.getColors().isEmpty())  {
+            if (methodsColorRepository.getColors().isEmpty()) {
                 return
             }
             val selectedIndex = view?.selectedItem ?: -1
@@ -53,6 +53,31 @@ class HighlightListDialogLogic(
 
             updateRemoveButtonVisibility()
         }
+
+        override fun onClickedUppButton() {
+            val selectedIndex = view?.selectedItem ?: -1
+            if (selectedIndex <= 0) {
+                return
+            }
+            swapElements(selectedIndex, selectedIndex - 1)
+        }
+
+        override fun onClickedDownButton() {
+            val selectedIndex = view?.selectedItem ?: -1
+            if (selectedIndex < 0 || selectedIndex == methodsColorRepository.getColors().size - 1) {
+                return
+            }
+            swapElements(selectedIndex, selectedIndex + 1)
+        }
+    }
+
+    private fun swapElements(fromPos: Int, toPos: Int) {
+        val list = mutableListOf<ColorInfo>()
+        list.addAll(methodsColorRepository.getColors())
+        val buf = list[toPos]
+        list[toPos] = list[fromPos]
+        list[fromPos] = buf
+        updateColorList(list)
     }
 
     private fun addOrEditElement(index: Int, color: ColorInfo) {

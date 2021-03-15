@@ -22,6 +22,8 @@ import javax.swing.ListSelectionModel
 
 private const val BUTTON_TITLE_ADD = "+"
 private const val BUTTON_TITLE_REMOVE = "-"
+private const val BUTTON_TITLE_UP = "Up"
+private const val BUTTON_TITLE_DOWN = "Down"
 
 class HighlightDialog(
     owner: Frame,
@@ -39,6 +41,9 @@ class HighlightDialog(
         isEnabled = true
     }
     private val removeButton = JButton(BUTTON_TITLE_REMOVE)
+    private val uppButton = JButton(BUTTON_TITLE_UP)
+    private val downButton = JButton(BUTTON_TITLE_DOWN)
+
     private var eventListener: HighlightDialogView.EventListener? = null
 
     override val selectedItem: Int
@@ -66,8 +71,10 @@ class HighlightDialog(
             BoxLayout.LINE_AXIS
         )
         buttonPane.add(removeButton)
-        buttonPane.add(Box.createHorizontalStrut(5))
         buttonPane.add(addButton)
+        buttonPane.add(Box.createHorizontalStrut(5))
+        buttonPane.add(uppButton)
+        buttonPane.add(downButton)
         buttonPane.add(okButton)
         buttonPane.border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
 
@@ -76,6 +83,9 @@ class HighlightDialog(
 
         removeButton.actionCommand = BUTTON_TITLE_REMOVE
         removeButton.addActionListener { eventListener?.onClickedRemoveButton() }
+
+        uppButton.addActionListener { eventListener?.onClickedUppButton() }
+        downButton.addActionListener { eventListener?.onClickedDownButton() }
 
         add(listScrollPane, BorderLayout.CENTER)
         add(buttonPane, BorderLayout.PAGE_END)
