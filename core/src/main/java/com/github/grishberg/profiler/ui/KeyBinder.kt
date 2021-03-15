@@ -160,6 +160,7 @@ class KeyBinder(
     private inner class GoToFindAction : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
             searchField.requestFocus();
+            searchField.selectAll()
         }
     }
 
