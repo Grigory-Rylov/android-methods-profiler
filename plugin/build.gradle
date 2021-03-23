@@ -60,9 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Allow to change order in methods color dialog.<br>
-      Select text in find text field after focusing from hotkey.<br>
-      Remove settings menu.<br>
+      Fixed crash on start when project don't have default activity.<br>
       """
 }
 
