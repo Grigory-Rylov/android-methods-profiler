@@ -24,7 +24,11 @@ class PluginProjectInfo(
         val facets = AndroidUtils.getApplicationFacets(project)
         packageName = createPackageName(facets)
         val devices = AndroidSdkUtils.getDebugBridge(project)?.devices ?: emptyArray()
-        activityName = getDefaultActivityName(facets, devices)
+        activityName = try {
+            getDefaultActivityName(facets, devices)
+        } catch (e: ActivityLocator.ActivityLocatorException) {
+            null
+        }
     }
 
     private fun createPackageName(facets: List<AndroidFacet>): String? {
