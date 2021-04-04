@@ -60,7 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Fixed crash on start when project don't have default activity.<br>
+      Removed redundant 'remote to device' checkbox.<br>
       """
 }
 

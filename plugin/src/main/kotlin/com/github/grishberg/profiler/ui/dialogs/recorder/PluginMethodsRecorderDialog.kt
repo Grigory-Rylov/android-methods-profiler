@@ -53,9 +53,7 @@ class PluginMethodsRecorderDialog(
     private val packageNameField: JTextField
     private val activityNameField: JTextField
     private val fileNamePrefixField: JTextField
-    private val remoteDeviceAddressField: JTextField = JTextField(20)
     private val stagesTracePrefixField: JTextField = JTextField(10)
-    private val showRemotePanelCheckbox = JCheckBox("Connect to remote device")
     private val showDevicePanelCheckbox = JCheckBox("Connect to device by serial number")
     private val moreOptionsPanelCheckbox = JCheckBox("Additional options")
     private val systraceStagesCheckbox = JCheckBox("Systrace Stages")
@@ -113,12 +111,7 @@ class PluginMethodsRecorderDialog(
             profilerBufferSizeField.value = value
         }
 
-    override var remoteDeviceAddress: String
-        get() = remoteDeviceAddressField.text.trim()
-        set(value) {
-            remoteDeviceAddressField.text = value
-            showRemotePanelCheckbox.isSelected = value.isNotEmpty()
-        }
+    override var remoteDeviceAddress: String = ""
 
     override var serialNumber: String?
         get() = serialNumberField.text.trim().takeIf { showDevicePanelCheckbox.isSelected }
@@ -215,9 +208,6 @@ class PluginMethodsRecorderDialog(
         activityNameField.addActionListener {
             logic.onStartPressed()
         }
-        remoteDeviceAddressField.addActionListener {
-            logic.onStartPressed()
-        }
         serialNumberField.addActionListener {
             logic.onStartPressed()
         }
@@ -230,7 +220,6 @@ class PluginMethodsRecorderDialog(
         panelBuilder.addLabeledComponent("file name prefix: ", fileNamePrefixField)
         panelBuilder.addLabeledComponent("recording mode: ", recordModeComBox)
         panelBuilder.addLabeledComponent("buffer size (Mb): ", profilerBufferSizeField)
-        panelBuilder.addSingleComponent(buildRemoteDevicePanel())
         panelBuilder.addSingleComponent(buildSerialNumberPanel())
         panelBuilder.addSingleComponent(buildMoreOptionsPanel())
         panelBuilder.addSingleComponent(buttons)
@@ -295,36 +284,6 @@ class PluginMethodsRecorderDialog(
 
         systraceStagesCheckbox.addChangeListener {
             hiddenPanel.isVisible = systraceStagesCheckbox.isSelected
-            pack()
-        }
-        panel.add(hiddenPanel, BorderLayout.SOUTH)
-        return panel
-    }
-
-    private fun buildRemoteDevicePanel(): JPanel {
-        val panel = JPanel()
-        panel.layout = BorderLayout()
-        remoteDeviceAddressField.toolTipText =
-            "Remote device address. Optional. If not empty - will try to connect " +
-                    "to remote device"
-
-        panel.add(showRemotePanelCheckbox, BorderLayout.NORTH)
-
-        val hiddenPanel = JPanel()
-        hiddenPanel.layout = BorderLayout()
-        hiddenPanel.border = BorderFactory.createEtchedBorder(EtchedBorder.RAISED)
-        hiddenPanel.isVisible = false
-
-        val contentPanel = JPanel()
-        hiddenPanel.add(contentPanel, BorderLayout.CENTER)
-
-        contentPanel.layout = BorderLayout()
-        contentPanel.border = EmptyBorder(8, 8, 8, 8)
-        contentPanel.add(Label("IP address:"), BorderLayout.NORTH)
-        contentPanel.add(remoteDeviceAddressField, BorderLayout.CENTER)
-
-        showRemotePanelCheckbox.addChangeListener {
-            hiddenPanel.isVisible = showRemotePanelCheckbox.isSelected
             pack()
         }
         panel.add(hiddenPanel, BorderLayout.SOUTH)
