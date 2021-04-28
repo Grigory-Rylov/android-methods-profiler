@@ -21,7 +21,7 @@ internal class CalledStacktraceTest {
             at: AffineTransform,
             fm: FontMetrics,
             threadId: Int,
-            selected: _root_ide_package_.com.github.grishberg.profiler.chart.ProfileRectangle?,
+            selected: ProfileRectangle?,
             minimumSizeInMs: Double,
             screenLeft: Double,
             screenTop: Double,

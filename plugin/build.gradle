@@ -60,7 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Removed redundant 'remote to device' checkbox.<br>
+      Fixed some deobfusation issues.<br>
       """
 }
 

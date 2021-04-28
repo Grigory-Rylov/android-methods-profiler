@@ -27,7 +27,7 @@ class PluginState : SettingsFacade {
     override var showBookmarks: Boolean = true
     override var threadTimeMode: Boolean = false
     override var theme: String = "" // not used
-    override var waitForResultTimeout: Int = 20
+    override var waitForResultTimeout: Int = 60
     override var deviceSerialNumber: String = ""
     override var deviceAddress: String = ""
     override var samplingRecordModeEnabled: Boolean = true

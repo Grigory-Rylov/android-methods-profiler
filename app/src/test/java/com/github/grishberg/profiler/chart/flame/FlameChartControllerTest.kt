@@ -4,7 +4,7 @@ import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
-import com.github.grishberg.profiler.common.settings.SettingsRepository
+import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
@@ -68,13 +68,15 @@ internal class FlameChartControllerTest {
     }
 
     private val methodsColor = object : MethodsColor {
-        override fun getColorForMethod(profile: _root_ide_package_.com.github.grishberg.profiler.chart.ProfileRectangle) = Color.YELLOW
+        override fun getColorForMethod(profile: ProfileRectangle) =
+            Color.YELLOW
+
         override fun getColorForMethod(name: String) = Color.YELLOW
     }
 
-    private val settings = mock<SettingsRepository> {
-        on { getStringValueOrDefault(any(), any()) } doReturn "Arial"
-        on { getIntValueOrDefault(any(), any()) } doReturn 17
+    private val settings = mock<SettingsFacade> {
+        on { fontName } doReturn "Arial"
+        on { fontSize } doReturn 17
     }
     private val testDispatcher = TestCoroutineDispatcher()
     val coroutineScope = GlobalScope

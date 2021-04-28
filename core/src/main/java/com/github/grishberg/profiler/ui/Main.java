@@ -383,6 +383,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             }
         });
         updatesChecker.checkForUpdates(this);
+        frame.setLocationRelativeTo(null);
     }
 
     @Override

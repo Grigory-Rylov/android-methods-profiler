@@ -24,8 +24,9 @@ class DeObfuscatorConverter(
             if (match != null) {
                 val argumentSignature = match.groupValues[1]
                 val typeSignature = match.groupValues[2]
-                typeFromSignature = argumentsReader.read(typeSignature).firstOrNull()?.name
-                if (typeFromSignature != null) {
+                val typeHolder = argumentsReader.read(typeSignature).firstOrNull()
+                typeFromSignature = typeHolder?.name
+                if (typeHolder != null && typeHolder.type != Type.SIMPLE) {
                     typeFromSignature = deObfuscator.originalClassName(typeFromSignature)
                 }
                 argumentsFromSignature = decodeArguments(argumentSignature)
@@ -38,7 +39,15 @@ class DeObfuscatorConverter(
             val javaClassName = className.substring(0, className.length - 2)
             return deObfuscator.originalMethodName(javaClassName, sourceMethodName, typeFromSignature, argumentsFromSignature)
         }
-        return originalMethodName
+        return removeMethodPackageIfNeeded(originalMethodName)
+    }
+
+    private fun removeMethodPackageIfNeeded(methodName: String): String {
+        val lastIndexOfDot = methodName.lastIndexOf('.')
+        if (lastIndexOfDot < 0) {
+            return methodName
+        }
+        return methodName.substring(lastIndexOfDot +1)
     }
 
     private fun decodeArguments(argumentSignature: String): String? {
