@@ -60,7 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Fixed some deobfusation issues.<br>
+      Fixed precision on very large scales.<br>
       """
 }
 
