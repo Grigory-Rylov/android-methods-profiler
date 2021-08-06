@@ -146,7 +146,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
                 if (rightClickListener != null) {
                     try {
-                        Point2D.Float transformedPoint = zoomAndPanDelegate.transformPoint(point);
+                        Point2D.Double transformedPoint = zoomAndPanDelegate.transformPoint(point);
                         rightClickListener.onMethodRightClicked(point, transformedPoint);
                     } catch (NoninvertibleTransformException noninvertibleTransformException) {
                         noninvertibleTransformException.printStackTrace();
@@ -231,12 +231,12 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     public void setMouseEventListener(ZoomAndPanDelegate.MouseEventsListener l) {
         ZoomAndPanDelegate.MouseEventsListener delegate = new ZoomAndPanDelegate.MouseEventsListener() {
             @Override
-            public void onMouseClicked(Point point, float x, float y) {
+            public void onMouseClicked(Point point, double x, double y) {
                 l.onMouseClicked(point, x, y);
             }
 
             @Override
-            public void onMouseMove(Point point, float x, float y) {
+            public void onMouseMove(Point point, double x, double y) {
                 l.onMouseMove(point, x, y);
             }
 
@@ -246,13 +246,13 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             }
 
             @Override
-            public void onControlMouseClicked(Point point, float x, float y) {
+            public void onControlMouseClicked(Point point, double x, double y) {
                 l.onControlMouseClicked(point, x, y);
                 findCreatedByDagger(x, y);
             }
 
             @Override
-            public void onControlShiftMouseClicked(Point point, float x, float y) {
+            public void onControlShiftMouseClicked(Point point, double x, double y) {
                 l.onControlShiftMouseClicked(point, x, y);
                 findDaggerCaller(x, y);
             }
@@ -487,8 +487,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         g.fillRect(0, 0, getWidth(), getHeight());
 
         try {
-            Point2D.Float leftTop = zoomAndPanDelegate.transformPoint(new Point(0, 0));
-            Point2D.Float rightBottom = zoomAndPanDelegate.transformPoint(new Point(screenSize.width, screenSize.height));
+            Point2D.Double leftTop = zoomAndPanDelegate.transformPoint(new Point(0, 0));
+            Point2D.Double rightBottom = zoomAndPanDelegate.transformPoint(new Point(screenSize.width, screenSize.height));
 
             screenLeft = leftTop.x;
             screenTop = leftTop.y;
@@ -727,7 +727,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         return fontTopOffset;
     }
 
-    public ProfileData findDataByPositionAndSelect(float x, float y) {
+    public ProfileData findDataByPositionAndSelect(double x, double y) {
         calledStacktrace.removeElements();
         currentSelectedElement = findElementIndexByXY(x, y);
         if (currentSelectedElement < 0) {
@@ -739,7 +739,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
 
-    private void findCreatedByDagger(float x, float y) {
+    private void findCreatedByDagger(double x, double y) {
         int foundElement = findElementIndexByXY(x, y);
         if (foundElement < 0) {
             return;
@@ -750,7 +750,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         repaint();
     }
 
-    private void findDaggerCaller(float x, float y) {
+    private void findDaggerCaller(double x, double y) {
         int foundElement = findElementIndexByXY(x, y);
         if (foundElement < 0) {
             return;
@@ -761,7 +761,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         repaint();
     }
 
-    public ProfileData findDataByPosition(float x, float y) {
+    public ProfileData findDataByPosition(double x, double y) {
         int pos = findElementIndexByXY(x, y);
         if (pos < 0) {
             return null;
@@ -770,7 +770,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         return objects.get(currentThreadId).get(pos).profileData;
     }
 
-    private int findElementIndexByXY(float x, float y) {
+    private int findElementIndexByXY(double x, double y) {
         if (x < 0 || x > maxRightOffset || y < 0) {
             return -1;
         }
@@ -1153,6 +1153,6 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         /**
          * Is celled when right-clicked on method.
          */
-        void onMethodRightClicked(Point clickedPoint, Point2D.Float transformed);
+        void onMethodRightClicked(Point clickedPoint, Point2D.Double transformed);
     }
 }

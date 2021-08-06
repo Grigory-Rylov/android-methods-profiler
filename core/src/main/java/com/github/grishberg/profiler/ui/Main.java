@@ -783,11 +783,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onMouseClicked(Point point, float x, float y) {
+    public void onMouseClicked(Point point, double x, double y) {
         selectMethodUnderCursor(x, y);
     }
 
-    private ProfileData selectMethodUnderCursor(float x, float y) {
+    private ProfileData selectMethodUnderCursor(double x, double y) {
         chart.requestFocus();
         @Nullable
         ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
@@ -809,7 +809,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onMouseMove(Point point, float x, float y) {
+    public void onMouseMove(Point point, double x, double y) {
         coordinatesLabel.setText(String.format("pointer: %s", formatMicroseconds(x)));
         @Nullable
         ProfileData selectedData = chart.findDataByPosition(x, y);
@@ -826,12 +826,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onControlMouseClicked(Point point, float x, float y) {
+    public void onControlMouseClicked(Point point, double x, double y) {
         // do nothing
     }
 
     @Override
-    public void onControlShiftMouseClicked(Point point, float x, float y) {
+    public void onControlShiftMouseClicked(Point point, double x, double y) {
         // do nothing
     }
 
@@ -1042,7 +1042,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onMethodRightClicked(Point clickedPoint, Point2D.Float transformed) {
+    public void onMethodRightClicked(Point clickedPoint, Point2D.Double transformed) {
         ProfileData selected = selectMethodUnderCursor(transformed.x, transformed.y);
         if (selected == null) {
             return;

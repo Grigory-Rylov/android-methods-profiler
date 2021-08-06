@@ -61,7 +61,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
     public void setTransform(AffineTransform transform) {
         this.coordTransform = transform;
         try {
-            Point2D.Float leftTop = transformPoint(visibleScreenBounds.getLocation());
+            Point2D.Double leftTop = transformPoint(visibleScreenBounds.getLocation());
             transform.translate(leftTop.x, leftTop.y);
         } catch (NoninvertibleTransformException e) {
             e.printStackTrace();
@@ -87,7 +87,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         if (MOUSE_GAP > Math.max(dx, dy)) {
             Point point = e.getPoint();
             try {
-                Point2D.Float transformedPoint = transformPoint(point);
+                Point2D.Double transformedPoint = transformPoint(point);
 
                 if (isCtrlShiftPressed(e)) {
                     mouseEventsListener.onControlShiftMouseClicked(point, transformedPoint.x, transformedPoint.y);
@@ -127,7 +127,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
     public void mouseMoved(MouseEvent e) {
         Point point = e.getPoint();
         try {
-            Point2D.Float transformedPoint = transformPoint(point);
+            Point2D.Double transformedPoint = transformPoint(point);
             mouseEventsListener.onMouseMove(point, transformedPoint.x, transformedPoint.y);
         } catch (NoninvertibleTransformException ex) {
             ex.printStackTrace();
@@ -143,8 +143,8 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         try {
 
             dragEndScreen = e.getPoint();
-            Point2D.Float dragStart = transformPoint(dragStartScreen);
-            Point2D.Float dragEnd = transformPoint(dragEndScreen);
+            Point2D.Double dragStart = transformPoint(dragStartScreen);
+            Point2D.Double dragEnd = transformPoint(dragEndScreen);
 
             double dx = dragEnd.getX() - dragStart.getX();
             double dy = dragEnd.getY() - dragStart.getY();
@@ -202,14 +202,14 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
 
     }
 
-    public Point2D.Float transformPoint(Point p1) throws NoninvertibleTransformException {
+    public Point2D.Double transformPoint(Point p1) throws NoninvertibleTransformException {
 //        System.out.println("Model -> Screen Transformation:");
 //        showMatrix(coordTransform);
         AffineTransform inverse = coordTransform.createInverse();
 //        System.out.println("Screen -> Model Transformation:");
 //        showMatrix(inverse);
 
-        Point2D.Float p2 = new Point2D.Float();
+        Point2D.Double p2 = new Point2D.Double();
         inverse.transform(p1, p2);
         return p2;
     }
@@ -224,10 +224,10 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         return new Rectangle2D.Double(leftTop.x, leftTop.y, rightBottom.x - leftTop.x, rightBottom.y - leftTop.y);
     }
 
-    public Point2D.Float transformPoint(Point2D.Double p1) throws NoninvertibleTransformException {
+    public Point2D.Double transformPoint(Point2D.Double p1) throws NoninvertibleTransformException {
         AffineTransform inverse = coordTransform.createInverse();
 
-        Point2D.Float p2 = new Point2D.Float();
+        Point2D.Double p2 = new Point2D.Double();
         inverse.transform(p1, p2);
         return p2;
     }
@@ -291,7 +291,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
             Rectangle2D.Double transformedScreenBounds = transformRectangle(visibleScreenBounds);
 
             Point2D.Double dragStart = new Point2D.Double(transformedScreenBounds.x, transformedScreenBounds.y);
-            Point2D.Float dragEnd = transformPoint(dragEndScreen);
+            Point2D.Double dragEnd = transformPoint(dragEndScreen);
             double tdx = dragEnd.getX() - dragStart.getX();
 
             Point2D delta = boundsStrategy.correctOffset(tdx, 0, transformedScreenBounds, dataRightBottomCorner);
@@ -305,8 +305,8 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
     private void moveCameraVertical(int dy) {
         try {
             Point targetPoint = new Point(0, dy);
-            Point2D.Float currentPoint = transformPoint(new Point(0, 0));
-            Point2D.Float transformedTargetPoint = transformPoint(targetPoint);
+            Point2D.Double currentPoint = transformPoint(new Point(0, 0));
+            Point2D.Double transformedTargetPoint = transformPoint(targetPoint);
             double tdy = transformedTargetPoint.getY() - currentPoint.getY();
 
             translateCamera(0, tdy);
@@ -334,7 +334,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         try {
             Point.Double targetElementCenter = new Point.Double(bounds.getCenterX(), bounds.getCenterY());
             Point.Double screenCenter = new Point.Double(targetComponent.getWidth() / 2.0, targetComponent.getHeight() / 2.0);
-            Point2D.Float transformedToScreenCenter = transformPoint(screenCenter);
+            Point2D.Double transformedToScreenCenter = transformPoint(screenCenter);
             double tdx = transformedToScreenCenter.getX() - targetElementCenter.getX();
             double tdy = boundsStrategy.calculateNavigationDy(getTransformedScreen(), bounds);
 
@@ -417,33 +417,33 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
     }
 
     public interface MouseEventsListener {
-        void onMouseClicked(Point point, float x, float y);
+        void onMouseClicked(Point point, double x, double y);
 
-        void onMouseMove(Point point, float x, float y);
+        void onMouseMove(Point point, double x, double y);
 
         void onMouseExited();
 
-        void onControlMouseClicked(Point point, float x, float y);
+        void onControlMouseClicked(Point point, double x, double y);
 
-        void onControlShiftMouseClicked(Point point, float x, float y);
+        void onControlShiftMouseClicked(Point point, double x, double y);
 
         MouseEventsListener STUB = new MouseEventsListener() {
             @Override
-            public void onMouseClicked(Point point, float x, float y) { /* stub */ }
+            public void onMouseClicked(Point point, double x, double y) { /* stub */ }
 
             @Override
-            public void onMouseMove(Point point, float x, float y) { /* stub */ }
+            public void onMouseMove(Point point, double x, double y) { /* stub */ }
 
             @Override
             public void onMouseExited() { /* stub */ }
 
             @Override
-            public void onControlMouseClicked(Point point, float x, float y) {
+            public void onControlMouseClicked(Point point, double x, double y) {
                 /* stub */
             }
 
             @Override
-            public void onControlShiftMouseClicked(Point point, float x, float y) {
+            public void onControlShiftMouseClicked(Point point, double x, double y) {
                 /* stub */
             }
         };
