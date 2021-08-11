@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.chart.flame
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.FoundInfoListener
 import com.github.grishberg.profiler.common.SimpleMouseListener
 import com.github.grishberg.profiler.ui.Main
@@ -35,7 +36,7 @@ class FlameChartDialog(
     private val controller: FlameChartController,
     private val palette: Palette,
     defaultFoundInfoMessage: String
-) : JFrame("Flame chart"), FoundInfoListener, DialogView {
+) : JFrame("Flame chart"), FoundInfoListener<FlameRectangle>, DialogView {
     private val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
     private val flameChart = FlameChartPanel(this, controller, palette)
     private val inputMap = flameChart.getInputMap(condition)
@@ -200,7 +201,7 @@ class FlameChartDialog(
         foundInfo.text = ""
     }
 
-    override fun onFound(count: Int, selectedIndex: Int) {
+    override fun onFound(count: Int, selectedIndex: Int, profileData: FlameRectangle) {
         foundInfo.text = String.format("found %d, current %d", count, selectedIndex)
     }
 

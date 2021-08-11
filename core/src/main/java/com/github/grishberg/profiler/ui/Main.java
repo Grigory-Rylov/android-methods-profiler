@@ -85,7 +85,7 @@ import java.awt.geom.Point2D;
 import java.io.File;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundInfoListener, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
+        FoundInfoListener<ProfileData>, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
     @Nullable
     private File currentOpenedFile;
 
@@ -792,20 +792,23 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         @Nullable
         ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
         if (selectedData != null) {
-            boolean isThreadTime = settings.getThreadTimeMode();
-
-            double start = isThreadTime ? selectedData.getThreadStartTimeInMillisecond() : selectedData.getGlobalStartTimeInMillisecond();
-            double end = isThreadTime ? selectedData.getThreadEndTimeInMillisecond() : selectedData.getGlobalEndTimeInMillisecond();
-
-            selectedClassNameLabel.setText(selectedData.getName());
-            selectedDurationLabel.setText(String.format("start: %s, end: %s, duration: %.3f ms",
-                    formatMicroseconds(start),
-                    formatMicroseconds(end),
-                    end - start));
-
+            showMethodInfoInTopPanel(selectedData);
             return selectedData;
         }
         return null;
+    }
+
+    private void showMethodInfoInTopPanel(@NotNull ProfileData selectedData) {
+        boolean isThreadTime = settings.getThreadTimeMode();
+
+        double start = isThreadTime ? selectedData.getThreadStartTimeInMillisecond() : selectedData.getGlobalStartTimeInMillisecond();
+        double end = isThreadTime ? selectedData.getThreadEndTimeInMillisecond() : selectedData.getGlobalEndTimeInMillisecond();
+
+        selectedClassNameLabel.setText(selectedData.getName());
+        selectedDurationLabel.setText(String.format("start: %s, end: %s, duration: %.3f ms",
+                formatMicroseconds(start),
+                formatMicroseconds(end),
+                end - start));
     }
 
     @Override
@@ -836,8 +839,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onFound(int count, int selectedIndex) {
+    public void onFound(int count, int selectedIndex, ProfileData profileData) {
         foundInfo.setText(String.format("found %d, current %d", count, selectedIndex));
+        showMethodInfoInTopPanel(profileData);
     }
 
     @Override

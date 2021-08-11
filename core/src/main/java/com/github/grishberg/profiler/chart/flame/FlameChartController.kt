@@ -3,7 +3,6 @@ package com.github.grishberg.profiler.chart.flame
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.ElementColor
 import com.github.grishberg.profiler.chart.FoundInfoListener
-import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
@@ -63,7 +62,7 @@ class FlameChartController(
                 initView(it)
             }
         }
-    var foundInfoListener: FoundInfoListener? = null
+    var foundInfoListener: FoundInfoListener<FlameRectangle>? = null
     var dialogView: DialogView? = null
 
     private val textUtils = TextUtils()
@@ -441,8 +440,8 @@ class FlameChartController(
             return
         }
         currentFocusedFoundElement = 0
-        foundInfoListener?.onFound(foundItems.size, currentFocusedFoundElement)
         val element: FlameRectangle = foundItems[currentFocusedFoundElement]
+        foundInfoListener?.onFound(foundItems.size, currentFocusedFoundElement, element)
         view?.fitZoom(element)
     }
 
@@ -454,8 +453,9 @@ class FlameChartController(
             if (currentFocusedFoundElement >= foundItems.size) {
                 currentFocusedFoundElement = 0
             }
-            view?.fitZoom(foundItems[currentFocusedFoundElement])
-            foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement)
+            val found = foundItems[currentFocusedFoundElement]
+            view?.fitZoom(found)
+            foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement, found)
         }
     }
 
@@ -467,8 +467,9 @@ class FlameChartController(
             if (currentFocusedFoundElement < 0) {
                 currentFocusedFoundElement = foundItems.size - 1
             }
-            view?.fitZoom(foundItems[currentFocusedFoundElement])
-            foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement)
+            val found = foundItems[currentFocusedFoundElement]
+            view?.fitZoom(found)
+            foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement, found)
         }
     }
 

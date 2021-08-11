@@ -55,7 +55,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private static final double MINIMUM_WIDTH_IN_PX = 1;
     private static final AnalyzerResultImpl RESULT_STUB = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
 
-    private final FoundInfoListener foundInfoListener;
+    private final FoundInfoListener<ProfileData> foundInfoListener;
     private boolean init = true;
 
     private final Bookmarks bookmarks;
@@ -815,8 +815,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             return;
         }
         currentFocusedFoundElement = 0;
-        foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement);
         ProfileRectangle element = foundItems.get(currentFocusedFoundElement);
+        foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, element.profileData);
         zoomAndPanDelegate.fitZoom(element, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
     }
 
@@ -913,8 +913,9 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             if (currentFocusedFoundElement < 0) {
                 currentFocusedFoundElement = foundItems.size() - 1;
             }
-            zoomAndPanDelegate.fitZoom(foundItems.get(currentFocusedFoundElement), FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
-            foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement);
+            ProfileRectangle found = foundItems.get(currentFocusedFoundElement);
+            zoomAndPanDelegate.fitZoom(found, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
+            foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, found.profileData);
         }
     }
 
@@ -924,8 +925,9 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             if (currentFocusedFoundElement >= foundItems.size()) {
                 currentFocusedFoundElement = 0;
             }
-            zoomAndPanDelegate.fitZoom(foundItems.get(currentFocusedFoundElement), FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
-            foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement);
+            ProfileRectangle found = foundItems.get(currentFocusedFoundElement);
+            zoomAndPanDelegate.fitZoom(found, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
+            foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, found.profileData);
         }
     }
 
