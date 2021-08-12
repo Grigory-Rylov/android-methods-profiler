@@ -61,6 +61,7 @@ task(verifySetup) {
 patchPluginXml {
     changeNotes """
       Update method info after switching to another found method.<br>
+      Fixed corrupting preview when selected text is large.<br>
       """
 }
 

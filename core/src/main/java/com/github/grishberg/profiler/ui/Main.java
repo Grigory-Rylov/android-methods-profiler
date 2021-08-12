@@ -104,10 +104,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final TimeFormatter timeFormatter = new TimeFormatter();
     private final JFrame frame;
     private final JLabel timeModeLabel;
-    private final JLabel coordinatesLabel;
-    private final JTextField selectedClassNameLabel;
+    private final JLabel coordinatesLabel = new JLabel("pointer: --/--");
+    private final JTextField selectedClassNameLabel = new JTextField(10);
     private final JTextField findClassText;
-    private final JLabel selectedDurationLabel;
+    private final JLabel selectedDurationLabel = new JLabel("Selected duration");
     private final CallTracePanel chart;
     private final InfoPanel hoverInfoPanel;
     private final JLabel foundInfo;
@@ -231,28 +231,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         gbc.gridwidth = 2;
 
         gbc.anchor = GridBagConstraints.PAGE_START;
-        selectedClassNameLabel = new JTextField("Selected class");
-        selectedClassNameLabel.setEnabled(false);
-        selectedClassNameLabel.setBorder(new EmptyBorder(0, 4, 0, 4));
-        selectedClassNameLabel.setForeground(UIManager.getColor("Label.foreground"));
-
-        JPanel selectionControls = new JPanel(new BorderLayout(10, 4));
-        selectionControls.setBorder(new EmptyBorder(0, 4, 2, 4));
 
         timeModeLabel = new JLabel(timeModeAsString());
-        timeModeLabel.setEnabled(false);
-        coordinatesLabel = new JLabel("pointer: --/--");
-        JPanel timeInfoPanel = new JPanel(new BorderLayout(2, 2));
-        timeInfoPanel.add(timeModeLabel, BorderLayout.LINE_START);
-        timeInfoPanel.add(coordinatesLabel, BorderLayout.LINE_END);
-
-        selectionControls.add(timeInfoPanel, BorderLayout.LINE_START);
-        selectionControls.add(selectedClassNameLabel, BorderLayout.CENTER);
-
-        selectedDurationLabel = new JLabel("Selected duration");
-        selectionControls.add(selectedDurationLabel, BorderLayout.LINE_END);
-
-        controls.add(selectionControls, gbc);
+        controls.add(createSelectionsPanel(timeModeLabel), gbc);
 
         ui.add(controls, BorderLayout.PAGE_START);
 
@@ -384,6 +365,27 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         });
         updatesChecker.checkForUpdates(this);
         frame.setLocationRelativeTo(null);
+    }
+
+    private JPanel createSelectionsPanel(JLabel timeModeLabel) {
+        selectedClassNameLabel.setEnabled(false);
+        selectedClassNameLabel.setBorder(new EmptyBorder(0, 4, 0, 4));
+        selectedClassNameLabel.setForeground(UIManager.getColor("Label.foreground"));
+
+        JPanel selectionControls = new JPanel(new BorderLayout(10, 4));
+        selectionControls.setBorder(new EmptyBorder(0, 4, 2, 4));
+
+        timeModeLabel.setEnabled(false);
+        JPanel timeInfoPanel = new JPanel(new BorderLayout(2, 2));
+        timeInfoPanel.add(timeModeLabel, BorderLayout.LINE_START);
+        timeInfoPanel.add(coordinatesLabel, BorderLayout.LINE_END);
+
+        selectionControls.add(timeInfoPanel, BorderLayout.LINE_START);
+        selectionControls.add(selectedClassNameLabel, BorderLayout.CENTER);
+
+        selectionControls.add(selectedDurationLabel, BorderLayout.LINE_END);
+
+        return selectionControls;
     }
 
     @Override
