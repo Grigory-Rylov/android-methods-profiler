@@ -28,6 +28,7 @@ import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
 import com.github.grishberg.profiler.common.FileSystem;
 import com.github.grishberg.profiler.common.MainScope;
 import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
+import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.UrlOpener;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -81,6 +83,7 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 
@@ -134,10 +137,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final CallTracePreviewPanel previewPanel;
     private final PreviewImageRepository previewImageRepository;
     private final ViewFactory dialogFactory;
+    private final JCheckBox caseInsensitiveToggle;
     private UrlOpener urlOpener;
     private String appFilesDir;
     private final MethodsColorImpl methodsColor;
     private JToolBar toolBar = new JToolBar();
+    private boolean caseSensitiveSearchDisabled;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -178,6 +183,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         // open file button
         JPanel topControls = new JPanel(new BorderLayout(2, 2));
+        JPanel topInnerControls = new JPanel(new BorderLayout());
+
         topControls.setBorder(new EmptyBorder(0, 4, 0, 4));
 
         switchThreadsButton = new SwitchThreadButton();
@@ -189,10 +196,17 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         findClassText.getDocument().addDocumentListener(new FindTextChangedEvent());
 
         findClassText.addActionListener(new FindInMethodsAction());
-        topControls.add(findClassText, BorderLayout.CENTER);
+        topControls.add(topInnerControls, BorderLayout.CENTER);
+        topInnerControls.add(findClassText, BorderLayout.CENTER);
+
+        caseInsensitiveToggle = new JCheckBox("Cc");
+        caseInsensitiveToggle.setToolTipText("Select to make it case insensitive");
+        caseInsensitiveToggle.addMouseListener(new CaseChangeFlagListener());
+        topInnerControls.add(caseInsensitiveToggle, BorderLayout.LINE_END);
 
         foundInfo = new JLabel(DEFAULT_FOUND_INFO_MESSAGE);
         topControls.add(foundInfo, BorderLayout.LINE_END);
+
 
         previewPanel = new CallTracePreviewPanel(log);
         int gridY = 0;
@@ -1057,17 +1071,23 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 
+    private void findInMethod() {
+        String textToFind = findClassText.getText();
+        if (textToFind != null && textToFind.length() > 0) {
+            chart.findItems(textToFind, caseSensitiveSearchDisabled);
+            chart.requestFocus();
+            return;
+        }
+    }
+
     private class FindInMethodsAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String textToFind = findClassText.getText();
-            if (textToFind != null && textToFind.length() > 0) {
-                chart.findItems(textToFind, false /* TODO: add checkbox */);
-                chart.requestFocus();
-                return;
-            }
+            findInMethod();
         }
     }
+
+
 
     private class ParseWorker extends SwingWorker<WorkerResult, WorkerResult> {
         private final File traceFile;
@@ -1157,6 +1177,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         public WorkerResult(TraceContainer traceContainer) {
             this.traceContainer = traceContainer;
             this.throwable = null;
+        }
+    }
+
+    private class CaseChangeFlagListener extends SimpleMouseListener {
+        @Override
+        public void mouseClicked(@NotNull MouseEvent e) {
+            caseSensitiveSearchDisabled = !caseSensitiveSearchDisabled;
+            findInMethod();
         }
     }
 }
