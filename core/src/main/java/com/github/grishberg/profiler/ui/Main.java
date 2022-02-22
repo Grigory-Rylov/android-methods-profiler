@@ -1181,9 +1181,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private class CaseChangeFlagListener implements ChangeListener {
+        private boolean oldSelectedState = false;
         @Override
         public void stateChanged(ChangeEvent e) {
-            findInMethod();
+            if (oldSelectedState != caseInsensitiveToggle.isSelected()){
+                oldSelectedState = caseInsensitiveToggle.isSelected();
+                findInMethod();
+            }
         }
     }
 }
