@@ -50,4 +50,5 @@ class PluginState : SettingsFacade {
     override var debugPort: Int = 0 // not used
     override var hierarchicalStagesMode: Boolean = true
     override var shouldShowToolbar: Boolean = true
+    override var caseSensitive: Boolean = false
 }

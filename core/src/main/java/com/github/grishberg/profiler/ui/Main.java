@@ -28,7 +28,6 @@ import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
 import com.github.grishberg.profiler.common.FileSystem;
 import com.github.grishberg.profiler.common.MainScope;
 import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
-import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.UrlOpener;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
@@ -71,6 +70,8 @@ import javax.swing.JToolBar;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -83,7 +84,6 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 
@@ -142,7 +142,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private String appFilesDir;
     private final MethodsColorImpl methodsColor;
     private JToolBar toolBar = new JToolBar();
-    private boolean caseSensitiveSearchDisabled;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -200,8 +199,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         topInnerControls.add(findClassText, BorderLayout.CENTER);
 
         caseInsensitiveToggle = new JCheckBox("Cc");
-        caseInsensitiveToggle.setToolTipText("Select to make it case insensitive");
-        caseInsensitiveToggle.addMouseListener(new CaseChangeFlagListener());
+        caseInsensitiveToggle.setToolTipText("Select to make it case sensitive");
+        caseInsensitiveToggle.addChangeListener(new CaseChangeFlagListener());
+        caseInsensitiveToggle.setSelected(settings.getCaseSensitive());
         topInnerControls.add(caseInsensitiveToggle, BorderLayout.LINE_END);
 
         foundInfo = new JLabel(DEFAULT_FOUND_INFO_MESSAGE);
@@ -1074,7 +1074,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private void findInMethod() {
         String textToFind = findClassText.getText();
         if (textToFind != null && textToFind.length() > 0) {
-            chart.findItems(textToFind, caseSensitiveSearchDisabled);
+            chart.findItems(textToFind, !caseInsensitiveToggle.isSelected());
             chart.requestFocus();
             return;
         }
@@ -1180,10 +1180,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
-    private class CaseChangeFlagListener extends SimpleMouseListener {
+    private class CaseChangeFlagListener implements ChangeListener {
         @Override
-        public void mouseClicked(@NotNull MouseEvent e) {
-            caseSensitiveSearchDisabled = !caseSensitiveSearchDisabled;
+        public void stateChanged(ChangeEvent e) {
             findInMethod();
         }
     }
