@@ -121,6 +121,13 @@ To scale application on hi-res displays on linux, try to edit `/opt/android-meth
 
 <a href="https://www.buymeacoffee.com/grishberg" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
+# Building
+## App
+Execute `./gradlew clean buildInstaller -Pbuild_type=app` , release will be placed at `app/build/release`
+
+## Plugin
+Execute `./gradlew clean buildPlugin -Pbuild_type=plugin` , plugin wiil be placed at `plugin/build/`
+
 # License
 
 YAMP is released under the [Apache License, Version 2.0](LICENSE.txt).

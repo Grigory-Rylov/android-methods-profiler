@@ -28,6 +28,7 @@ private const val SETTINGS_REPORTS_FILE_DIALOG_DIRECTORY = "Main.reportsFileDial
 private const val SETTINGS_SHOW_BOOKMARKS = "Char.showBookmarks"
 private const val SETTINGS_GRID = "Main.enableGrid"
 private const val SETTINGS_THEME = "Main.theme"
+private const val SETTINGS_CASE_SENSITIVE = "Main.sensitive"
 
 private const val TRACE_SETTINGS_ROOT = "MethodTraceRecordDialog"
 private const val PKG_NAME_SETTINGS = "$TRACE_SETTINGS_ROOT.package"
@@ -128,6 +129,12 @@ class JsonSettings(
     override var hierarchicalStagesMode: Boolean
         get() = getBoolValueOrDefault(SETTINGS_STAGES_HIERARCHICAL, true)
         set(value) {}
+
+    override var caseSensitive: Boolean
+        get() = getBoolValueOrDefault(SETTINGS_CASE_SENSITIVE, false)
+        set(value) {
+            setBoolValue(SETTINGS_CASE_SENSITIVE, value)
+        }
 
     fun getBoolValueOrDefault(name: String, default: Boolean): Boolean {
         val boolVal = settingsMap[name]
