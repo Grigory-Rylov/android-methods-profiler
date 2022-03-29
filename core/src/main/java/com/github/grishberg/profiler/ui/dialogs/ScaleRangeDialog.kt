@@ -8,8 +8,9 @@ import javax.swing.JOptionPane
 
 
 class ScaleRangeDialog(
-    owner: Frame
-) : CloseByEscapeDialog(owner, "Set view range", true) {
+    owner: Frame,
+    modal: Boolean,
+) : CloseByEscapeDialog(owner, "Set view range", modal) {
     private val startRangeField: JNumberField
     private val endRangeField: JNumberField
     var result: Range? = null

@@ -60,7 +60,7 @@ task(verifySetup) {
 
 patchPluginXml {
     changeNotes """
-      Added case insensitive methods searching in main screen.<br>
+      Make all dialogs non-modal.<br>
       """
 }
 

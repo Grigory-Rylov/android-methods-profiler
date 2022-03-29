@@ -142,6 +142,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private String appFilesDir;
     private final MethodsColorImpl methodsColor;
     private JToolBar toolBar = new JToolBar();
+    private boolean allowModalDialogs;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -156,13 +157,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 UrlOpener urlOpener,
                 AppIconDelegate appIconDelegate,
                 MethodsColorRepository methodsColorRepository,
-                String appFilesDir) {
+                String appFilesDir,
+                boolean allowModalDialogs) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
         this.dialogFactory = viewFactory;
         this.urlOpener = urlOpener;
         this.appFilesDir = appFilesDir;
+        this.allowModalDialogs = allowModalDialogs;
         themeController.applyTheme();
 
         String title = viewFactory.getTitle();
@@ -311,16 +314,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.setRightClickListener(this);
         chart.setGridEnabled(true);
 
-        newBookmarkDialog = new NewBookmarkDialog(frame);
+        newBookmarkDialog = new NewBookmarkDialog(frame, allowModalDialogs);
         newBookmarkDialog.pack();
 
-        loadingDialog = new LoadingDialog(frame, appIconDelegate);
+        loadingDialog = new LoadingDialog(frame, appIconDelegate, allowModalDialogs);
         loadingDialog.pack();
 
         methodTraceRecordDialog = viewFactory.createJavaMethodsRecorderDialog(
                 coroutineScope, coroutinesDispatchers, frame, settings, log);
 
-        scaleRangeDialog = new ScaleRangeDialog(frame);
+        scaleRangeDialog = new ScaleRangeDialog(frame, allowModalDialogs);
 
         flameChartController = new FlameChartController(methodsColor, settings, log,
                 coroutineScope, coroutinesDispatchers);
@@ -692,7 +695,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
 
         ThreadsSelectionController controller = new ThreadsSelectionController();
-        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log);
+        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log, allowModalDialogs);
         dialog.showThreads(resultContainer.getResult().getThreads());
         dialog.setLocationRelativeTo(chart);
         dialog.setVisible(true);
@@ -761,7 +764,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private void setupAndroidHome() {
-        SetAndroidHomeDialog dialog = new SetAndroidHomeDialog(frame, settings);
+        SetAndroidHomeDialog dialog = new SetAndroidHomeDialog(frame, settings, allowModalDialogs);
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
@@ -1011,7 +1014,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         hoverInfoPanel.hidePanel();
 
         FlatMethodsReportGenerator generator = new FlatMethodsReportGenerator(chart.getData());
-        ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator);
+        ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator, allowModalDialogs);
         reportsGeneratorDialog.pack();
 
         reportsGeneratorDialog.setLocationRelativeTo(frame);

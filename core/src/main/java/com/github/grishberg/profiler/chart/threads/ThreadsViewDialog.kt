@@ -28,8 +28,9 @@ class ThreadsViewDialog(
     private val frame: Frame,
     private val controller: ThreadsSelectionController,
     private val previewImageRepository: PreviewImageRepository,
-    private val logger: AppLogger
-) : CloseByEscapeDialog(frame, "Select thread", true), ThreadsSelectionView {
+    private val logger: AppLogger,
+    modal: Boolean,
+) : CloseByEscapeDialog(frame, "Select thread", modal), ThreadsSelectionView {
 
     private val model = ThreadListModel(previewImageRepository)
     var selectedThreadItem: ThreadItem? = null

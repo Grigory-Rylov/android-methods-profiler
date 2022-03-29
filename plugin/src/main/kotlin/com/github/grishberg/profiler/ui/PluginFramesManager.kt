@@ -26,7 +26,8 @@ class PluginFramesManager(
             themesController, NoOpUpdatesChecker, viewFactory, urlOpener,
             iconDelegate,
             methodsColorRepository,
-            "<not used>"
+            "<not used>",
+            false
         )
     }
 

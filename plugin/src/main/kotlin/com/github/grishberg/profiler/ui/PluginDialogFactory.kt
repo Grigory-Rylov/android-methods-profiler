@@ -39,7 +39,8 @@ class PluginDialogFactory(
             adbWrapper,
             coroutineScope, coroutinesDispatchers,
             frame, settings, log,
-            projectInfoProvider
+            projectInfoProvider,
+            false,
         )
     }
 
@@ -56,14 +57,14 @@ class PluginDialogFactory(
 
 
     override fun createHighlightDialog(owner: JFrame): HighlightDialog {
-        return HighlightDialog(owner, methodsColorRepository, this)
+        return HighlightDialog(owner, methodsColorRepository, this, false)
     }
 
     override fun createElementWithColorDialog(owner: Dialog, title: String): ElementWithColorDialog {
-        return ElementWithColorDialog(owner, title, true)
+        return ElementWithColorDialog(owner, title, false)
     }
 
-    override fun createElementWithColorDialog(owner: JFrame, title: String): ElementWithColorDialog {// not used
-        return ElementWithColorDialog(owner, title, true)
+    override fun createElementWithColorDialog(owner: JFrame, title: String): ElementWithColorDialog {
+        return ElementWithColorDialog(owner, title, false)
     }
 }

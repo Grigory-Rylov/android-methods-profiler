@@ -45,10 +45,11 @@ class PluginMethodsRecorderDialog(
     owner: Frame,
     private val settings: SettingsFacade,
     private val logger: AppLogger,
-    private val projectInfoProvider: ProjectInfoProvider
+    private val projectInfoProvider: ProjectInfoProvider,
+    allowModalDialog: Boolean,
 ) : CloseByEscapeDialog(
     owner,
-    TITLE, true
+    TITLE, allowModalDialog
 ), JavaMethodsRecorderDialogView {
     private val packageNameField: JTextField
     private val activityNameField: JTextField

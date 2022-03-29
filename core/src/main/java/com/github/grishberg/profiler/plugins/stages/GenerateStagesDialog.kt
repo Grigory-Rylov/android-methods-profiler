@@ -22,8 +22,9 @@ private const val removeString = "-"
 class GenerateStagesDialog(
     owner: Dialog,
     methods: List<ProfileData>,
-    logger: AppLogger
-) : CloseByEscapeDialog(owner, "Packages filter", true), ListSelectionListener {
+    logger: AppLogger,
+    modal: Boolean,
+) : CloseByEscapeDialog(owner, "Packages filter", modal), ListSelectionListener {
     private val packageTextField =
         JTextField(20).apply { toolTipText = "Enter package prefix to filter from trace methods" }
     private val addButton = JButton(addString)
