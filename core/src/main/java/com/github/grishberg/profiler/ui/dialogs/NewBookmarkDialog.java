@@ -29,8 +29,8 @@ public class NewBookmarkDialog extends CloseByEscapeDialog implements ChangeList
     @Nullable
     private BookMarkInfo result;
 
-    public NewBookmarkDialog(Frame owner) {
-        super(owner, "New Bookmark", true);
+    public NewBookmarkDialog(Frame owner, boolean allowModalDialogs) {
+        super(owner, "New Bookmark", allowModalDialogs);
         JPanel content = new JPanel();
         content.setBorder(new EmptyBorder(4, 4, 4, 4));
         content.setLayout(new BorderLayout());

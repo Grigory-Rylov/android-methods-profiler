@@ -11,8 +11,9 @@ import javax.swing.WindowConstants
 
 class LoadingDialog(
     owner: Frame,
-    appIconDelegate: AppIconDelegate
-) : JDialog(owner, true) {
+    appIconDelegate: AppIconDelegate,
+    allowModalDialogs: Boolean,
+) : JDialog(owner, allowModalDialogs) {
 
     init {
         val panel = JPanel()

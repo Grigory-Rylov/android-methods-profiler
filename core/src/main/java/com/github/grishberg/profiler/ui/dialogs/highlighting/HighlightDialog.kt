@@ -28,11 +28,12 @@ private const val BUTTON_TITLE_DOWN = "Down"
 class HighlightDialog(
     owner: Frame,
     methodsColorRepository: MethodsColorRepository,
-    private val dialogFactory: ElementWithColorDialogFactory
+    private val dialogFactory: ElementWithColorDialogFactory,
+    allowModalDialogs: Boolean,
 ) : CloseByEscapeDialog(
     owner,
     "Highlight settings",
-    true
+    allowModalDialogs
 ), HighlightDialogView {
     private val logic = HighlightListDialogLogic(methodsColorRepository)
     private val listModel = DefaultListModel<ColorInfo>()

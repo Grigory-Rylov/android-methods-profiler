@@ -10,8 +10,9 @@ import javax.swing.*
  */
 class SetAndroidHomeDialog(
     owner: JFrame,
-    private val settings: SettingsFacade
-) : CloseByEscapeDialog(owner, "Set path to Android SDK", true) {
+    private val settings: SettingsFacade,
+    modal: Boolean,
+) : CloseByEscapeDialog(owner, "Set path to Android SDK", modal) {
     private val androidHomeField = JTextField(25)
 
     init {

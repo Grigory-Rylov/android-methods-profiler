@@ -43,7 +43,8 @@ class StandaloneAppFramesManagerFramesManager(
             urlOpener,
             iconDelegate,
             methodsColorRepository,
-            APP_FILES_DIR
+            APP_FILES_DIR,
+            true
         )
     }
 
