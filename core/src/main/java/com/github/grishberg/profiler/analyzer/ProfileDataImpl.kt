@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.analyzer
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 
 data class ProfileDataImpl(
     override val name: String,

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade
 import com.github.grishberg.profiler.common.createAccelerator
 import com.github.grishberg.profiler.common.createControlAccelerator

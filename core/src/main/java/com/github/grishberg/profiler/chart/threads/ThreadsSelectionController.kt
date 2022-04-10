@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.threads
 
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.core.ThreadItem
 
 interface ThreadsSelectionView {
     fun showThreads(threads: List<ThreadItem>)

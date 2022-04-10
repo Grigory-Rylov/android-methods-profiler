@@ -17,7 +17,7 @@ plugins {
 def use_jdk8 = project.hasProperty("use_jdk8")
 
 if (!use_jdk8) {
-    idea.project.jdkName = '9'
+    idea.project.jdkName = '11'
 }
 
 allprojects {
@@ -25,12 +25,13 @@ allprojects {
     apply plugin: "idea"
     repositories {
         google()
+        mavenCentral()
         jcenter()
         maven { url 'https://jitpack.io' }
     }
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     }
 
     compileKotlin {

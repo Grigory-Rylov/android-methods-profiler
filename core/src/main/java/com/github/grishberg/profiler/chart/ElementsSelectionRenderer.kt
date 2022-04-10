@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import java.awt.Color
 import java.awt.FontMetrics
 import java.awt.Graphics2D

@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.chart.stages.methods
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
 import com.github.grishberg.profiler.analyzer.calculateMaxThreadTime
 import com.github.grishberg.profiler.chart.ChartPaintDelegate

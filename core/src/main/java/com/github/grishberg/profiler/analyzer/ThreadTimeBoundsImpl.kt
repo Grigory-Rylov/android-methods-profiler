@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.analyzer
 
-import com.github.grishberg.android.profiler.core.ThreadTimeBounds
+import com.github.grishberg.profiler.core.ThreadTimeBounds
 
 data class ThreadTimeBoundsImpl(
     override var minTime: Double = Double.MAX_VALUE,

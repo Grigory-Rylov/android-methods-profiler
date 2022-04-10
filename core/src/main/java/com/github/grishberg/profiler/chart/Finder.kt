@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
 
 class Finder(
     private val analyzerResult: AnalyzerResult

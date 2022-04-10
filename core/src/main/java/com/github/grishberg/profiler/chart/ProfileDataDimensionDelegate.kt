@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 
 interface ProfileDataDimensionDelegate {
     fun calculateTopForLevel(level: Int): Double

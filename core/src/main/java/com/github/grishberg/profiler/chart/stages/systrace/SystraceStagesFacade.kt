@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.stages.systrace
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.AnalyzerResult
 import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
 import com.github.grishberg.profiler.chart.ChartPaintDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle

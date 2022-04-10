@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui;
 
-import com.github.grishberg.android.profiler.core.ProfileData;
+import com.github.grishberg.profiler.core.ProfileData;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;

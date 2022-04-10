@@ -1,8 +1,8 @@
 package com.github.grishberg.profiler.ui;
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult;
-import com.github.grishberg.android.profiler.core.ProfileData;
-import com.github.grishberg.android.profiler.core.ThreadItem;
+import com.github.grishberg.profiler.core.AnalyzerResult;
+import com.github.grishberg.profiler.core.ProfileData;
+import com.github.grishberg.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
 import com.github.grishberg.profiler.chart.Bookmarks;

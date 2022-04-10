@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages.methods
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.expandabletree.AbstractTreeTableModel
 import com.github.grishberg.expandabletree.TreeTableModel
 import com.github.grishberg.profiler.plugins.stages.WrongStage

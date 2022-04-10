@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages.methods
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
 import com.github.grishberg.profiler.plugins.stages.MethodsAvailabilityImpl

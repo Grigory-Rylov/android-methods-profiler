@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.common
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.JTable

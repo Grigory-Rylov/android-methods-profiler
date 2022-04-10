@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.chart.preview
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.Bookmarks
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.ui.theme.Palette
