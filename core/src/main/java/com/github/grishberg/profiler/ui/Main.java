@@ -571,14 +571,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ButtonGroup group = new ButtonGroup();
         globalTimeMenuItem.setSelected(!settings.getThreadTimeMode());
         globalTimeMenuItem.setMnemonic(KeyEvent.VK_G);
-        globalTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('G'));
+        globalTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('G'));
         group.add(globalTimeMenuItem);
         viewMenu.add(globalTimeMenuItem);
         globalTimeMenuItem.addActionListener(e -> switchTimeMode(false));
 
         threadTimeMenuItem.setSelected(settings.getThreadTimeMode());
         threadTimeMenuItem.setMnemonic(KeyEvent.VK_T);
-        threadTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('T'));
+        threadTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('T'));
         threadTimeMenuItem.addActionListener(e -> switchTimeMode(true));
         group.add(threadTimeMenuItem);
         viewMenu.add(threadTimeMenuItem);
