@@ -1,7 +1,6 @@
 package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.ProfileData
-import java.util.DoubleSummaryStatistics
 
 enum class MarkType {
     NONE, COMPARED, OLD, NEW, CHANGE_ORDER, SUSPICIOUS;
@@ -82,14 +81,28 @@ data class CompareID(
     }
 }
 
-class ComparableFlameProfileData(
-    val id: CompareID,
+class FlameProfileData(
+    val name: String,
     val count: Int,
     val left: Double,
     val top: Double,
     val width: Double
 ) {
-    val children = mutableListOf<ComparableFlameProfileData>()
+    val children = mutableListOf<FlameProfileData>()
+
+    fun addChild(data: FlameProfileData) = children.add(data)
+}
+
+class AggregatedFlameProfileData(
+    val name: String,
+    val sumCountAggregated: Int,
+    val countAggregated: Int,
+    var left: Double,
+    val top: Double,
+    var width: Double = 0.0
+) {
+    val mean: Double get() = sumCountAggregated.toDouble() / countAggregated
+    val children = mutableListOf<AggregatedFlameProfileData>()
     var mark: FlameMarkType = FlameMarkType.NONE
         set(value) {
             field = value
@@ -98,7 +111,7 @@ class ComparableFlameProfileData(
             }
         }
 
-    fun addChild(data: ComparableFlameProfileData) = children.add(data)
+    fun addChild(data: AggregatedFlameProfileData) = children.add(data)
 }
 
 data class ComparableFlameChildHolder(
