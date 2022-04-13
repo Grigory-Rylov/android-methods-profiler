@@ -1,6 +1,7 @@
 package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.ProfileData
+import java.util.DoubleSummaryStatistics
 
 enum class MarkType {
     NONE, COMPARED, OLD, NEW, CHANGE_ORDER, SUSPICIOUS;
@@ -14,11 +15,19 @@ enum class MarkType {
     }
 }
 
+enum class FlameMarkType {
+    NONE, NEW_NEW, OLD_OLD, MAYBE_NEW, MAYBE_OLD;
+
+    fun isOverrideChildren(): Boolean {
+        return this == NEW_NEW || this == OLD_OLD
+    }
+}
+
 fun ProfileData.toComparable(
     parent: ComparableProfileData?,
     fillInto: MutableList<ComparableProfileData>
 ): ComparableProfileData {
-    val root = ComparableProfileData(CompareID(name, parent?.id), parent, this)
+    val root = ComparableProfileData(CompareID(name, parent?.id), this)
     fillInto.add(root)
     children.forEach {
         root.addChild(it.toComparable(root, fillInto))
@@ -28,7 +37,6 @@ fun ProfileData.toComparable(
 
 class ComparableProfileData(
     val id: CompareID,
-    val parent: ComparableProfileData?,
     val profileData: ProfileData
 ) {
     var mark: MarkType = MarkType.NONE
@@ -72,4 +80,30 @@ data class CompareID(
 
         return true
     }
+}
+
+class ComparableFlameProfileData(
+    val id: CompareID,
+    val count: Int,
+    val left: Double,
+    val top: Double,
+    val width: Double
+) {
+    val children = mutableListOf<ComparableFlameProfileData>()
+    var mark: FlameMarkType = FlameMarkType.NONE
+        set(value) {
+            field = value
+            if (value.isOverrideChildren()) {
+                children.forEach { it.mark = value }
+            }
+        }
+
+    fun addChild(data: ComparableFlameProfileData) = children.add(data)
+}
+
+data class ComparableFlameChildHolder(
+    var minLeft: Double,
+    val children: MutableList<ProfileData> = mutableListOf()
+) {
+    val count get() = children.size
 }

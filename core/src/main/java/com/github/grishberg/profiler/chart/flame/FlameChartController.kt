@@ -8,6 +8,9 @@ import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsFacade
+import com.github.grishberg.profiler.comparator.ComparableFlameChildHolder
+import com.github.grishberg.profiler.comparator.ComparableFlameProfileData
+import com.github.grishberg.profiler.comparator.CompareID
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -192,6 +195,26 @@ class FlameChartController(
             return Result(result, minX, -topOffset - levelHeight, maxX)
         }
 
+        fun calculateFlameToAggregate(threadMethods: List<ProfileData>): ComparableFlameProfileData {
+            val rootSources = threadMethods.filter { it.level == 0 }
+            val left = rootSources.minByOrNull { it.globalStartTimeInMillisecond }?.globalStartTimeInMillisecond
+                ?: throw IllegalStateException("Root sources must not be empty")
+            val right = rootSources.maxByOrNull { it.globalEndTimeInMillisecond }?.globalEndTimeInMillisecond
+                ?: throw IllegalStateException("Root sources must not be empty")
+            val width = right - left
+            val fakeRoot = ComparableFlameProfileData(
+                CompareID("INIT", null),
+                count = 1,
+                left,
+                Double.MIN_VALUE,
+                width
+            )
+
+            processChildrenToAggregate(rootSources, fakeRoot)
+
+            return fakeRoot
+        }
+
         fun calculateFlame(rootSource: ProfileData): Result {
             result.clear()
             rootLevel = rootSource.level
@@ -221,12 +244,25 @@ class FlameChartController(
             return Result(result, minX, -topOffset, maxX)
         }
 
+        fun calculateFlameToAggregate(rootSource: ProfileData): ComparableFlameProfileData {
+            rootLevel = rootSource.level
+            val top = calculateTopForLevel(rootSource)
+            val left = calculateStartXForTime(rootSource)
+            val right = calculateEndXForTime(rootSource)
+            val width = right - left
+
+            val root = ComparableFlameProfileData(CompareID(rootSource.name, null), 1, left, top, width)
+            processChildrenToAggregate(listOf(rootSource), root)
+
+            return root
+        }
+
         private fun processChildren(rootSources: List<ProfileData>, parentLeft: Double) {
             val children = mutableMapOf<String, ChildHolder>()
             var left = parentLeft
             for (root in rootSources) {
                 for (child in root.children) {
-                    val childHolder = children.getOrPut(child.name, { ChildHolder() })
+                    val childHolder = children.getOrPut(child.name) { ChildHolder() }
                     val left = calculateStartXForTime(child)
                     val right = calculateEndXForTime(child)
                     val width = right - left
@@ -250,6 +286,38 @@ class FlameChartController(
                 )
                 processChildren(entry.value.children, left)
                 left += entry.value.totalDuration
+            }
+        }
+
+        private fun processChildrenToAggregate(rootSources: List<ProfileData>, parent: ComparableFlameProfileData) {
+            val children = mutableMapOf<String, ComparableFlameChildHolder>()
+            var left = parent.left
+            val childrenCallCount = rootSources.sumOf { it.children.size }
+            for (root in rootSources) {
+                for (child in root.children) {
+                    val start = calculateStartXForTime(child)
+                    val childHolder = children.getOrPut(child.name) { ComparableFlameChildHolder(start) }
+                    childHolder.minLeft = min(childHolder.minLeft, start)
+                    childHolder.children.add(child)
+                }
+            }
+
+            val sorted = children.toList().sortedBy { (_, value) -> value.minLeft }.toMap()
+
+            for (entry in sorted) {
+                val child = entry.value.children.first()
+                val top = calculateTopForLevel(entry.value.children.first())
+                val width = (parent.width * entry.value.count) / childrenCallCount
+                val cmpChild = ComparableFlameProfileData(
+                    CompareID(child.name, parent.id),
+                    entry.value.count,
+                    left,
+                    top,
+                    width
+                )
+                parent.addChild(cmpChild)
+                processChildrenToAggregate(entry.value.children, cmpChild)
+                left += width
             }
         }
 
