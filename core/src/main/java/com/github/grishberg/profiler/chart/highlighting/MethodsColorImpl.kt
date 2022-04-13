@@ -2,12 +2,15 @@ package com.github.grishberg.profiler.chart.highlighting
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.comparator.MarkType
 import java.awt.Color
 
 interface MethodsColor {
     fun getColorForMethod(profile: ProfileRectangle): Color
 
     fun getColorForMethod(name: String): Color
+
+    fun getColorForCompare(markType: MarkType): Color
 }
 
 class MethodsColorImpl(
@@ -27,6 +30,13 @@ class MethodsColorImpl(
     private val activityStartColor = Color(197, 219, 187)
     private val activityResumeColor = Color(211, 216, 255)
     private val requestLayoutColor = Color(0xFFA7A3)
+
+    private val compareNoneColor = Color(0x999999)
+    private val compareComparedColor = Color(0xCCCCCC)
+    private val compareOldColor = Color(255, 90, 0)
+    private val compareNewColor = Color(0, 255, 0)
+    private val compareChangeOrderColor = Color(0, 120, 255)
+    private val compareSuspiciousColor = Color(255, 191, 160)
 
     init {
         colors.addAll(methodsColors.getColors())
@@ -92,6 +102,17 @@ class MethodsColorImpl(
             return javaLangColor
         }
         return otherColor
+    }
+
+    override fun getColorForCompare(markType: MarkType): Color {
+        return when (markType) {
+            MarkType.NONE -> compareNoneColor
+            MarkType.OLD -> compareOldColor
+            MarkType.NEW -> compareNewColor
+            MarkType.SUSPICIOUS -> compareSuspiciousColor
+            MarkType.CHANGE_ORDER -> compareChangeOrderColor
+            MarkType.COMPARED -> compareComparedColor
+        }
     }
 
 

@@ -34,6 +34,8 @@ import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel;
+import com.github.grishberg.profiler.comparator.ComparableProfileData;
+import com.github.grishberg.profiler.comparator.OpenTraceToCompareCallback;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
 import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
@@ -999,6 +1001,17 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         showProgressDialog(file);
     }
 
+    public void openCompareTraceFile(File file, OpenTraceToCompareCallback callback) {
+        currentOpenedFile = file;
+        new ParseToCompareWorker(file, callback).execute();
+        showProgressDialog(file);
+    }
+
+    public void highlightCompareResult(ComparableProfileData rootCompareData) {
+        assert resultContainer != null;
+        chart.highlightCompare(rootCompareData, resultContainer.getResult().getMainThreadId());
+    }
+
     private void showProgressDialog(File file) {
         loadingDialog.setLocationRelativeTo(frame);
         loadingDialog.setVisible(true);
@@ -1142,6 +1155,29 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             } catch (Exception e) {
                 e.printStackTrace();
                 log.e("Parse trace file exception: ", e);
+            }
+        }
+    }
+
+    private class ParseToCompareWorker extends ParseWorker {
+
+        private final OpenTraceToCompareCallback callback;
+
+        private ParseToCompareWorker(File traceFile, OpenTraceToCompareCallback callback) {
+            super(traceFile, null);
+            this.callback = callback;
+        }
+
+        @Override
+        protected void done() {
+            super.done();
+            try {
+                TraceContainer traceContainer = get().traceContainer;
+                if (traceContainer != null) {
+                    callback.onTraceOpened(traceContainer);
+                }
+            } catch (Exception e) {
+                log.e("In callback exception occured:", e);
             }
         }
     }

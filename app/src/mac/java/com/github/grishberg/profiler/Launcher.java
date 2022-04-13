@@ -4,17 +4,22 @@ import com.github.grishberg.profiler.chart.highlighting.ColorInfoAdapter;
 import com.github.grishberg.profiler.chart.highlighting.StandaloneAppMethodsColorRepository;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
+import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
+import com.github.grishberg.profiler.comparator.ComparableProfileData;
+import com.github.grishberg.profiler.comparator.TraceComparator;
 import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import com.github.grishberg.profiler.ui.StandaloneAppDialogFactory;
 import com.github.grishberg.profiler.ui.StandaloneAppFramesManagerFramesManager;
 import com.github.grishberg.profiler.ui.ViewFactory;
+import kotlin.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Desktop;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Launcher {
@@ -35,6 +40,8 @@ public class Launcher {
                     settings, log, sViewFactory, methodsColorRepository
             );
 
+    private static final TraceComparator sTraceComparator = new TraceComparator(log);
+
     static {
         initDefaultSettings(settings, log);
 
@@ -47,17 +54,44 @@ public class Launcher {
     }
 
     public static void main(String[] args) {
-        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
-        sMainWidowStarted = true;
-        if (sPendingFile != null) {
-            app.openTraceFile(sPendingFile);
-            sPendingFile = null;
-        }
+        if (args.length == 3 && args[0].equals("--cmp")) {
+            File reference = new File(args[1]);
+            File tested = new File(args[2]);
+            Main windowRef = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
+            Main windowTest = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
+            List<TraceContainer> analyzerResults = new ArrayList<>();
+            sMainWidowStarted = true;
+            windowRef.openCompareTraceFile(reference, (traceContainer) -> {
+                analyzerResults.add(traceContainer);
+                if (analyzerResults.size() == 2) {
+                    Pair<ComparableProfileData, ComparableProfileData> compareResult =
+                            sTraceComparator.compare(traceContainer, analyzerResults.get(0));
+                    windowRef.highlightCompareResult(compareResult.getFirst());
+                    windowTest.highlightCompareResult(compareResult.getSecond());
+                }
+            });
+            windowTest.openCompareTraceFile(tested, (traceContainer) -> {
+                analyzerResults.add(traceContainer);
+                if (analyzerResults.size() == 2) {
+                    Pair<ComparableProfileData, ComparableProfileData> compareResult =
+                            sTraceComparator.compare(analyzerResults.get(0), traceContainer);
+                    windowRef.highlightCompareResult(compareResult.getFirst());
+                    windowTest.highlightCompareResult(compareResult.getSecond());
+                }
+            });
+        } else {
+            Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
+            sMainWidowStarted = true;
+            if (sPendingFile != null) {
+                app.openTraceFile(sPendingFile);
+                sPendingFile = null;
+            }
 
-        if (args.length > 0) {
-            File f = new File(args[0]);
-            if (f.isFile()) {
-                app.openTraceFile(f);
+            if (args.length > 0) {
+                File f = new File(args[0]);
+                if (f.isFile()) {
+                    app.openTraceFile(f);
+                }
             }
         }
     }
