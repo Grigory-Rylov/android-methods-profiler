@@ -71,6 +71,7 @@ patchPluginXml {
     sinceBuild("211")
     changeNotes """
       Support Android Studio Chipmunk.<br>
+      Fixed recording bug.<br>
       """
 }
 
