@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.common
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.AnalyzerResult
 import com.github.grishberg.profiler.analyzer.TraceAnalyzer
 import com.github.grishberg.profiler.analyzer.converter.DeObfuscatorConverter
 import com.github.grishberg.profiler.chart.BOOKMARK_EXTENSION

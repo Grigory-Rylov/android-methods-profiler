@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui.dialogs.info
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.CyclicTableRowSorter
 import com.github.grishberg.profiler.common.DoubleRenderer
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog

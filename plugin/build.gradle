@@ -6,10 +6,19 @@ plugins {
 group 'com.github.grishberg'
 version ext.productVersion
 
-sourceCompatibility = 8
-targetCompatibility = 8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
+    maven {
+        url = uri("https://www.jetbrains.com/intellij-repository/snapshots/")
+    }
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
+    maven {
+        url = uri("https://www.jetbrains.com/intellij-repository/releases")
+    }
     mavenCentral()
     maven { url 'https://jitpack.io' }
     maven {
@@ -24,8 +33,8 @@ if (!hasProperty('studioCompilePath')) {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     updateSinceUntilBuild false
-    plugins 'android'
-    intellij.localPath = project.hasProperty("studioCompilePath") ? studioCompilePath : studioRunPath
+    plugins ['android']
+    version "212-EAP-SNAPSHOT"
 }
 
 runIde {
@@ -43,9 +52,9 @@ dependencies {
     compileOnly fileTree(dir: "$studioCompilePath/plugins/android/lib", include: ['*.jar'])
     compileOnly fileTree(dir: "$studioCompilePath/lib", include: ['*.jar'])
 
-    testCompile 'junit:junit:4.12'
-    testCompile fileTree(dir: "$studioCompilePath/plugins/android/lib", include: ['*.jar'])
-    testCompile fileTree(dir: "$studioCompilePath/lib", include: ['*.jar'])
+    testImplementation 'junit:junit:4.12'
+    testImplementation fileTree(dir: "$studioCompilePath/plugins/android/lib", include: ['*.jar'])
+    testImplementation fileTree(dir: "$studioCompilePath/lib", include: ['*.jar'])
 
 }
 
@@ -59,14 +68,16 @@ task(verifySetup) {
 }
 
 patchPluginXml {
+    sinceBuild("211")
     changeNotes """
-      Make all dialogs non-modal.<br>
+      Support Android Studio Chipmunk.<br>
+      Fixed recording bug.<br>
       """
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "11"
 }
 compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "11"
 }

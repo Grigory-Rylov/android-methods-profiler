@@ -1,8 +1,8 @@
 package com.github.grishberg.profiler.ui;
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult;
-import com.github.grishberg.android.profiler.core.ProfileData;
-import com.github.grishberg.android.profiler.core.ThreadItem;
+import com.github.grishberg.profiler.core.AnalyzerResult;
+import com.github.grishberg.profiler.core.ProfileData;
+import com.github.grishberg.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
 import com.github.grishberg.profiler.chart.Bookmarks;
@@ -571,14 +571,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ButtonGroup group = new ButtonGroup();
         globalTimeMenuItem.setSelected(!settings.getThreadTimeMode());
         globalTimeMenuItem.setMnemonic(KeyEvent.VK_G);
-        globalTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('G'));
+        globalTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('G'));
         group.add(globalTimeMenuItem);
         viewMenu.add(globalTimeMenuItem);
         globalTimeMenuItem.addActionListener(e -> switchTimeMode(false));
 
         threadTimeMenuItem.setSelected(settings.getThreadTimeMode());
         threadTimeMenuItem.setMnemonic(KeyEvent.VK_T);
-        threadTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('T'));
+        threadTimeMenuItem.setAccelerator(MenuAcceleratorHelperKt.createAccelerator('T'));
         threadTimeMenuItem.addActionListener(e -> switchTimeMode(true));
         group.add(threadTimeMenuItem);
         viewMenu.add(threadTimeMenuItem);
@@ -981,13 +981,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             }
         }
 
-        methodTraceRecordDialog.setLocationRelativeTo(frame);
-        methodTraceRecordDialog.showDialog();
-        RecordedResult result = methodTraceRecordDialog.getResult();
-        if (result != null) {
+        methodTraceRecordDialog.setResultListener(result -> {
             menuHistoryItems.addToFileHistory(result.getRecorderTraceFile());
             openTraceFile(result.getRecorderTraceFile(), result.getSystraces());
-        }
+        });
+        methodTraceRecordDialog.setLocationRelativeTo(frame);
+        methodTraceRecordDialog.showDialog();
     }
 
     public void openTraceFile(File file) {

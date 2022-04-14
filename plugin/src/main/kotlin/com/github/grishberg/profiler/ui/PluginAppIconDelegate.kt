@@ -13,18 +13,15 @@ import javax.swing.JLabel
 private const val ICON_SIZE = 18
 
 class PluginAppIconDelegate(private val iconSize: Int = ICON_SIZE) : AppIconDelegate {
-    override fun updateFrameIcon(frame: Frame) = Unit
+    override fun updateFrameIcon(frame: Frame) { /* not used */ }
 
     override fun updateLoadingIcon(iconLabel: JLabel) {
-        val cldr = this.javaClass.classLoader
-        val imageURL = cldr.getResource("/images/loading.gif")
-        val imageIcon = ImageIcon(imageURL)
+        val imageIcon = IconLoader.getIcon("/images/loading.gif", this.javaClass)
         iconLabel.icon = imageIcon
-        imageIcon.imageObserver = iconLabel
     }
 
     override fun loadIcon(path: String, altText: String): ImageIcon {
-        val icon = IconLoader.getIcon("/$path")
+        val icon = IconLoader.getIcon("/$path", this.javaClass)
         val image: BufferedImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon))
         if (UIUtil.isRetina()) {
             val retinaIcon = getRetinaIcon(image)

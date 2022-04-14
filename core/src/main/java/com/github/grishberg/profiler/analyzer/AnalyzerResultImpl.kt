@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.analyzer
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
 import kotlin.math.max
 
 data class AnalyzerResultImpl(

@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.expandabletree.JTreeTable
 import com.github.grishberg.profiler.common.CyclicTableRowSorter
 import com.github.grishberg.profiler.plugins.stages.methods.MethodsWithStageModel

@@ -36,9 +36,13 @@ class PluginProjectInfo(
             logger.d("found ${facets.size} facets")
             val facet = facets.firstOrNull()
             if (facet != null) {
-                val applicationId = AndroidModuleModel.get(facet)?.applicationId
-                logger.d("selected applicationId =$applicationId")
-                return applicationId
+                try {
+                    val applicationId = AndroidModuleModel.get(facet)?.applicationId
+                    logger.d("selected applicationId =$applicationId")
+                    return applicationId
+                } catch (e: Throwable) {
+                    logger.e("Error while trying extract module name from facet", e)
+                }
             }
         }
         return null

@@ -31,6 +31,11 @@ private const val TAG = "MethodTraceRecordDialog"
 private const val DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT = 120
 
 interface JavaMethodsRecorderDialogView {
+
+    interface OnRecordedListener {
+        fun onRecorded(result: RecordedResult)
+    }
+
     var packageName: String
     var activityName: String
     var fileNamePrefix: String
@@ -57,6 +62,7 @@ interface JavaMethodsRecorderDialogView {
     fun setLocationRelativeTo(frame: JFrame)
     fun showDialog()
     fun getResult(): RecordedResult?
+    fun setResultListener(listener: OnRecordedListener?)
 }
 
 class JavaMethodsDialogLogic(

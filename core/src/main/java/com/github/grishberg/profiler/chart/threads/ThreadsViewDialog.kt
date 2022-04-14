@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.threads
 
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.core.ThreadItem
 import com.github.grishberg.profiler.chart.preview.PREVIEW_IMAGE_HEIGHT
 import com.github.grishberg.profiler.chart.preview.PREVIEW_IMAGE_WIDTH
 import com.github.grishberg.profiler.chart.preview.PreviewImageRepository

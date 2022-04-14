@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.common.colorToHex
 import com.github.grishberg.profiler.common.hexToColor
 import com.github.grishberg.profiler.ui.BookMarkInfo

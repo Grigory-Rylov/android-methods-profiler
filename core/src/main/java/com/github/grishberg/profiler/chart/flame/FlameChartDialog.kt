@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.chart.flame
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.FoundInfoListener
 import com.github.grishberg.profiler.common.SimpleMouseListener
 import com.github.grishberg.profiler.ui.Main

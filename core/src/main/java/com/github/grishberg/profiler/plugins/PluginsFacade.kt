@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.plugins
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ThreadItem
 import com.github.grishberg.profiler.chart.stages.methods.StagesFacade
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade
 import com.github.grishberg.profiler.common.AppLogger

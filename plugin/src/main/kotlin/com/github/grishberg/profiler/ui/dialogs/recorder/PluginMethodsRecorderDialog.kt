@@ -142,6 +142,8 @@ class PluginMethodsRecorderDialog(
             stagesTracePrefixField.text = value
         }
 
+    private var listener: JavaMethodsRecorderDialogView.OnRecordedListener? = null
+
     init {
 
         val panelBuilder = LabeledGridBuilder()
@@ -378,6 +380,14 @@ class PluginMethodsRecorderDialog(
 
     override fun closeDialog() {
         SwingUtilities.invokeLater { isVisible = false }
+        val result = logic.result
+        if (result != null) {
+            listener?.onRecorded(result)
+        }
+    }
+
+    override fun setResultListener(listener: JavaMethodsRecorderDialogView.OnRecordedListener?) {
+        this.listener = listener
     }
 
     override fun initialState() {

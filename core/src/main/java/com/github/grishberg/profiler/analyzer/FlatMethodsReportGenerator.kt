@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.analyzer
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.BookmarksRectangle
 import com.github.grishberg.profiler.chart.CallTracePanel
 import java.io.BufferedWriter

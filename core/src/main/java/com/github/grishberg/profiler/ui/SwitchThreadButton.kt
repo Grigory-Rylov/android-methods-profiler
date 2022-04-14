@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui
 
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.core.ThreadItem
 import javax.swing.JButton
 
 private const val MAX_TEXT_WIDTH = 20

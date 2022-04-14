@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.plugins.stages.systrace
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.plugins.stages.Stage
 import com.github.grishberg.tracerecorder.SystraceRecord
 
