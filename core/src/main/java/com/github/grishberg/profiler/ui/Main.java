@@ -981,14 +981,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             }
         }
 
-        methodTraceRecordDialog.setResultListener(new JavaMethodsRecorderDialogView.OnRecordedListener() {
-            @Override
-            public void onRecorded(@NotNull RecordedResult result) {
-                if (result != null) {
-                    menuHistoryItems.addToFileHistory(result.getRecorderTraceFile());
-                    openTraceFile(result.getRecorderTraceFile(), result.getSystraces());
-                }
-            }
+        methodTraceRecordDialog.setResultListener(result -> {
+            menuHistoryItems.addToFileHistory(result.getRecorderTraceFile());
+            openTraceFile(result.getRecorderTraceFile(), result.getSystraces());
         });
         methodTraceRecordDialog.setLocationRelativeTo(frame);
         methodTraceRecordDialog.showDialog();
