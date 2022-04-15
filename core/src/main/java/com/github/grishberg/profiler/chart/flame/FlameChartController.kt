@@ -8,8 +8,7 @@ import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.comparator.ComparableFlameChildHolder
-import com.github.grishberg.profiler.comparator.FlameProfileData
+import com.github.grishberg.profiler.comparator.AggregatedFlameProfileData
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -21,7 +20,6 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
-import java.util.ArrayList
 import kotlin.math.min
 
 interface View {
@@ -135,6 +133,53 @@ class FlameChartController(
         }
     }
 
+    fun showAggregatedFlameChart(aggregatedChart: AggregatedFlameProfileData, topOffset: Double) {
+        rectangles.clear()
+        val result = aggregatedChart.toRectangles()
+        rectangles.addAll(result.rectangles)
+        val bounds =
+            Rectangle2D.Double(
+                result.minLeftOffset,
+                0.0,
+                result.maxRightOffset - result.minLeftOffset,
+                result.topOffset + 15.0
+            )
+        view?.bounds = bounds
+        view?.fitZoom(bounds)
+
+        view?.redraw()
+        view?.showDialog()
+    }
+
+    private fun AggregatedFlameProfileData.toRectangles(): Result {
+        val result = mutableListOf<FlameRectangle>()
+        for (child in children) {
+            toRectangle(child, result)
+        }
+        val topOffset = children.minOf { it.top }
+        for (child in result) {
+            child.y -= topOffset
+            child.color = methodsColor.getColorForMethod(child.name)
+        }
+        return Result(result, left, -topOffset, left + width)
+    }
+
+    private fun toRectangle(node: AggregatedFlameProfileData, fillIn: MutableList<FlameRectangle>) {
+        fillIn.add(
+            FlameRectangle(
+                node.left,
+                node.top,
+                node.width,
+                15.0,
+                node.name,
+                node.mean.toInt()
+            )
+        )
+        for (child in node.children) {
+            toRectangle(child, fillIn)
+        }
+    }
+
     private suspend fun calculateFlame(
         levelHeight: Double,
         selectedElements: List<ProfileData>,
@@ -194,26 +239,6 @@ class FlameChartController(
             return Result(result, minX, -topOffset - levelHeight, maxX)
         }
 
-        fun calculateFlameToAggregate(threadMethods: List<ProfileData>): FlameProfileData {
-            val rootSources = threadMethods.filter { it.level == 0 }
-            val left = rootSources.minByOrNull { it.globalStartTimeInMillisecond }?.globalStartTimeInMillisecond
-                ?: throw IllegalStateException("Root sources must not be empty")
-            val right = rootSources.maxByOrNull { it.globalEndTimeInMillisecond }?.globalEndTimeInMillisecond
-                ?: throw IllegalStateException("Root sources must not be empty")
-            val width = right - left
-            val fakeRoot = FlameProfileData(
-                name = "INIT",
-                count = 1,
-                left,
-                Double.MIN_VALUE,
-                width
-            )
-
-            processChildrenToAggregate(rootSources, fakeRoot)
-
-            return fakeRoot
-        }
-
         fun calculateFlame(rootSource: ProfileData): Result {
             result.clear()
             rootLevel = rootSource.level
@@ -241,19 +266,6 @@ class FlameChartController(
                 rect.color = methodsColor.getColorForMethod(rect.name)
             }
             return Result(result, minX, -topOffset, maxX)
-        }
-
-        fun calculateFlameToAggregate(rootSource: ProfileData): FlameProfileData {
-            rootLevel = rootSource.level
-            val top = calculateTopForLevel(rootSource)
-            val left = calculateStartXForTime(rootSource)
-            val right = calculateEndXForTime(rootSource)
-            val width = right - left
-
-            val root = FlameProfileData(rootSource.name, 1, left, top, width)
-            processChildrenToAggregate(listOf(rootSource), root)
-
-            return root
         }
 
         private fun processChildren(rootSources: List<ProfileData>, parentLeft: Double) {
@@ -285,38 +297,6 @@ class FlameChartController(
                 )
                 processChildren(entry.value.children, left)
                 left += entry.value.totalDuration
-            }
-        }
-
-        private fun processChildrenToAggregate(rootSources: List<ProfileData>, parent: FlameProfileData) {
-            val children = mutableMapOf<String, ComparableFlameChildHolder>()
-            var left = parent.left
-            val childrenCallCount = rootSources.sumOf { it.children.size }
-            for (root in rootSources) {
-                for (child in root.children) {
-                    val start = calculateStartXForTime(child)
-                    val childHolder = children.getOrPut(child.name) { ComparableFlameChildHolder(start) }
-                    childHolder.minLeft = min(childHolder.minLeft, start)
-                    childHolder.children.add(child)
-                }
-            }
-
-            val sorted = children.toList().sortedBy { (_, value) -> value.minLeft }.toMap()
-
-            for (entry in sorted) {
-                val child = entry.value.children.first()
-                val top = calculateTopForLevel(entry.value.children.first())
-                val width = (parent.width * entry.value.count) / childrenCallCount
-                val cmpChild = FlameProfileData(
-                    child.name,
-                    entry.value.count,
-                    left,
-                    top,
-                    width
-                )
-                parent.addChild(cmpChild)
-                processChildrenToAggregate(entry.value.children, cmpChild)
-                left += width
             }
         }
 
