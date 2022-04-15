@@ -172,7 +172,7 @@ class FlameChartController(
                 node.width,
                 15.0,
                 node.name,
-                node.mean.toInt()
+                node.mean.toInt()  // TODO: allow to show double?
             )
         )
         for (child in node.children) {

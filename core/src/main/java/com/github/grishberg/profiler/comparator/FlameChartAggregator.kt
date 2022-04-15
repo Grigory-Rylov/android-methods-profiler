@@ -153,12 +153,13 @@ class FlameChartAggregator(
     private fun aggregateImpl(charts: List<FlameProfileData>): AggregatedFlameProfileData {
         check(charts.all { it.name == "INIT" })
         val left = charts.minOf { it.left }
-        val width = charts.maxOf { it.width }
+        val width = charts.sumOf { it.width } / charts.size
 
         val result = AggregatedFlameProfileData(
             name = "INIT",
-            sumCountAggregated = -1,
-            countAggregated = -1,
+            sumCountAggregated = 1,
+            sumWidthAggregated = width,
+            countAggregated = 1,
             left,
             Double.MIN_VALUE,
             width
@@ -175,6 +176,7 @@ class FlameChartAggregator(
             val acc = AggregatedFlameProfileData(
                 name,
                 sumCountAggregated = 0,
+                sumWidthAggregated = 0.0,
                 countAggregated = 0,
                 left = Double.MAX_VALUE,
                 dataToAggregate.first().top,
@@ -184,6 +186,7 @@ class FlameChartAggregator(
                 AggregatedFlameProfileData(
                     name,
                     current.sumCountAggregated + next.count,
+                    current.sumWidthAggregated + next.width,
                     current.countAggregated + 1,
                     left = min(current.left, next.left),
                     top = current.top,
@@ -192,9 +195,9 @@ class FlameChartAggregator(
             }
         }
 
-        val parentMethodCallCount = aggregated.values.sumByDouble { data ->
+        val parentMethodTime = aggregated.values.sumByDouble { data ->
             if (data.countAggregated.toDouble() / chartLayerLists.size > INCLUDE_METHOD_THRESHOLD) {
-                data.mean
+                data.meanWidth
             } else 0.0
         }
 
@@ -203,7 +206,7 @@ class FlameChartAggregator(
         var curLeft = parent.left
         for ((name, data) in sorted) {
             if (data.countAggregated.toDouble() / chartLayerLists.size <= INCLUDE_METHOD_THRESHOLD) continue
-            val width = data.mean * parent.width / parentMethodCallCount
+            val width = data.meanWidth * parent.width / parentMethodTime
             data.left = curLeft
             data.width = width
             parent.addChild(data)
