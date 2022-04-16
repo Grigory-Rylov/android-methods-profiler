@@ -51,7 +51,6 @@ class FlameChartAggregator {
     ) {
         val children = mutableMapOf<String, ComparableFlameChildHolder>()
         var left = parent.left
-        val childrenCallCount = rootSources.sumOf { it.children.size }
         for (root in rootSources) {
             for (child in root.children) {
                 val start = child.globalStartTimeInMillisecond
@@ -65,10 +64,12 @@ class FlameChartAggregator {
 
         val sorted = children.toList().sortedBy { (_, value) -> value.minLeft }.toMap()
 
+        val childrenCallTimeout = sorted.toList().sumOf { (_, value) -> value.width }
+
         for (entry in sorted) {
             val child = entry.value.children.first()
             val top = calculateTopForLevel(entry.value.children.first())
-            val width = (parent.width * entry.value.count) / childrenCallCount
+            val width = (parent.width * entry.value.width) / childrenCallTimeout
             val cmpChild = FlameProfileData(
                 child.name,
                 entry.value.count,
