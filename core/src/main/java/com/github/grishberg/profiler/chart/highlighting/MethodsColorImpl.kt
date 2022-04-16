@@ -1,7 +1,8 @@
 package com.github.grishberg.profiler.chart.highlighting
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
-import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.comparator.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.FlameMarkType
 import com.github.grishberg.profiler.comparator.MarkType
 import java.awt.Color
 
@@ -11,6 +12,8 @@ interface MethodsColor {
     fun getColorForMethod(name: String): Color
 
     fun getColorForCompare(markType: MarkType): Color
+
+    fun getColorForMethod(method: AggregatedFlameProfileData): Color
 }
 
 class MethodsColorImpl(
@@ -33,8 +36,10 @@ class MethodsColorImpl(
 
     private val compareNoneColor = Color(0x999999)
     private val compareComparedColor = Color(0xCCCCCC)
-    private val compareOldColor = Color(255, 90, 0)
+    private val compareOldColor = Color(255, 50, 0)
+    private val compareMaybeOldColor = Color(255, 120, 0)
     private val compareNewColor = Color(0, 255, 0)
+    private val compareMaybeNewColor = Color(0, 255, 190)
     private val compareChangeOrderColor = Color(0, 120, 255)
     private val compareSuspiciousColor = Color(255, 191, 160)
 
@@ -115,6 +120,15 @@ class MethodsColorImpl(
         }
     }
 
+    override fun getColorForMethod(method: AggregatedFlameProfileData): Color {
+        return when (method.mark) {
+            FlameMarkType.NONE -> getColorForMethod(method.name)
+            FlameMarkType.NEW_NEW -> compareNewColor
+            FlameMarkType.OLD_OLD -> compareOldColor
+            FlameMarkType.MAYBE_NEW -> compareMaybeNewColor
+            FlameMarkType.MAYBE_OLD -> compareMaybeOldColor
+        }
+    }
 
     private fun isDrawMethod(name: String): Boolean {
         return name == "android.view.ViewRootImpl.performDraw" || name == "android.view.ViewRootImpl.draw"

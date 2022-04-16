@@ -133,7 +133,7 @@ class FlameChartController(
         }
     }
 
-    fun showAggregatedFlameChart(aggregatedChart: AggregatedFlameProfileData, topOffset: Double) {
+    fun showAggregatedFlameChart(aggregatedChart: AggregatedFlameProfileData) {
         rectangles.clear()
         val result = aggregatedChart.toRectangles()
         rectangles.addAll(result.rectangles)
@@ -159,7 +159,6 @@ class FlameChartController(
         val topOffset = children.minOf { it.top }
         for (child in result) {
             child.y -= topOffset
-            child.color = methodsColor.getColorForMethod(child.name)
         }
         return Result(result, left, -topOffset, left + width)
     }
@@ -172,7 +171,8 @@ class FlameChartController(
                 node.width,
                 15.0,
                 node.name,
-                node.mean.toInt()  // TODO: allow to show double?
+                node.mean.toInt(),  // TODO: allow to show double?
+                methodsColor.getColorForMethod(node),
             )
         )
         for (child in node.children) {

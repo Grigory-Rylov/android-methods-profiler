@@ -2,6 +2,9 @@ package com.github.grishberg.profiler.comparator
 
 class AggregatedFlameChartComparator {
 
+    /**
+     * Should be called from worker thread.
+     */
     fun compare(referenceNode: AggregatedFlameProfileData, testedNode: AggregatedFlameProfileData) {
         val (ref, test) = compareChildren(referenceNode.children, testedNode.children)
 

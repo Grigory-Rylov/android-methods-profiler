@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui
 
-import com.github.grishberg.profiler.chart.highlighting.ColorInfoAdapter
+import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl
 import com.github.grishberg.profiler.chart.highlighting.StandaloneAppMethodsColorRepository
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl
@@ -8,6 +8,7 @@ import com.github.grishberg.profiler.common.MainScope
 import com.github.grishberg.profiler.common.StandaloneAppUrlOpener
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.common.updates.StandaloneAppUpdatesChecker
+import com.github.grishberg.profiler.comparator.AggregatorMain
 import com.github.grishberg.profiler.ui.theme.StandaloneAppThemeController
 import java.io.File
 import kotlin.system.exitProcess
@@ -54,6 +55,16 @@ class StandaloneAppFramesManagerFramesManager(
             exitProcess(0)
         }
     }
+
+    override fun createAggregatorFrame(): AggregatorMain {
+        return AggregatorMain(
+            MethodsColorImpl(methodsColorRepository),
+            settings,
+            StandaloneAppThemeController(settings),
+            log
+        )
+    }
+
     companion object {
         @JvmField
         val APP_FILES_DIR = System.getProperty("user.home") + File.separator + DEFAULT_DIR

@@ -1,85 +1,31 @@
 package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.profiler.analyzer.TraceAnalyzer
-import com.github.grishberg.profiler.chart.flame.FlameChartController
-import com.github.grishberg.profiler.chart.flame.FlameChartDialog
-import com.github.grishberg.profiler.chart.highlighting.MethodsColor
-import com.github.grishberg.profiler.common.AppLogger
-import com.github.grishberg.profiler.common.CoroutinesDispatchers
-import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.ui.Main
-import com.github.grishberg.profiler.ui.theme.ThemeController
-import kotlinx.coroutines.*
-import java.io.File
 import kotlin.math.min
 
 private const val INCLUDE_METHOD_THRESHOLD = 0.4
 
-class FlameChartAggregator(
-    private val methodsColor: MethodsColor,
-    private val settings: SettingsFacade,
-    private val logger: AppLogger,
-    private val coroutineScope: CoroutineScope,
-    private val dispatchers: CoroutinesDispatchers,
-    private val themeController: ThemeController,
-) {
+class FlameChartAggregator {
     private val levelHeight: Double = 15.0
     private var rootLevel = 0
     private var topOffset = 0.0
 
-    fun aggregateAndCompareTraces(reference: List<File>, tested: List<File>) {
-        runBlocking {
-            val referenceData = reference.map { parseTraceAsync(it) }
-            val testedData = tested.map { parseTraceAsync(it) }
-
-            aggregateAndShow(referenceData.awaitAll(), testedData.awaitAll())
-        }
-    }
-
-    // TODO: support bg threads methods comparing
-    private fun parseTraceAsync(trace: File): Deferred<List<ProfileData>> {
-        return coroutineScope.async(dispatchers.worker) {
-            val traceContainer = TraceAnalyzer(logger).analyze(trace)
-            traceContainer.mutableData[traceContainer.mainThreadId] ?: emptyList()
-        }
-    }
-
-    private suspend fun aggregateAndShow(
+    /**
+     * Should be called from worker thread.
+     */
+    fun aggregate(
         reference: List<List<ProfileData>>,
         tested: List<List<ProfileData>>
-    ) {
-        val referenceReadyToAggregate = reference.map { calculateFlameToAggregateAsync(it) }
-        val testedReadyToAggregate = tested.map { calculateFlameToAggregateAsync(it) }
-        val referenceAggregated = aggregateAsync(referenceReadyToAggregate.awaitAll())
-        val testedAggregated = aggregateAsync(testedReadyToAggregate.awaitAll())
+    ): Pair<AggregatedFlameProfileData, AggregatedFlameProfileData> {
+        val referenceReadyToAggregate = reference.map { calculateFlameToAggregate(it) }
+        val testedReadyToAggregate = tested.map { calculateFlameToAggregate(it) }
+        val referenceAggregated = aggregate(referenceReadyToAggregate)
+        val testedAggregated = aggregate(testedReadyToAggregate)
 
-        //  TODO: compare ref and tested
-
-        val refWindowController = FlameChartController(methodsColor, settings, logger, coroutineScope, dispatchers)
-        val testedWindowController = FlameChartController(methodsColor, settings, logger, coroutineScope, dispatchers)
-        val windowRef = FlameChartDialog(refWindowController, themeController.palette, Main.DEFAULT_FOUND_INFO_MESSAGE)
-        val windowTested = FlameChartDialog(testedWindowController, themeController.palette, Main.DEFAULT_FOUND_INFO_MESSAGE)
-        refWindowController.foundInfoListener = windowRef
-        refWindowController.dialogView = windowRef
-        testedWindowController.foundInfoListener = windowTested
-        testedWindowController.dialogView = windowTested
-        refWindowController.showDialog()
-        testedWindowController.showDialog()
-
-        refWindowController.showAggregatedFlameChart(referenceAggregated.await(), topOffset)
-        testedWindowController.showAggregatedFlameChart(testedAggregated.await(), topOffset)
+        return referenceAggregated to testedAggregated
     }
 
-    private fun calculateFlameToAggregateAsync(
-        threadMethods: List<ProfileData>
-    ): Deferred<FlameProfileData> {
-        return coroutineScope.async(dispatchers.worker) {
-            return@async calculateFlameToAggregateImpl(threadMethods)
-        }
-    }
-
-    private fun calculateFlameToAggregateImpl(threadMethods: List<ProfileData>): FlameProfileData {
+    private fun calculateFlameToAggregate(threadMethods: List<ProfileData>): FlameProfileData {
         val rootSources = threadMethods.filter { it.level == 0 }
         val left = rootSources.minByOrNull { it.globalStartTimeInMillisecond }?.globalStartTimeInMillisecond
             ?: throw IllegalStateException("Root sources must not be empty")
@@ -109,7 +55,9 @@ class FlameChartAggregator(
         for (root in rootSources) {
             for (child in root.children) {
                 val start = child.globalStartTimeInMillisecond
-                val childHolder = children.getOrPut(child.name) { ComparableFlameChildHolder(start) }
+                val childHolder = children.getOrPut(child.name) {
+                    ComparableFlameChildHolder(start)
+                }
                 childHolder.minLeft = min(childHolder.minLeft, start)
                 childHolder.children.add(child)
             }
@@ -142,15 +90,7 @@ class FlameChartAggregator(
         return top
     }
 
-    private fun aggregateAsync(
-        charts: List<FlameProfileData>
-    ): Deferred<AggregatedFlameProfileData> {
-        return coroutineScope.async(dispatchers.worker) {
-            return@async aggregateImpl(charts)
-        }
-    }
-
-    private fun aggregateImpl(charts: List<FlameProfileData>): AggregatedFlameProfileData {
+    private fun aggregate(charts: List<FlameProfileData>): AggregatedFlameProfileData {
         check(charts.all { it.name == "INIT" })
         val left = charts.minOf { it.left }
         val width = charts.sumOf { it.width } / charts.size
@@ -170,9 +110,12 @@ class FlameChartAggregator(
         return result
     }
 
-    private fun processNextLayer(chartLayerLists: List<List<FlameProfileData>>, parent: AggregatedFlameProfileData) {
-        val traversed: Map<String, List<FlameProfileData>> = chartLayerLists.flatten().groupBy { it.name }
-        val aggregated: Map<String, AggregatedFlameProfileData> = traversed.mapValues { (name, dataToAggregate) ->
+    private fun processNextLayer(
+        chartLayerLists: List<List<FlameProfileData>>,
+        parent: AggregatedFlameProfileData
+    ) {
+        val traversed = chartLayerLists.flatten().groupBy { it.name }
+        val aggregated = traversed.mapValues { (name, dataToAggregate) ->
             val acc = AggregatedFlameProfileData(
                 name,
                 sumCountAggregated = 0,
@@ -205,7 +148,9 @@ class FlameChartAggregator(
 
         var curLeft = parent.left
         for ((name, data) in sorted) {
-            if (data.countAggregated.toDouble() / chartLayerLists.size <= INCLUDE_METHOD_THRESHOLD) continue
+            if (data.countAggregated.toDouble() / chartLayerLists.size <= INCLUDE_METHOD_THRESHOLD) {
+                continue
+            }
             val width = data.meanWidth * parent.width / parentMethodTime
             data.left = curLeft
             data.width = width

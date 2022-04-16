@@ -1,24 +1,24 @@
 package com.github.grishberg.profiler;
 
 import com.github.grishberg.profiler.chart.highlighting.ColorInfoAdapter;
-import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
 import com.github.grishberg.profiler.chart.highlighting.StandaloneAppMethodsColorRepository;
-import com.github.grishberg.profiler.common.*;
+import com.github.grishberg.profiler.common.AppLogger;
+import com.github.grishberg.profiler.common.SimpleConsoleLogger;
+import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
+import com.github.grishberg.profiler.comparator.AggregatorMain;
 import com.github.grishberg.profiler.comparator.ComparableProfileData;
-import com.github.grishberg.profiler.comparator.FlameChartAggregator;
 import com.github.grishberg.profiler.comparator.TraceComparator;
 import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import com.github.grishberg.profiler.ui.StandaloneAppDialogFactory;
 import com.github.grishberg.profiler.ui.StandaloneAppFramesManagerFramesManager;
 import com.github.grishberg.profiler.ui.ViewFactory;
-import com.github.grishberg.profiler.ui.theme.StandaloneAppThemeController;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,15 +42,6 @@ public class Launcher {
             );
 
     private static final TraceComparator sTraceComparator = new TraceComparator(log);
-
-    private static final FlameChartAggregator sFlameChartAggragator = new FlameChartAggregator(
-            new MethodsColorImpl(methodsColorRepository),
-            settings,
-            log,
-            new MainScope(),
-            new CoroutinesDispatchersImpl(),
-            new StandaloneAppThemeController(settings)
-    );
 
     static {
         initDefaultSettings(settings, log);
@@ -82,7 +73,8 @@ public class Launcher {
                 tested.add(new File(args[index]));
                 index++;
             }
-            sFlameChartAggragator.aggregateAndCompareTraces(reference, tested);
+            AggregatorMain app = sFramesManager.createAggregatorFrame();
+            app.aggregateAndCompareTraces(reference, tested);
         } else if (args.length == 3 && args[0].equals("--cmp")) {
             File reference = new File(args[1]);
             File tested = new File(args[2]);
