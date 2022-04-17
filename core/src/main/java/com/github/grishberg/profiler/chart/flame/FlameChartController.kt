@@ -20,6 +20,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import javax.swing.JFrame
 import kotlin.math.min
 
 interface View {
@@ -146,6 +147,7 @@ class FlameChartController(
             )
         view?.bounds = bounds
         view?.fitZoom(bounds)
+        (dialogView as? JFrame)?.title = aggregatedChart.name
 
         view?.redraw()
         view?.showDialog()

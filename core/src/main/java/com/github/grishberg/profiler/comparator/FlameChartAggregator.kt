@@ -15,10 +15,15 @@ class FlameChartAggregator {
     /**
      * Should be called from worker thread.
      */
-    fun aggregate(threadMethods: List<List<ProfileData>>): AggregatedFlameProfileData {
-        val threadMethodsReadyToAggregate = threadMethods.map { calculateFlameToAggregate(it) }
+    fun aggregate(
+        threadMethods: List<List<ProfileData>>,
+        threadName: String
+    ): AggregatedFlameProfileData {
+        val threadMethodsReadyToAggregate = threadMethods.map {
+            calculateFlameToAggregate(it, threadName)
+        }
 
-        return aggregateFlameCharts(threadMethodsReadyToAggregate)
+        return aggregateFlameCharts(threadMethodsReadyToAggregate, threadName)
     }
 
     fun aggregateBgThreads(
@@ -31,18 +36,18 @@ class FlameChartAggregator {
 
         for (name in names) {
             val flameChartsRef = getTracesThreadMethods(reference, name).map {
-                calculateFlameToAggregate(it)
+                calculateFlameToAggregate(it, "reference: $name")
             }
-            val aggregatedRef = aggregateFlameCharts(flameChartsRef)
+            val aggregatedRef = aggregateFlameCharts(flameChartsRef, "reference: $name")
 
             if (aggregatedRef.width < THREAD_METHODS_TIMEOUT_THRESHOLD_MS) {
                 continue
             }
 
             val flameChartsTest = getTracesThreadMethods(tested, name).map {
-                calculateFlameToAggregate(it)
+                calculateFlameToAggregate(it, "tested: $name")
             }
-            val aggregatedTest = aggregateFlameCharts(flameChartsTest)
+            val aggregatedTest = aggregateFlameCharts(flameChartsTest, "tested: $name")
 
             if (aggregatedTest.width < THREAD_METHODS_TIMEOUT_THRESHOLD_MS) {
                 continue
@@ -68,7 +73,10 @@ class FlameChartAggregator {
         return result
     }
 
-    fun aggregateBgThreadsInOne(traces: List<AnalyzerResult>): AggregatedFlameProfileData {
+    fun aggregateBgThreadsInOne(
+        traces: List<AnalyzerResult>,
+        threadName: String
+    ): AggregatedFlameProfileData {
         val bgThreadsInOne = traces.map { trace ->
             val bgMethods = mutableListOf<ProfileData>()
             for (thread in trace.threads) {
@@ -81,20 +89,26 @@ class FlameChartAggregator {
         }
 
         val bgThreadsInOneReadyToAggregate = bgThreadsInOne.map {
-            calculateFlameToAggregate(it)
+            calculateFlameToAggregate(it, threadName)
         }
 
-        return aggregateFlameCharts(bgThreadsInOneReadyToAggregate)
+        return aggregateFlameCharts(bgThreadsInOneReadyToAggregate, threadName)
     }
 
-    private fun calculateFlameToAggregate(threadMethods: List<ProfileData>): FlameProfileData {
+    private fun calculateFlameToAggregate(
+        threadMethods: List<ProfileData>,
+        threadName: String
+    ): FlameProfileData {
         val rootSources = threadMethods.filter { it.level == 0 }
+        if (rootSources.isEmpty()) {
+            return FlameProfileData(threadName, 1, 0.0, Double.MIN_VALUE, 0.0)
+        }
         val left = rootSources.minOf { it.globalStartTimeInMillisecond }
         val width = rootSources.sumOf {
             it.globalEndTimeInMillisecond - it.globalStartTimeInMillisecond
         }
         val fakeRoot = FlameProfileData(
-            name = "INIT",
+            name = threadName,
             count = 1,
             left,
             Double.MIN_VALUE,
@@ -152,13 +166,15 @@ class FlameChartAggregator {
         return top
     }
 
-    private fun aggregateFlameCharts(charts: List<FlameProfileData>): AggregatedFlameProfileData {
-        check(charts.all { it.name == "INIT" })
+    private fun aggregateFlameCharts(
+        charts: List<FlameProfileData>,
+        threadName: String
+    ): AggregatedFlameProfileData {
         val left = charts.minOf { it.left }
         val width = charts.sumOf { it.width } / charts.size
 
         val result = AggregatedFlameProfileData(
-            name = "INIT",
+            name = threadName,
             sumCountAggregated = 1,
             sumWidthAggregated = width,
             countAggregated = 1,

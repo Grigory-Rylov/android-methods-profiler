@@ -71,10 +71,10 @@ class AggregatorMain(
             val testedTraces = tested.map { parseTraceAsync(it) }
 
             val aggregatedRef = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
-                aggregator.aggregate(referenceTraces.awaitAll().mainThreadData())
+                aggregator.aggregate(referenceTraces.awaitAll().mainThreadData(), "reference: main")
             }
             val aggregatedTest = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
-                aggregator.aggregate(testedTraces.awaitAll().mainThreadData())
+                aggregator.aggregate(testedTraces.awaitAll().mainThreadData(), "tested: main")
             }
 
             withContext(coroutineScope.coroutineContext + dispatchers.worker) {
@@ -93,6 +93,16 @@ class AggregatorMain(
                 for ((refThread, testThread) in threadsToCompare) {
                     compareAndShowAggregatedFlameCharts(refThread, testThread)
                 }
+
+                val refBgThreadsInOne = aggregator.aggregateBgThreadsInOne(
+                    referenceTraces.awaitAll(),
+                    "reference: all bg threads in one"
+                )
+                val testBgThreadsInOne = aggregator.aggregateBgThreadsInOne(
+                    testedTraces.awaitAll(),
+                    "tested: all bg threads in one"
+                )
+                compareAndShowAggregatedFlameCharts(refBgThreadsInOne, testBgThreadsInOne)
             }
         }
     }

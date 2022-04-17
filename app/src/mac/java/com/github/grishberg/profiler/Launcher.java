@@ -74,7 +74,7 @@ public class Launcher {
                 index++;
             }
             AggregatorMain app = sFramesManager.createAggregatorFrame();
-            app.aggregateAndCompareTraces(reference, tested);
+            app.aggregateAndCompareTraces(reference, tested, true);
         } else if (args.length == 3 && args[0].equals("--cmp")) {
             File reference = new File(args[1]);
             File tested = new File(args[2]);
