@@ -5,6 +5,7 @@ import com.github.grishberg.android.profiler.core.ProfileData
 import kotlin.math.min
 
 private const val INCLUDE_METHOD_THRESHOLD = 0.4
+private const val THREAD_METHODS_TIMEOUT_THRESHOLD_MS = 50
 
 class FlameChartAggregator {
     private val levelHeight: Double = 15.0
@@ -20,6 +21,53 @@ class FlameChartAggregator {
         return aggregateFlameCharts(threadMethodsReadyToAggregate)
     }
 
+    fun aggregateBgThreads(
+        reference: List<AnalyzerResult>,
+        tested: List<AnalyzerResult>
+    ): List<Pair<AggregatedFlameProfileData, AggregatedFlameProfileData>> {
+        val result = mutableListOf<Pair<AggregatedFlameProfileData, AggregatedFlameProfileData>>()
+        // Suppose traces has same threads.
+        val names = reference.first().threads.map { it.name }.toSet()
+
+        for (name in names) {
+            val flameChartsRef = getTracesThreadMethods(reference, name).map {
+                calculateFlameToAggregate(it)
+            }
+            val aggregatedRef = aggregateFlameCharts(flameChartsRef)
+
+            if (aggregatedRef.width < THREAD_METHODS_TIMEOUT_THRESHOLD_MS) {
+                continue
+            }
+
+            val flameChartsTest = getTracesThreadMethods(tested, name).map {
+                calculateFlameToAggregate(it)
+            }
+            val aggregatedTest = aggregateFlameCharts(flameChartsTest)
+
+            if (aggregatedTest.width < THREAD_METHODS_TIMEOUT_THRESHOLD_MS) {
+                continue
+            }
+
+            result.add(aggregatedRef to aggregatedTest)
+        }
+
+        return result
+    }
+
+    private fun getTracesThreadMethods(
+        traces: List<AnalyzerResult>,
+        threadName: String
+    ): List<List<ProfileData>> {
+        val result = mutableListOf<List<ProfileData>>()
+        for (trace in traces) {
+            val ids = trace.threads.findAllOf({ it.name == threadName }) { it.threadId }
+            val mergedThreadMethods = ids.map { trace.data[it] ?: emptyList() }.flatten()
+
+            result.add(mergedThreadMethods)
+        }
+        return result
+    }
+
     fun aggregateBgThreadsInOne(traces: List<AnalyzerResult>): AggregatedFlameProfileData {
         val bgThreadsInOne = traces.map { trace ->
             val bgMethods = mutableListOf<ProfileData>()
@@ -33,40 +81,18 @@ class FlameChartAggregator {
         }
 
         val bgThreadsInOneReadyToAggregate = bgThreadsInOne.map {
-            calculateBgThreadsInOneFlameToAggregate(it)
+            calculateFlameToAggregate(it)
         }
 
         return aggregateFlameCharts(bgThreadsInOneReadyToAggregate)
     }
 
-    private fun calculateBgThreadsInOneFlameToAggregate(
-        bgThreadsInOne: List<ProfileData>
-    ): FlameProfileData {
-        val rootSources = bgThreadsInOne.filter { it.level == 0 }
+    private fun calculateFlameToAggregate(threadMethods: List<ProfileData>): FlameProfileData {
+        val rootSources = threadMethods.filter { it.level == 0 }
         val left = rootSources.minOf { it.globalStartTimeInMillisecond }
         val width = rootSources.sumOf {
             it.globalEndTimeInMillisecond - it.globalStartTimeInMillisecond
         }
-        val fakeRoot = FlameProfileData(
-            name = "INIT",
-            count = 1,
-            left,
-            Double.MIN_VALUE,
-            width
-        )
-
-        processChildrenToAggregate(rootSources, fakeRoot)
-
-        return fakeRoot
-    }
-
-    private fun calculateFlameToAggregate(threadMethods: List<ProfileData>): FlameProfileData {
-        val rootSources = threadMethods.filter { it.level == 0 }
-        val left = rootSources.minByOrNull { it.globalStartTimeInMillisecond }?.globalStartTimeInMillisecond
-            ?: throw IllegalStateException("Root sources must not be empty")
-        val right = rootSources.maxByOrNull { it.globalEndTimeInMillisecond }?.globalEndTimeInMillisecond
-            ?: throw IllegalStateException("Root sources must not be empty")
-        val width = right - left
         val fakeRoot = FlameProfileData(
             name = "INIT",
             count = 1,
