@@ -65,10 +65,12 @@ class AggregatorMain(
             val referenceData = reference.map { parseTraceAsync(it) }
             val testedData = tested.map { parseTraceAsync(it) }
 
-            val (aggregatedRef, aggregatedTest) =
-                withContext(coroutineScope.coroutineContext + dispatchers.worker) {
-                    aggregator.aggregate(referenceData.awaitAll(), testedData.awaitAll())
-                }
+            val aggregatedRef = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
+                aggregator.aggregate(referenceData.awaitAll())
+            }
+            val aggregatedTest = withContext(coroutineScope.coroutineContext + dispatchers.worker) {
+                aggregator.aggregate(testedData.awaitAll())
+            }
 
             withContext(coroutineScope.coroutineContext + dispatchers.worker) {
                 comparator.compare(aggregatedRef, aggregatedTest)

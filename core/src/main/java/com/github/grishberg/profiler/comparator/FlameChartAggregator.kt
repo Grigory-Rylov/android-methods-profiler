@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.comparator
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
 import kotlin.math.min
 
@@ -13,16 +14,50 @@ class FlameChartAggregator {
     /**
      * Should be called from worker thread.
      */
-    fun aggregate(
-        reference: List<List<ProfileData>>,
-        tested: List<List<ProfileData>>
-    ): Pair<AggregatedFlameProfileData, AggregatedFlameProfileData> {
-        val referenceReadyToAggregate = reference.map { calculateFlameToAggregate(it) }
-        val testedReadyToAggregate = tested.map { calculateFlameToAggregate(it) }
-        val referenceAggregated = aggregate(referenceReadyToAggregate)
-        val testedAggregated = aggregate(testedReadyToAggregate)
+    fun aggregate(threadMethods: List<List<ProfileData>>): AggregatedFlameProfileData {
+        val threadMethodsReadyToAggregate = threadMethods.map { calculateFlameToAggregate(it) }
 
-        return referenceAggregated to testedAggregated
+        return aggregateFlameCharts(threadMethodsReadyToAggregate)
+    }
+
+    fun aggregateBgThreadsInOne(traces: List<AnalyzerResult>): AggregatedFlameProfileData {
+        val bgThreadsInOne = traces.map { trace ->
+            val bgMethods = mutableListOf<ProfileData>()
+            for (thread in trace.threads) {
+                if (thread.threadId == trace.mainThreadId) {
+                    continue
+                }
+                bgMethods.addAll(trace.data[thread.threadId]!!)
+            }
+            bgMethods
+        }
+
+        val bgThreadsInOneReadyToAggregate = bgThreadsInOne.map {
+            calculateBgThreadsInOneFlameToAggregate(it)
+        }
+
+        return aggregateFlameCharts(bgThreadsInOneReadyToAggregate)
+    }
+
+    private fun calculateBgThreadsInOneFlameToAggregate(
+        bgThreadsInOne: List<ProfileData>
+    ): FlameProfileData {
+        val rootSources = bgThreadsInOne.filter { it.level == 0 }
+        val left = rootSources.minOf { it.globalStartTimeInMillisecond }
+        val width = rootSources.sumOf {
+            it.globalEndTimeInMillisecond - it.globalStartTimeInMillisecond
+        }
+        val fakeRoot = FlameProfileData(
+            name = "INIT",
+            count = 1,
+            left,
+            Double.MIN_VALUE,
+            width
+        )
+
+        processChildrenToAggregate(rootSources, fakeRoot)
+
+        return fakeRoot
     }
 
     private fun calculateFlameToAggregate(threadMethods: List<ProfileData>): FlameProfileData {
@@ -91,7 +126,7 @@ class FlameChartAggregator {
         return top
     }
 
-    private fun aggregate(charts: List<FlameProfileData>): AggregatedFlameProfileData {
+    private fun aggregateFlameCharts(charts: List<FlameProfileData>): AggregatedFlameProfileData {
         check(charts.all { it.name == "INIT" })
         val left = charts.minOf { it.left }
         val width = charts.sumOf { it.width } / charts.size
