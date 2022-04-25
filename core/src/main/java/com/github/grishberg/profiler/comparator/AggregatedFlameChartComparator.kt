@@ -1,5 +1,8 @@
 package com.github.grishberg.profiler.comparator
 
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.FlameMarkType
+
 class AggregatedFlameChartComparator {
 
     /**

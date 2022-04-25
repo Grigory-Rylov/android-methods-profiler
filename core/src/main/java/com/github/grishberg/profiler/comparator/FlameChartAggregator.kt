@@ -2,6 +2,9 @@ package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.ComparableFlameChildHolder
+import com.github.grishberg.profiler.comparator.model.FlameProfileData
 import kotlin.math.min
 
 private const val INCLUDE_METHOD_THRESHOLD = 0.4

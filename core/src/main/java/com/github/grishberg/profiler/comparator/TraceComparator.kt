@@ -3,6 +3,10 @@ package com.github.grishberg.profiler.comparator
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.TraceContainer
+import com.github.grishberg.profiler.comparator.model.ComparableProfileData
+import com.github.grishberg.profiler.comparator.model.CompareID
+import com.github.grishberg.profiler.comparator.model.MarkType
+import com.github.grishberg.profiler.comparator.model.toComparable
 
 class TraceComparator(
     private val log: AppLogger

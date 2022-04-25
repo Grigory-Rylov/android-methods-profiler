@@ -13,7 +13,7 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
-import com.github.grishberg.profiler.comparator.ComparableProfileData;
+import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.ui.BookMarkInfo;
 import com.github.grishberg.profiler.ui.SimpleComponentListener;
 import com.github.grishberg.profiler.ui.TimeFormatter;

@@ -8,7 +8,7 @@ import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.comparator.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async

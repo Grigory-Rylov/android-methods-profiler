@@ -1,9 +1,9 @@
 package com.github.grishberg.profiler.chart.highlighting
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
-import com.github.grishberg.profiler.comparator.AggregatedFlameProfileData
-import com.github.grishberg.profiler.comparator.FlameMarkType
-import com.github.grishberg.profiler.comparator.MarkType
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.FlameMarkType
+import com.github.grishberg.profiler.comparator.model.MarkType
 import java.awt.Color
 
 interface MethodsColor {
