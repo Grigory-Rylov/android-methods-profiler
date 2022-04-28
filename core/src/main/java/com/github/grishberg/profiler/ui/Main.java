@@ -1120,6 +1120,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         menu.show(chart, clickedPoint.x, clickedPoint.y);
     }
 
+    @Nullable
+    public TraceContainer getResultContainer() {
+        return resultContainer;
+    }
+
     private void findInMethod() {
         String textToFind = findClassText.getText();
         if (textToFind != null && textToFind.length() > 0) {

@@ -94,13 +94,27 @@ class TraceComparatorApp(
     private inner class ReferenceComparatorUIListener : ComparatorUIListener {
 
         override fun onCompareMenuItemClick(profileData: ProfileData) {
-            val tested = selectedTestedFrame
-            if (tested != null) {
+            selectedTestedFrame?.let { tested ->
                 compare(profileData, tested)
                 return
             }
 
-            // TODO: try to find tested automatically
+            val testedWindowSnapshot = testedWindow
+            if (testedWindowSnapshot != null) {
+                val threadId = testedWindowSnapshot.resultContainer?.result?.threads?.first() ?: return
+                val testedTrace = testedWindowSnapshot.resultContainer?.result?.data?.get(threadId) ?: return
+                val tested = TraceProfileDataFinder(testedTrace).findToCompare(profileData)
+
+                if (tested.isEmpty()) {
+                    logger.d("sorry, ${profileData.name} not found on tested trace :(")
+                } else if (tested.size > 1) {
+                    logger.d("found ${tested.size} same calls on tested trace," +
+                            " select one you want to compare with manually")
+                } else {
+                    compare(profileData, tested.first())
+                }
+                return
+            }
         }
 
         override fun onFrameSelected(frame: ProfileData) {
