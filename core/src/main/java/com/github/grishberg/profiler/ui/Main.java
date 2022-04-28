@@ -34,6 +34,7 @@ import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel;
+import com.github.grishberg.profiler.comparator.ComparatorUIListener;
 import com.github.grishberg.profiler.comparator.OpenTraceToCompareCallback;
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
@@ -149,6 +150,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     @Nullable
     private TraceContainer resultContainer;
 
+    @Nullable
+    private final ComparatorUIListener comparatorUIListener;
+
     public Main(StartMode startMode,
                 SettingsFacade settings,
                 AppLogger log,
@@ -160,7 +164,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 AppIconDelegate appIconDelegate,
                 MethodsColorRepository methodsColorRepository,
                 String appFilesDir,
-                boolean allowModalDialogs) {
+                boolean allowModalDialogs,
+                @Nullable ComparatorUIListener comparatorUIListener) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
@@ -168,6 +173,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         this.urlOpener = urlOpener;
         this.appFilesDir = appFilesDir;
         this.allowModalDialogs = allowModalDialogs;
+        this.comparatorUIListener = comparatorUIListener;
         themeController.applyTheme();
 
         String title = viewFactory.getTitle();
@@ -814,6 +820,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
         if (selectedData != null) {
             showMethodInfoInTopPanel(selectedData);
+            if (comparatorUIListener != null) {
+                comparatorUIListener.onFrameSelected(selectedData);
+            }
             return selectedData;
         }
         return null;
@@ -1019,6 +1028,22 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             return;
         }
         chart.updateCompare(rootCompareData, currentThread.getThreadId());
+    }
+
+    public boolean isCompareMenuItemEnabled() {
+        return comparatorUIListener != null;
+    }
+
+    public void onCompareMenuItemClicked() {
+        if (comparatorUIListener != null) {
+            ProfileData selected = chart.getSelected();
+            assert selected != null;
+            comparatorUIListener.onCompareMenuItemClick(selected);
+        }
+    }
+
+    public void fitSelectedElement() {
+        chart.fitSelectedElement();
     }
 
     private void showProgressDialog(File file) {

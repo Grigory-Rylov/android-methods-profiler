@@ -46,7 +46,8 @@ class StandaloneAppFramesManagerFramesManager(
             iconDelegate,
             methodsColorRepository,
             APP_FILES_DIR,
-            true
+            true,
+            null,
         )
     }
 
@@ -67,7 +68,15 @@ class StandaloneAppFramesManagerFramesManager(
     }
 
     override fun createComparatorFrame(): TraceComparatorApp {
-        return TraceComparatorApp(this, log)
+        return TraceComparatorApp(settings, log, this,
+            versionsChecker,
+            StandaloneAppThemeController(settings),
+            dialogFactory,
+            urlOpener,
+            iconDelegate,
+            methodsColorRepository,
+            APP_FILES_DIR,
+        )
     }
 
     companion object {

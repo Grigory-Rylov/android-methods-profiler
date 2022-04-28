@@ -206,6 +206,7 @@ class TraceComparator(
     }
 
     private fun isSystemMethod(name: String): Boolean {
-        return name.startsWith("android.") || name.startsWith("com.android.") || name.startsWith("java.")
+        return name.startsWith("android.os") || name.startsWith("android.app") ||
+                name.startsWith("com.android.internal.os") || name == "java.lang.reflect.Method.invoke"
     }
 }

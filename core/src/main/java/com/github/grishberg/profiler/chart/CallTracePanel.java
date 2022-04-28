@@ -372,6 +372,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         Map<String, ProfileRectangle> objectsForThread = new HashMap<>();
         List<ProfileRectangle> rectangles = objects.get(threadId);
         for (ProfileRectangle rectangle : rectangles) {
+            rectangle.setColor(methodsColor.getColorForMethod(rectangle));
             objectsForThread.put(rectangle.toString(), rectangle);
         }
         updateCompare(root, objectsForThread);

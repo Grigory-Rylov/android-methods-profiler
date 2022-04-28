@@ -34,12 +34,16 @@ class MethodsPopupMenu(
     private val addBookmark = JMenuItem("Add bookmark").apply {
         accelerator = createAccelerator('M')
     }
+    private val compareTracesItem = JMenuItem("Compare")
 
     init {
         add(copyNameMenuItem)
         add(copyStackTraceMenuItem)
         add(addBookmark)
         add(flameChartMenuItem)
+        if (main.isCompareMenuItemEnabled) {
+            add(compareTracesItem)
+        }
 
         addBookmark.addActionListener {
             main.addBookmark()
@@ -61,6 +65,10 @@ class MethodsPopupMenu(
                 val clipboard = Toolkit.getDefaultToolkit().systemClipboard
                 clipboard.setContents(stringSelection, null)
             }
+        }
+
+        compareTracesItem.addActionListener {
+            main.onCompareMenuItemClicked()
         }
 
         val stageForMethod = stagesFacade.stageForMethod(selectedMethod)
