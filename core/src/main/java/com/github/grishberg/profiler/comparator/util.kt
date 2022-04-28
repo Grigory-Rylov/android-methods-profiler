@@ -1,5 +1,7 @@
 package com.github.grishberg.profiler.comparator
 
+import com.github.grishberg.profiler.comparator.model.ComparableProfileData
+
 fun <K, V> List<Pair<K, List<V>>>.toMapMergeOnConflict(): Map<K, List<V>> {
     val result = mutableMapOf<K, MutableList<V>>()
     for ((key, value) in this) {
@@ -17,3 +19,10 @@ fun <T, R> List<T>.findAllOf(comparator: (T) -> Boolean, of: (T) -> R): List<R> 
     }
     return result
 }
+
+fun MutableList<ComparableProfileData>.sortedForCompare() = sortedWith(
+    compareBy(
+        { it.profileData.level },
+        { it.profileData.globalStartTimeInMillisecond }
+    )
+)

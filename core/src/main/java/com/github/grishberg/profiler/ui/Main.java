@@ -1012,6 +1012,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.highlightCompare(rootCompareData, resultContainer.getResult().getMainThreadId());
     }
 
+    public void updateCompareResult(ComparableProfileData rootCompareData) {
+        assert resultContainer != null;
+        ThreadItem currentThread = pluginsFacade.getCurrentThread();
+        if (currentThread == null) {
+            return;
+        }
+        chart.updateCompare(rootCompareData, currentThread.getThreadId());
+    }
+
     private void showProgressDialog(File file) {
         loadingDialog.setLocationRelativeTo(frame);
         loadingDialog.setVisible(true);

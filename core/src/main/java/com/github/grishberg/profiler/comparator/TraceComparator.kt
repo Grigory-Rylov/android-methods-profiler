@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.comparator
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.TraceContainer
@@ -17,7 +18,10 @@ class TraceComparator(
      * 1. Из распаршенных трейсов получаю дерево, удобное для сравнения
      * 2. Сравниваю поддеревья с корнем в несистемном методе (двигаюсь по дереву сверху внизу, слево направо)
      */
-    fun compare(traceReference: TraceContainer, traceTested: TraceContainer): Pair<ComparableProfileData, ComparableProfileData> {
+    fun compare(
+        traceReference: TraceContainer,
+        traceTested: TraceContainer
+    ): Pair<ComparableProfileData, ComparableProfileData> {
         val referenceResult = traceReference.result
         val testedResult = traceTested.result
         val root = ProfileDataImpl("INIT", level = -1, 0.0, 0.0)
@@ -39,18 +43,44 @@ class TraceComparator(
             }
         }
 
-        referenceProfileDataList.sortedWith(compareBy({ it.profileData.level }, { it.profileData.threadStartTimeInMillisecond }))
-        testedProfileDataList.sortedWith(compareBy({ it.profileData.level }, { it.profileData.threadStartTimeInMillisecond }))
+        referenceProfileDataList.sortedForCompare()
+        testedProfileDataList.sortedForCompare()
 
+        compare(referenceProfileDataList, testedProfileDataList)
+
+        return refRootNode to testRootNode
+    }
+
+    fun compare(
+        referenceNode: ProfileData,
+        testedNode: ProfileData
+    ) : Pair<ComparableProfileData, ComparableProfileData> {
+        val refProfileData = mutableListOf<ComparableProfileData>()
+        val testProfileData = mutableListOf<ComparableProfileData>()
+        val refRootNode = referenceNode.toComparable(fillInto = refProfileData)
+        val testRootNode = testedNode.toComparable(fillInto = testProfileData)
+
+        refProfileData.sortedForCompare()
+        testProfileData.sortedForCompare()
+
+        compare(refProfileData, testProfileData)
+
+        return refRootNode to testRootNode
+    }
+
+    private fun compare(
+        referenceProfileData: List<ComparableProfileData>,
+        testedProfileData: List<ComparableProfileData>
+    ) {
         val reference = mutableMapOf<CompareID, MutableList<ComparableProfileData>>()
         val tested = mutableMapOf<CompareID, MutableList<ComparableProfileData>>()
 
-        for (profileData in referenceProfileDataList) {
+        for (profileData in referenceProfileData) {
             reference.compute(profileData.id) { _, list ->
                 (list ?: mutableListOf()).apply { add(profileData) }
             }
         }
-        for (profileData in testedProfileDataList) {
+        for (profileData in testedProfileData) {
             tested.compute(profileData.id) { _, list ->
                 (list ?: mutableListOf()).apply { add(profileData) }
             }
@@ -94,8 +124,6 @@ class TraceComparator(
                 }
             }
         }
-
-        return refRootNode to testRootNode
     }
 
     private fun compareTrees(referenceNode: ComparableProfileData, testedNode: ComparableProfileData) {

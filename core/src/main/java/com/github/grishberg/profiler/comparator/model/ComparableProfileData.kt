@@ -23,11 +23,11 @@ class ComparableProfileData(
 }
 
 fun ProfileData.toComparable(
-    parent: ComparableProfileData?,
-    fillInto: MutableList<ComparableProfileData>
+    parent: ComparableProfileData? = null,
+    fillInto: MutableList<ComparableProfileData>? = null
 ): ComparableProfileData {
     val root = ComparableProfileData(CompareID(name, parent?.id), this)
-    fillInto.add(root)
+    fillInto?.add(root)
     children.forEach {
         root.addChild(it.toComparable(root, fillInto))
     }

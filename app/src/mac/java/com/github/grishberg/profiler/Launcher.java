@@ -9,6 +9,7 @@ import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.comparator.AggregatorMain;
 import com.github.grishberg.profiler.comparator.TraceComparator;
+import com.github.grishberg.profiler.comparator.TraceComparatorApp;
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
@@ -75,31 +76,18 @@ public class Launcher {
             }
             AggregatorMain app = sFramesManager.createAggregatorFrame();
             app.aggregateAndCompareTraces(reference, tested, true);
-        } else if (args.length == 3 && args[0].equals("--cmp")) {
-            File reference = new File(args[1]);
-            File tested = new File(args[2]);
-            Main windowRef = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
-            Main windowTest = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
-            List<TraceContainer> analyzerResults = new ArrayList<>();
+        } else if (args.length > 0 && args[0].equals("--cmp")) {
+            TraceComparatorApp app = sFramesManager.createComparatorFrame();
+            String reference = null;
+            String tested = null;
+            if (args.length > 1) {
+                reference = args[1];
+            }
+            if (args.length > 2) {
+                tested = args[2];
+            }
             sMainWidowStarted = true;
-            windowRef.openCompareTraceFile(reference, (traceContainer) -> {
-                analyzerResults.add(traceContainer);
-                if (analyzerResults.size() == 2) {
-                    Pair<ComparableProfileData, ComparableProfileData> compareResult =
-                            sTraceComparator.compare(traceContainer, analyzerResults.get(0));
-                    windowRef.highlightCompareResult(compareResult.getFirst());
-                    windowTest.highlightCompareResult(compareResult.getSecond());
-                }
-            });
-            windowTest.openCompareTraceFile(tested, (traceContainer) -> {
-                analyzerResults.add(traceContainer);
-                if (analyzerResults.size() == 2) {
-                    Pair<ComparableProfileData, ComparableProfileData> compareResult =
-                            sTraceComparator.compare(analyzerResults.get(0), traceContainer);
-                    windowRef.highlightCompareResult(compareResult.getFirst());
-                    windowTest.highlightCompareResult(compareResult.getSecond());
-                }
-            });
+            app.createFrames(reference, tested);
         } else {
             Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
             sMainWidowStarted = true;

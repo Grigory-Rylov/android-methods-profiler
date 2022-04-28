@@ -368,6 +368,25 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         repaint();
     }
 
+    public void updateCompare(ComparableProfileData root, int threadId) {
+        Map<String, ProfileRectangle> objectsForThread = new HashMap<>();
+        List<ProfileRectangle> rectangles = objects.get(threadId);
+        for (ProfileRectangle rectangle : rectangles) {
+            objectsForThread.put(rectangle.toString(), rectangle);
+        }
+        updateCompare(root, objectsForThread);
+        repaint();
+    }
+
+    private void updateCompare(ComparableProfileData root, Map<String, ProfileRectangle> objectsForThread) {
+        ProfileRectangle rect = createProfileRectangle(root.getProfileData());
+        ProfileRectangle currentRect = objectsForThread.get(rect.toString());
+        currentRect.setColor(methodsColor.getColorForCompare(root.getMark()));
+        for (ComparableProfileData child : root.getChildren()) {
+            updateCompare(child, objectsForThread);
+        }
+    }
+
     private void rebuildDataWithCompare(ComparableProfileData root, List<ProfileRectangle> objectsForThread) {
         if (root.getProfileData().getLevel() != -1) {
             ProfileRectangle rect = createProfileRectangle(root.getProfileData());

@@ -9,6 +9,7 @@ import com.github.grishberg.profiler.common.StandaloneAppUrlOpener
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.common.updates.StandaloneAppUpdatesChecker
 import com.github.grishberg.profiler.comparator.AggregatorMain
+import com.github.grishberg.profiler.comparator.TraceComparatorApp
 import com.github.grishberg.profiler.ui.theme.StandaloneAppThemeController
 import java.io.File
 import kotlin.system.exitProcess
@@ -63,6 +64,10 @@ class StandaloneAppFramesManagerFramesManager(
             StandaloneAppThemeController(settings),
             log
         )
+    }
+
+    override fun createComparatorFrame(): TraceComparatorApp {
+        return TraceComparatorApp(this, log)
     }
 
     companion object {
