@@ -105,13 +105,17 @@ class TraceComparatorApp(
         val traceToFindIn = trace.result.data[threadId] ?: return
         val foundNodes = TraceProfileDataFinder(traceToFindIn).findToCompare(node)
 
-        if (foundNodes.isEmpty()) {
-            logger.d("sorry, ${node.name} not found on tested trace :(")
+        val error = if (foundNodes.isEmpty()) {
+            "${node.name} not found on this trace. " +
+                    "Try select it manually and repeat compare"
         } else if (foundNodes.size > 1) {
-            logger.d(
-                "found ${foundNodes.size} same calls on tested trace," +
-                        " select one you want to compare with manually"
-            )
+            "Found ${foundNodes.size} same calls on this trace. " +
+                    "Select one you want to compare with manually and repeat compare"
+        } else ""
+
+        if (error.isNotEmpty()) {
+            val window = if (findMode == FindMode.FIND_TESTED) testedWindow else referenceWindow
+            window?.showErrorDialog("Find ${node.name}", error)
         } else {
             val reference = if (findMode == FindMode.FIND_TESTED) node else foundNodes.first()
             val tested = if (findMode == FindMode.FIND_REFERENCE) node else foundNodes.first()

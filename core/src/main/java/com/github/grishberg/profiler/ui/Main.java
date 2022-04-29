@@ -1062,6 +1062,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         loadingDialog.setVisible(false);
     }
 
+    public void showErrorDialog(String title, String errorMessage) {
+        JOptionPane.showMessageDialog(
+                frame,
+                errorMessage,
+                title,
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+
     @Override
     public void showReportsDialog() {
         hoverInfoPanel.hidePanel();
