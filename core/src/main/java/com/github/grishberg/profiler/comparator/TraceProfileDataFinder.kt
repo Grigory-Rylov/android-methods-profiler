@@ -1,33 +1,51 @@
 package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.common.TraceContainer
 
-data class ProfileDataSearchInfo(val node: ProfileData, val ancestor: ProfileData?)
+data class ProfileDataSearchInfo(
+    val node: ProfileData,
+    val ancestor: ProfileData?,
+    val thread: ThreadItem
+)
+
+data class ProfileDataSearchResult(val node: ProfileData, val thread: ThreadItem)
 
 class TraceProfileDataFinder(
-    private val trace: List<ProfileData>
+    private val trace: TraceContainer
 ) {
-    fun findToCompare(profileData: ProfileData): List<ProfileData> {
-        var possibleData = trace.filter { data ->
-            data.name == profileData.name && data.level == profileData.level &&
-                    data.order() == profileData.order()
-        }.map { node ->
-            ProfileDataSearchInfo(node, node.parent)
-        }
+    fun findToCompare(profileData: ProfileData): List<ProfileDataSearchResult> {
+        var possibleData = trace.result.threads.map { thread ->
+            trace.result.data[thread.threadId]!!.filter { data ->
+                data.name == profileData.name && data.level == profileData.level &&
+                        data.order() == profileData.order()
+            }.map { data ->
+                ProfileDataSearchInfo(data, data.parent, thread)
+            }
+        }.flatten()
         var parent = profileData.parent
 
         while (parent != null) {
+            if (possibleData.size <= 1) {
+                return possibleData.map { (node, _, thread) ->
+                    ProfileDataSearchResult(node, thread)
+                }
+            }
+
             val parentSnapshot = parent
             possibleData = possibleData.filter { data ->
                 data.ancestor?.name == parentSnapshot.name &&
                         data.ancestor.order() == parentSnapshot.order()
-            }.map { (node, ancestor) ->
-                ProfileDataSearchInfo(node, ancestor?.parent)
+            }.map { (node, ancestor, thread) ->
+                ProfileDataSearchInfo(node, ancestor?.parent, thread)
             }
             parent = parent.parent
         }
 
-        return possibleData.map { it.node }
+        return possibleData.map { (node, _, thread) ->
+            ProfileDataSearchResult(node, thread)
+        }
     }
 
     private fun ProfileData?.order(): Int {

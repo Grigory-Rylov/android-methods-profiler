@@ -19,7 +19,7 @@ import kotlin.system.exitProcess
 interface ComparatorUIListener {
     fun onCompareMenuItemClick(profileData: ProfileData)
 
-    fun onFrameSelected(frame: ProfileData)
+    fun onFrameSelected(frame: ProfileData?)
 
     fun onWindowClosed()
 }
@@ -101,9 +101,7 @@ class TraceComparatorApp(
     }
 
     private fun findAndCompare(node: ProfileData, trace: TraceContainer, findMode: FindMode) {
-        val threadId = trace.result.mainThreadId
-        val traceToFindIn = trace.result.data[threadId] ?: return
-        val foundNodes = TraceProfileDataFinder(traceToFindIn).findToCompare(node)
+        val foundNodes = TraceProfileDataFinder(trace).findToCompare(node)
 
         val error = if (foundNodes.isEmpty()) {
             "${node.name} not found on this trace. " +
@@ -117,8 +115,11 @@ class TraceComparatorApp(
             val window = if (findMode == FindMode.FIND_TESTED) testedWindow else referenceWindow
             window?.showErrorDialog("Find ${node.name}", error)
         } else {
-            val reference = if (findMode == FindMode.FIND_TESTED) node else foundNodes.first()
-            val tested = if (findMode == FindMode.FIND_REFERENCE) node else foundNodes.first()
+            val foundNodeInfo = foundNodes.first()
+            val reference = if (findMode == FindMode.FIND_TESTED) node else foundNodeInfo.node
+            val tested = if (findMode == FindMode.FIND_REFERENCE) node else foundNodeInfo.node
+            val windowFindIn = if (findMode == FindMode.FIND_TESTED) testedWindow else referenceWindow
+            windowFindIn?.switchThread(foundNodeInfo.thread)
 
             compare(reference, tested)
         }
@@ -157,7 +158,7 @@ class TraceComparatorApp(
             }
         }
 
-        override fun onFrameSelected(frame: ProfileData) {
+        override fun onFrameSelected(frame: ProfileData?) {
             selectedReferenceFrame = frame
         }
 
@@ -193,7 +194,7 @@ class TraceComparatorApp(
             }
         }
 
-        override fun onFrameSelected(frame: ProfileData) {
+        override fun onFrameSelected(frame: ProfileData?) {
             selectedTestedFrame = frame
         }
 

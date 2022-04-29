@@ -429,7 +429,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         updatesInfoPanel.showUpdate();
     }
 
-    private void switchThread(ThreadItem thread) {
+    public void switchThread(ThreadItem thread) {
         switchThreadsButton.switchThread(thread);
         chart.switchThread(thread.getThreadId());
         pluginsFacade.setCurrentThread(thread);
@@ -821,11 +821,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.requestFocus();
         @Nullable
         ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
+        if (comparatorUIListener != null) {
+            comparatorUIListener.onFrameSelected(selectedData);
+        }
         if (selectedData != null) {
             showMethodInfoInTopPanel(selectedData);
-            if (comparatorUIListener != null) {
-                comparatorUIListener.onFrameSelected(selectedData);
-            }
             return selectedData;
         }
         return null;
