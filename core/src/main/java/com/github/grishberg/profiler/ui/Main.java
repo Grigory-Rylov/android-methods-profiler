@@ -376,6 +376,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 coroutineScope.destroy();
                 framesManager.onFrameClosed();
+                if (comparatorUIListener != null) {
+                    comparatorUIListener.onWindowClosed();
+                }
             }
         });
 
@@ -1040,6 +1043,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             assert selected != null;
             comparatorUIListener.onCompareMenuItemClick(selected);
         }
+    }
+
+    public void selectProfileData(ProfileData profileData) {
+        chart.selectProfileData(profileData);
     }
 
     public void fitSelectedElement() {

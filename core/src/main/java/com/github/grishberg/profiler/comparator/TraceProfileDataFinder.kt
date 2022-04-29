@@ -9,7 +9,8 @@ class TraceProfileDataFinder(
 ) {
     fun findToCompare(profileData: ProfileData): List<ProfileData> {
         var possibleData = trace.filter { data ->
-            data.name == profileData.name && data.level == profileData.level
+            data.name == profileData.name && data.level == profileData.level &&
+                    data.order() == profileData.order()
         }.map { node ->
             ProfileDataSearchInfo(node, node.parent)
         }
@@ -18,7 +19,8 @@ class TraceProfileDataFinder(
         while (parent != null) {
             val parentSnapshot = parent
             possibleData = possibleData.filter { data ->
-                data.ancestor?.name == parentSnapshot.name && data.ancestor.order() == parentSnapshot.order()
+                data.ancestor?.name == parentSnapshot.name &&
+                        data.ancestor.order() == parentSnapshot.order()
             }.map { (node, ancestor) ->
                 ProfileDataSearchInfo(node, ancestor?.parent)
             }
