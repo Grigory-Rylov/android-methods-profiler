@@ -117,8 +117,20 @@ class FlameChartAggregator {
             Double.MIN_VALUE,
             width
         )
+        val fakeParent = object : ProfileData {
+            override val children = rootSources
+            override val globalEndTimeInMillisecond = Double.MAX_VALUE
+            override val globalSelfTime = Double.MAX_VALUE
+            override val globalStartTimeInMillisecond = Double.MIN_VALUE
+            override val level = -1
+            override val name = "fake parent"
+            override val parent = null
+            override val threadEndTimeInMillisecond = Double.MAX_VALUE
+            override val threadSelfTime = Double.MAX_VALUE
+            override val threadStartTimeInMillisecond = Double.MIN_VALUE
+        }
 
-        processChildrenToAggregate(rootSources, fakeRoot)
+        processChildrenToAggregate(listOf(fakeParent), fakeRoot)
 
         return fakeRoot
     }

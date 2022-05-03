@@ -1,11 +1,13 @@
 package com.github.grishberg.profiler.chart.flame
 
-import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.highlighting.MethodsColor
+import com.github.grishberg.profiler.child
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.nhaarman.mockitokotlin2.any
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.MarkType
+import com.github.grishberg.profiler.profileData
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import junit.framework.Assert.assertEquals
@@ -72,6 +74,11 @@ internal class FlameChartControllerTest {
             Color.YELLOW
 
         override fun getColorForMethod(name: String) = Color.YELLOW
+
+        override fun getColorForMethod(method: AggregatedFlameProfileData) =
+            Color.YELLOW
+
+        override fun getColorForCompare(markType: MarkType) = Color.YELLOW
     }
 
     private val settings = mock<SettingsFacade> {
@@ -161,19 +168,4 @@ internal class FlameChartControllerTest {
 
         assertEquals(Rectangle2D.Double(0.0, 0.0, 100.0, 80.0), viewStub.bounds)
     }
-
-    private fun ProfileDataImpl.child(childName: String, start: Double, end: Double): ProfileDataImpl {
-        val child = profileData(childName, start, end, this.level + 1)
-        this.addChild(child)
-        return child
-    }
-
-    private fun profileData(name: String, start: Double, end: Double, level: Int = 0): ProfileDataImpl =
-        ProfileDataImpl(
-            name = name, level = level,
-            threadStartTimeInMillisecond = start,
-            globalStartTimeInMillisecond = start,
-            threadEndTimeInMillisecond = end,
-            globalEndTimeInMillisecond = end
-        )
 }
