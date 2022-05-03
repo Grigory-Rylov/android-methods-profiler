@@ -8,7 +8,7 @@ import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -134,7 +134,7 @@ class FlameChartController(
         }
     }
 
-    fun showAggregatedFlameChart(aggregatedChart: AggregatedFlameProfileData) {
+    fun showAggregatedFlameChart(aggregatedChart: AggregatedFlameProfileDataImpl) {
         rectangles.clear()
         val result = aggregatedChart.toRectangles()
         rectangles.addAll(result.rectangles)
@@ -153,7 +153,7 @@ class FlameChartController(
         view?.showDialog()
     }
 
-    private fun AggregatedFlameProfileData.toRectangles(): Result {
+    private fun AggregatedFlameProfileDataImpl.toRectangles(): Result {
         val result = mutableListOf<FlameRectangle>()
         for (child in children) {
             toRectangle(child, result)
@@ -165,7 +165,7 @@ class FlameChartController(
         return Result(result, left, -topOffset, left + width)
     }
 
-    private fun toRectangle(node: AggregatedFlameProfileData, fillIn: MutableList<FlameRectangle>) {
+    private fun toRectangle(node: AggregatedFlameProfileDataImpl, fillIn: MutableList<FlameRectangle>) {
         fillIn.add(
             FlameRectangle(
                 node.left,

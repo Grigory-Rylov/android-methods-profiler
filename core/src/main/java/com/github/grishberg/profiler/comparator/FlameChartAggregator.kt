@@ -2,7 +2,7 @@ package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.comparator.model.ComparableFlameChildHolder
 import com.github.grishberg.profiler.comparator.model.FlameProfileData
 import kotlin.math.min
@@ -21,7 +21,7 @@ class FlameChartAggregator {
     fun aggregate(
         threadMethods: List<List<ProfileData>>,
         threadName: String
-    ): AggregatedFlameProfileData {
+    ): AggregatedFlameProfileDataImpl {
         val threadMethodsReadyToAggregate = threadMethods.map {
             calculateFlameToAggregate(it, threadName)
         }
@@ -32,8 +32,8 @@ class FlameChartAggregator {
     fun aggregateBgThreads(
         reference: List<AnalyzerResult>,
         tested: List<AnalyzerResult>
-    ): List<Pair<AggregatedFlameProfileData, AggregatedFlameProfileData>> {
-        val result = mutableListOf<Pair<AggregatedFlameProfileData, AggregatedFlameProfileData>>()
+    ): List<Pair<AggregatedFlameProfileDataImpl, AggregatedFlameProfileDataImpl>> {
+        val result = mutableListOf<Pair<AggregatedFlameProfileDataImpl, AggregatedFlameProfileDataImpl>>()
         // Suppose traces has same threads.
         val names = reference.first().threads.map { it.name }.toSet()
 
@@ -79,7 +79,7 @@ class FlameChartAggregator {
     fun aggregateBgThreadsInOne(
         traces: List<AnalyzerResult>,
         threadName: String
-    ): AggregatedFlameProfileData {
+    ): AggregatedFlameProfileDataImpl {
         val bgThreadsInOne = traces.map { trace ->
             val bgMethods = mutableListOf<ProfileData>()
             for (thread in trace.threads) {
@@ -184,11 +184,11 @@ class FlameChartAggregator {
     private fun aggregateFlameCharts(
         charts: List<FlameProfileData>,
         threadName: String
-    ): AggregatedFlameProfileData {
+    ): AggregatedFlameProfileDataImpl {
         val left = charts.minOf { it.left }
         val width = charts.sumOf { it.width } / charts.size
 
-        val result = AggregatedFlameProfileData(
+        val result = AggregatedFlameProfileDataImpl(
             name = threadName,
             sumCountAggregated = 1,
             sumWidthAggregated = width,
@@ -205,11 +205,11 @@ class FlameChartAggregator {
 
     private fun processNextLayer(
         chartLayerLists: List<List<FlameProfileData>>,
-        parent: AggregatedFlameProfileData
+        parent: AggregatedFlameProfileDataImpl
     ) {
         val traversed = chartLayerLists.flatten().groupBy { it.name }
         val aggregated = traversed.mapValues { (name, dataToAggregate) ->
-            val acc = AggregatedFlameProfileData(
+            val acc = AggregatedFlameProfileDataImpl(
                 name,
                 sumCountAggregated = 0,
                 sumWidthAggregated = 0.0,
@@ -219,7 +219,7 @@ class FlameChartAggregator {
                 width = 0.0  // will be set later
             )
             dataToAggregate.fold(acc) { current, next ->
-                AggregatedFlameProfileData(
+                AggregatedFlameProfileDataImpl(
                     name,
                     current.sumCountAggregated + next.count,
                     current.sumWidthAggregated + next.width,

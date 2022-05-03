@@ -11,7 +11,7 @@ import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl
 import com.github.grishberg.profiler.common.MainScope
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.theme.ThemeController
 import kotlinx.coroutines.*
@@ -109,8 +109,8 @@ class AggregatorMain(
     }
 
     private suspend fun compareAndShowAggregatedFlameCharts(
-        reference: AggregatedFlameProfileData,
-        tested: AggregatedFlameProfileData
+        reference: AggregatedFlameProfileDataImpl,
+        tested: AggregatedFlameProfileDataImpl
     ) {
         val refThreadWindowController = FlameChartController(
             methodsColor, settings, logger, coroutineScope, dispatchers)
