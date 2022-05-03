@@ -8,6 +8,7 @@ import com.github.grishberg.profiler.comparator.model.ComparableProfileData
 import com.github.grishberg.profiler.comparator.model.CompareID
 import com.github.grishberg.profiler.comparator.model.MarkType
 import com.github.grishberg.profiler.comparator.model.toComparable
+import kotlin.math.max
 
 class TraceComparator(
     private val log: AppLogger
@@ -100,9 +101,6 @@ class TraceComparator(
 
             for ((refNode, testedNode) in referenceProfiles.zip(testedProfiles)) {
                 if (refNode.mark.isVisited() || testedNode.mark.isVisited()) {
-                    check(refNode.mark.isVisited() && testedNode.mark.isVisited()) {
-                        "${refNode.id.name}, ${testedNode.id.name} mark: ${refNode.mark}, mark: ${testedNode.mark}"
-                    }
                     check(referenceProfiles.all { it.mark.isVisited() }) {
                         "${refNode.id.name}, ${testedNode.id.name} mark: ${refNode.mark}, mark: ${testedNode.mark}"
                     }
@@ -136,7 +134,7 @@ class TraceComparator(
             for ((refId, testId) in ids.zip(testIds)) {
                 val newRefNode = referenceNode.children[refId]
                 val newTestNode = testedNode.children[testId]
-                if ((newRefNode.mark == MarkType.NONE || newRefNode.mark == MarkType.SUSPICIOUS) && (newTestNode.mark == MarkType.NONE || newTestNode.mark == MarkType.SUSPICIOUS)) {
+                if (newRefNode.mark.isComparable() && newTestNode.mark.isComparable()) {
                     compareTrees(newRefNode, newTestNode)
                 }
             }
@@ -153,56 +151,84 @@ class TraceComparator(
      * )
      * 1. есть новые вызовы? Если да, такие вершины помечу "новыми"
      * 2. пропали ли старые? Если да, такие вершины помечу "старыми"
-     * 3. если 1 или 2 пометили слой как suspicious
      */
     private fun compareChildren(
         refChildren: List<ComparableProfileData>,
         testedChildren: List<ComparableProfileData>
-    ): Pair<Map<String, MutableList<Int>>, Map<String, MutableList<Int>>> {
-        val reference = mutableMapOf<String, MutableList<Int>>()
-        val tested = mutableMapOf<String, MutableList<Int>>()
+    ): Pair<Map<String, List<Int>>, Map<String, List<Int>>> {
+        val reference = refChildren.buildMethodToIndices()
+        val tested = testedChildren.buildMethodToIndices()
 
-        for ((index, child) in refChildren.withIndex()) {
-            reference.compute(child.name) { _, ids ->
-                ids?.apply { add(index) } ?: mutableListOf(index)
-            }
-        }
-        for ((index, child) in testedChildren.withIndex()) {
-            tested.compute(child.name) { _, ids ->
-                ids?.apply { add(index) } ?: mutableListOf(index)
-            }
-        }
-
-        var isSuspiciousLayer = false
         for ((methodName, ids) in reference) {
             val testedMethodIds = tested[methodName]
             if (testedMethodIds == null || ids.size > testedMethodIds.size) {
                 for (index in ids.subList(testedMethodIds?.size ?: 0, ids.size)) {
                     refChildren[index].mark = MarkType.OLD
                 }
-                isSuspiciousLayer = true
             } else if (ids.size < testedMethodIds.size) {
                 for (index in testedMethodIds.subList(ids.size, testedMethodIds.size)) {
                     testedChildren[index].mark = MarkType.NEW
                 }
-                isSuspiciousLayer = true
             }
         }
+
         for ((testedMethodName, ids) in tested) {
             val method = reference[testedMethodName]
             if (method == null) {
                 ids.forEach { index ->
                     testedChildren[index].mark = MarkType.NEW
                 }
-                isSuspiciousLayer = true
             }
         }
-        if (isSuspiciousLayer) {
-            refChildren.forEach { it.mark = MarkType.SUSPICIOUS }
-            testedChildren.forEach { it.mark = MarkType.SUSPICIOUS }
-        }
+
+        checkOrder(
+            reference = refChildren.filter { it.mark.isOverridable() },
+            tested = testedChildren.filter { it.mark.isOverridable() }
+        )
 
         return reference to tested
+    }
+
+    private fun checkOrder(
+        reference: List<ComparableProfileData>,
+        tested: List<ComparableProfileData>
+    ) {
+        check(reference.size == tested.size) {
+            "Order checks on lists with same size, same entries"
+        }
+        val refMap = reference.buildMethodToIndices()
+        val testMap = tested.buildMethodToIndices()
+        val refIndexToTestIndex = MutableList(reference.size) { -1 }
+
+        for ((method, refIds) in refMap) {
+            val testIds = testMap[method]!!
+            check(refIds.size == testIds.size) {
+                "Order checks on lists with same size, same entries"
+            }
+            for ((refIndex, testIndex) in refIds.zip(testIds)) {
+                refIndexToTestIndex[refIndex] = testIndex
+            }
+        }
+
+        var curMaxTestIndex = -1
+        for (refIndex in reference.indices) {
+            val testIndex = refIndexToTestIndex[refIndex]
+            if (testIndex < curMaxTestIndex) {
+                reference[refIndex].mark = MarkType.CHANGE_ORDER
+                tested[testIndex].mark = MarkType.CHANGE_ORDER
+            }
+            curMaxTestIndex = max(curMaxTestIndex, testIndex)
+        }
+    }
+
+    private fun List<ComparableProfileData>.buildMethodToIndices(): Map<String, List<Int>> {
+        val result = mutableMapOf<String, MutableList<Int>>()
+        for ((index, data) in this.withIndex()) {
+            result.compute(data.name) { _, ids ->
+                ids?.apply { add(index) } ?: mutableListOf(index)
+            }
+        }
+        return result
     }
 
     private fun isSystemMethod(name: String): Boolean {

@@ -12,7 +12,7 @@ class ComparableProfileData(
                 return
             }
             field = value
-            if (!value.isOverridable()) {
+            if (value.isOverrideChildren()) {
                 children.forEach { it.mark = value }
             }
         }

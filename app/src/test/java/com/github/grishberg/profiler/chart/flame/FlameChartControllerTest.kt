@@ -78,7 +78,7 @@ internal class FlameChartControllerTest {
         override fun getColorForMethod(method: AggregatedFlameProfileDataImpl) =
             Color.YELLOW
 
-        override fun getColorForCompare(markType: MarkType) = Color.YELLOW
+        override fun getColorForCompare(markType: MarkType, name: String) = Color.YELLOW
     }
 
     private val settings = mock<SettingsFacade> {

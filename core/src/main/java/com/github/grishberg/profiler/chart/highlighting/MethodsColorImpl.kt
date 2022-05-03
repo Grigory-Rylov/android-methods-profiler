@@ -11,7 +11,7 @@ interface MethodsColor {
 
     fun getColorForMethod(name: String): Color
 
-    fun getColorForCompare(markType: MarkType): Color
+    fun getColorForCompare(markType: MarkType, name: String): Color
 
     fun getColorForMethod(method: AggregatedFlameProfileDataImpl): Color
 }
@@ -34,14 +34,12 @@ class MethodsColorImpl(
     private val activityResumeColor = Color(211, 216, 255)
     private val requestLayoutColor = Color(0xFFA7A3)
 
-    private val compareNoneColor = Color(0x999999)
     private val compareComparedColor = Color(0xCCCCCC)
     private val compareOldColor = Color(255, 50, 0)
     private val compareMaybeOldColor = Color(255, 120, 0)
     private val compareNewColor = Color(0, 255, 0)
     private val compareMaybeNewColor = Color(0, 255, 190)
     private val compareChangeOrderColor = Color(0, 120, 255)
-    private val compareSuspiciousColor = Color(255, 191, 160)
 
     init {
         colors.addAll(methodsColors.getColors())
@@ -109,12 +107,11 @@ class MethodsColorImpl(
         return otherColor
     }
 
-    override fun getColorForCompare(markType: MarkType): Color {
+    override fun getColorForCompare(markType: MarkType, name: String): Color {
         return when (markType) {
-            MarkType.NONE -> compareNoneColor
+            MarkType.NONE -> getColorForMethod(name)
             MarkType.OLD -> compareOldColor
             MarkType.NEW -> compareNewColor
-            MarkType.SUSPICIOUS -> compareSuspiciousColor
             MarkType.CHANGE_ORDER -> compareChangeOrderColor
             MarkType.COMPARED -> compareComparedColor
         }
