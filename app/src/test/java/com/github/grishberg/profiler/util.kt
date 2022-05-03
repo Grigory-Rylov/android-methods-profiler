@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler
 
+import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.comparator.findAllOf
 import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
@@ -58,4 +59,11 @@ fun AggregatedTestFlameProfileData.child(
     val child = aggregatedData(name = name, mean = mean)
     this.addChild(child)
     return child
+}
+
+fun MutableList<ProfileData>.fillWith(root: ProfileData) {
+    this.add(root)
+    for (child in root.children) {
+        this.fillWith(child)
+    }
 }

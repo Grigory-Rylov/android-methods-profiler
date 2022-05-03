@@ -1,8 +1,8 @@
 package com.github.grishberg.profiler.comparator
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.android.profiler.core.ThreadItem
-import com.github.grishberg.profiler.common.TraceContainer
 
 data class ProfileDataSearchInfo(
     val node: ProfileData,
@@ -13,11 +13,11 @@ data class ProfileDataSearchInfo(
 data class ProfileDataSearchResult(val node: ProfileData, val thread: ThreadItem)
 
 class TraceProfileDataFinder(
-    private val trace: TraceContainer
+    private val trace: AnalyzerResult
 ) {
     fun findToCompare(profileData: ProfileData): List<ProfileDataSearchResult> {
-        var possibleData = trace.result.threads.map { thread ->
-            trace.result.data[thread.threadId]!!.filter { data ->
+        var possibleData = trace.threads.map { thread ->
+            trace.data[thread.threadId]!!.filter { data ->
                 data.name == profileData.name && data.level == profileData.level &&
                         data.order() == profileData.order()
             }.map { data ->

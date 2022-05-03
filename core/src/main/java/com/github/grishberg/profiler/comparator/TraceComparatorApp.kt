@@ -101,7 +101,7 @@ class TraceComparatorApp(
     }
 
     private fun findAndCompare(node: ProfileData, trace: TraceContainer, findMode: FindMode) {
-        val foundNodes = TraceProfileDataFinder(trace).findToCompare(node)
+        val foundNodes = TraceProfileDataFinder(trace.result).findToCompare(node)
 
         val error = if (foundNodes.isEmpty()) {
             "${node.name} not found on this trace. " +
