@@ -1,4 +1,4 @@
-package com.github.grishberg.profiler.comparator.model
+package com.github.grishberg.profiler.comparator.aggregator.model
 
 import com.github.grishberg.android.profiler.core.ProfileData
 

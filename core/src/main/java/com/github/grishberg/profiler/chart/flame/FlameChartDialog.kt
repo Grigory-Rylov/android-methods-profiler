@@ -1,9 +1,11 @@
 package com.github.grishberg.profiler.chart.flame
 
-import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.FoundInfoListener
 import com.github.grishberg.profiler.common.SimpleMouseListener
-import com.github.grishberg.profiler.ui.Main
+import com.github.grishberg.profiler.comparator.aggregator.threads.AggregatedFlameThreadsViewDialog
+import com.github.grishberg.profiler.comparator.aggregator.threads.FlameThreadItem
+import com.github.grishberg.profiler.comparator.aggregator.threads.AggregatedFlameThreadSwitchController
+import com.github.grishberg.profiler.ui.SwitchThreadButton
 import com.github.grishberg.profiler.ui.TextUtils
 import com.github.grishberg.profiler.ui.theme.Palette
 import java.awt.BorderLayout
@@ -35,7 +37,8 @@ import javax.swing.event.DocumentListener
 class FlameChartDialog(
     private val controller: FlameChartController,
     private val palette: Palette,
-    defaultFoundInfoMessage: String
+    defaultFoundInfoMessage: String,
+    private val threadSwitchController: AggregatedFlameThreadSwitchController? = null
 ) : JFrame("Flame chart"), FoundInfoListener<FlameRectangle>, DialogView {
     private val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
     private val flameChart = FlameChartPanel(this, controller, palette)
@@ -52,6 +55,7 @@ class FlameChartDialog(
         document.addDocumentListener(FindTextChangedEvent())
         addActionListener(FindInMethodsAction())
     }
+    private val switchThreadButton = SwitchThreadButton()
 
     private val foundInfo = JLabel(defaultFoundInfoMessage)
 
@@ -152,9 +156,27 @@ class FlameChartDialog(
 
     private fun createFindPanel() {
         val findPanel = JPanel(BorderLayout(2, 2))
+        if (threadSwitchController != null) {
+            switchThreadButton.switchThread(FlameThreadItem.MAIN)
+            switchThreadButton.addActionListener {
+                showSwitchThreadDialog()
+            }
+            findPanel.add(switchThreadButton, BorderLayout.LINE_START)
+        }
         findPanel.add(findClassText, BorderLayout.CENTER)
         findPanel.add(foundInfo, BorderLayout.LINE_END)
         mainPanel.add(findPanel, BorderLayout.NORTH)
+    }
+
+    private fun showSwitchThreadDialog() {
+        val dialog = AggregatedFlameThreadsViewDialog(this, threadSwitchController!!)
+        dialog.setLocationRelativeTo(flameChart)
+        dialog.isVisible = true
+        val selected = dialog.selectedThreadItem
+        if (selected != null) {
+            switchThreadButton.switchThread(selected)
+            threadSwitchController.onThreadSelected(selected)
+        }
     }
 
     private fun createStatusBar() {

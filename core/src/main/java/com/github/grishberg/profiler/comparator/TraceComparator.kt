@@ -1,9 +1,9 @@
 package com.github.grishberg.profiler.comparator
 
+import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
-import com.github.grishberg.profiler.common.TraceContainer
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData
 import com.github.grishberg.profiler.comparator.model.CompareID
 import com.github.grishberg.profiler.comparator.model.MarkType
@@ -20,24 +20,22 @@ class TraceComparator(
      * 2. Сравниваю поддеревья с корнем в несистемном методе (двигаюсь по дереву сверху внизу, слево направо)
      */
     fun compare(
-        traceReference: TraceContainer,
-        traceTested: TraceContainer
+        traceReference: AnalyzerResult,
+        traceTested: AnalyzerResult
     ): Pair<ComparableProfileData, ComparableProfileData> {
-        val referenceResult = traceReference.result
-        val testedResult = traceTested.result
         val root = ProfileDataImpl("INIT", level = -1, 0.0, 0.0)
         val refRootNode = ComparableProfileData(CompareID(root.name, null), root)
         val testRootNode = ComparableProfileData(CompareID(root.name, null), root.copy())
         val referenceProfileDataList = mutableListOf<ComparableProfileData>()
         val testedProfileDataList = mutableListOf<ComparableProfileData>()
 
-        referenceResult.data[referenceResult.mainThreadId]?.forEach {
+        traceReference.data[traceReference.mainThreadId]?.forEach {
             if (it.level == 0) {
                 val child = it.toComparable(refRootNode, referenceProfileDataList)
                 refRootNode.addChild(child)
             }
         }
-        testedResult.data[testedResult.mainThreadId]?.forEach {
+        traceTested.data[traceTested.mainThreadId]?.forEach {
             if (it.level == 0) {
                 val child = it.toComparable(testRootNode, testedProfileDataList)
                 testRootNode.addChild(child)

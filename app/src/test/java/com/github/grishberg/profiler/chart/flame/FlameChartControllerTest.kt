@@ -5,7 +5,7 @@ import com.github.grishberg.profiler.chart.highlighting.MethodsColor
 import com.github.grishberg.profiler.child
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.comparator.model.MarkType
 import com.github.grishberg.profiler.profileData
 import com.nhaarman.mockitokotlin2.doReturn

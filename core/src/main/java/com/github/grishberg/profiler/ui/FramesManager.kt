@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui
 
-import com.github.grishberg.profiler.comparator.AggregatorMain
+import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain
 import com.github.grishberg.profiler.comparator.TraceComparatorApp
 
 interface FramesManager {

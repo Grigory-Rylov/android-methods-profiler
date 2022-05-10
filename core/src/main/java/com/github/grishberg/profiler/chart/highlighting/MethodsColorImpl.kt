@@ -1,8 +1,8 @@
 package com.github.grishberg.profiler.chart.highlighting
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
-import com.github.grishberg.profiler.comparator.model.FlameMarkType
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
+import com.github.grishberg.profiler.comparator.aggregator.model.FlameMarkType
 import com.github.grishberg.profiler.comparator.model.MarkType
 import java.awt.Color
 
@@ -119,7 +119,7 @@ class MethodsColorImpl(
 
     override fun getColorForMethod(method: AggregatedFlameProfileDataImpl): Color {
         return when (method.mark) {
-            FlameMarkType.NONE -> getColorForMethod(method.name)
+            FlameMarkType.NONE -> compareComparedColor
             FlameMarkType.NEW_NEW -> compareNewColor
             FlameMarkType.OLD_OLD -> compareOldColor
             FlameMarkType.MAYBE_NEW -> compareMaybeNewColor

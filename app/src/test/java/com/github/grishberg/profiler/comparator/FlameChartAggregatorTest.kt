@@ -1,6 +1,7 @@
 package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.profiler.child
+import com.github.grishberg.profiler.comparator.aggregator.FlameChartAggregator
 import com.github.grishberg.profiler.countChildren
 import com.github.grishberg.profiler.get
 import com.github.grishberg.profiler.profileData

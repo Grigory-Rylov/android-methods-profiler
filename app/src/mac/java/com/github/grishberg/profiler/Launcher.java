@@ -4,19 +4,16 @@ import com.github.grishberg.profiler.chart.highlighting.ColorInfoAdapter;
 import com.github.grishberg.profiler.chart.highlighting.StandaloneAppMethodsColorRepository;
 import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
-import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
-import com.github.grishberg.profiler.comparator.AggregatorMain;
+import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain;
 import com.github.grishberg.profiler.comparator.TraceComparator;
 import com.github.grishberg.profiler.comparator.TraceComparatorApp;
-import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import com.github.grishberg.profiler.ui.StandaloneAppDialogFactory;
 import com.github.grishberg.profiler.ui.StandaloneAppFramesManagerFramesManager;
 import com.github.grishberg.profiler.ui.ViewFactory;
-import kotlin.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -75,7 +72,7 @@ public class Launcher {
                 index++;
             }
             AggregatorMain app = sFramesManager.createAggregatorFrame();
-            app.aggregateAndCompareTraces(reference, tested, true);
+            app.aggregateAndCompareTraces(reference, tested);
         } else if (args.length > 0 && args[0].equals("--cmp")) {
             TraceComparatorApp app = sFramesManager.createComparatorFrame();
             String reference = null;

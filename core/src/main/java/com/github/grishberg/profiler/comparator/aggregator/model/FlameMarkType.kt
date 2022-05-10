@@ -1,4 +1,4 @@
-package com.github.grishberg.profiler.comparator.model
+package com.github.grishberg.profiler.comparator.aggregator.model
 
 enum class FlameMarkType {
     NONE, NEW_NEW, OLD_OLD, MAYBE_NEW, MAYBE_OLD;

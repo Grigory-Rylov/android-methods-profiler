@@ -8,7 +8,7 @@ import com.github.grishberg.profiler.common.MainScope
 import com.github.grishberg.profiler.common.StandaloneAppUrlOpener
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.common.updates.StandaloneAppUpdatesChecker
-import com.github.grishberg.profiler.comparator.AggregatorMain
+import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain
 import com.github.grishberg.profiler.comparator.TraceComparatorApp
 import com.github.grishberg.profiler.ui.theme.StandaloneAppThemeController
 import java.io.File

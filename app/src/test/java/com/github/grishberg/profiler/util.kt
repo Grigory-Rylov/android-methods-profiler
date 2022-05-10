@@ -3,9 +3,8 @@ package com.github.grishberg.profiler
 import com.github.grishberg.android.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.comparator.findAllOf
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
-import com.github.grishberg.profiler.comparator.model.FlameMarkType
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.aggregator.model.FlameMarkType
 
 fun ProfileDataImpl.child(childName: String, start: Double, end: Double): ProfileDataImpl {
     val child = profileData(childName, start, end, this.level + 1)

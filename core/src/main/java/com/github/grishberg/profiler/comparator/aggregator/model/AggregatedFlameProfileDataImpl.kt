@@ -1,4 +1,4 @@
-package com.github.grishberg.profiler.comparator.model
+package com.github.grishberg.profiler.comparator.aggregator.model
 
 class AggregatedFlameProfileDataImpl(
     override val name: String,

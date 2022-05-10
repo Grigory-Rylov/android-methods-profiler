@@ -8,7 +8,7 @@ import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -65,6 +65,8 @@ class FlameChartController(
         }
     var foundInfoListener: FoundInfoListener<FlameRectangle>? = null
     var dialogView: DialogView? = null
+    var currentSelectedElement: FlameRectangle? = null
+        private set
 
     private val textUtils = TextUtils()
 
@@ -73,7 +75,6 @@ class FlameChartController(
     private val foundItems = ArrayList<FlameRectangle>()
     private var currentFocusedFoundElement: Int = -1
 
-    private var currentSelectedElement: FlameRectangle? = null
     private val rectangles = mutableListOf<FlameRectangle>()
     private val edgesColor = Color(0, 0, 0, 131)
     private val defaultFillColor = Color(0xD7AE65)
@@ -147,7 +148,6 @@ class FlameChartController(
             )
         view?.bounds = bounds
         view?.fitZoom(bounds)
-        (dialogView as? JFrame)?.title = aggregatedChart.name
 
         view?.redraw()
         view?.showDialog()

@@ -2,8 +2,9 @@ package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.profiler.aggregatedData
 import com.github.grishberg.profiler.child
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileData
-import com.github.grishberg.profiler.comparator.model.FlameMarkType
+import com.github.grishberg.profiler.comparator.aggregator.AggregatedFlameChartComparator
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileData
+import com.github.grishberg.profiler.comparator.aggregator.model.FlameMarkType
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

@@ -75,7 +75,7 @@ class TraceComparatorApp(
     }
 
     private fun onParseTracesFinished(analyzerResults: List<TraceContainer>) {
-        val compareResult = traceComparator.compare(analyzerResults[0], analyzerResults[1])
+        val compareResult = traceComparator.compare(analyzerResults[0].result, analyzerResults[1].result)
         referenceWindow?.highlightCompareResult(compareResult.first)
         testedWindow?.highlightCompareResult(compareResult.second)
     }

@@ -338,7 +338,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         FlameChartDialog flameChartDialog = new FlameChartDialog(
                 flameChartController,
                 themeController.getPalette(),
-                Main.DEFAULT_FOUND_INFO_MESSAGE);
+                Main.DEFAULT_FOUND_INFO_MESSAGE,
+                null);
         flameChartController.setFoundInfoListener(flameChartDialog);
         flameChartController.setDialogView(flameChartDialog);
 

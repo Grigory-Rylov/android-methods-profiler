@@ -173,7 +173,9 @@ class FlameChartPanel(
     }
 
     fun fitSelectedElement() {
-
+        controller.currentSelectedElement?.let { element ->
+            fitZoom(element)
+        }
     }
 
     fun findDataByPosition(point: Point): FlameRectangle? {

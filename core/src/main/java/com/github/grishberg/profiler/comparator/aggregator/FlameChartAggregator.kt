@@ -1,10 +1,11 @@
-package com.github.grishberg.profiler.comparator
+package com.github.grishberg.profiler.comparator.aggregator
 
 import com.github.grishberg.android.profiler.core.AnalyzerResult
 import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.profiler.comparator.model.AggregatedFlameProfileDataImpl
-import com.github.grishberg.profiler.comparator.model.ComparableFlameChildHolder
-import com.github.grishberg.profiler.comparator.model.FlameProfileData
+import com.github.grishberg.profiler.comparator.findAllOf
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
+import com.github.grishberg.profiler.comparator.aggregator.model.ComparableFlameChildHolder
+import com.github.grishberg.profiler.comparator.aggregator.model.FlameProfileData
 import kotlin.math.min
 
 private const val INCLUDE_METHOD_THRESHOLD = 0.4
@@ -39,18 +40,18 @@ class FlameChartAggregator {
 
         for (name in names) {
             val flameChartsRef = getTracesThreadMethods(reference, name).map {
-                calculateFlameToAggregate(it, "reference: $name")
+                calculateFlameToAggregate(it, name)
             }
-            val aggregatedRef = aggregateFlameCharts(flameChartsRef, "reference: $name")
+            val aggregatedRef = aggregateFlameCharts(flameChartsRef, name)
 
             if (aggregatedRef.width < THREAD_METHODS_TIMEOUT_THRESHOLD_MS) {
                 continue
             }
 
             val flameChartsTest = getTracesThreadMethods(tested, name).map {
-                calculateFlameToAggregate(it, "tested: $name")
+                calculateFlameToAggregate(it, name)
             }
-            val aggregatedTest = aggregateFlameCharts(flameChartsTest, "tested: $name")
+            val aggregatedTest = aggregateFlameCharts(flameChartsTest, name)
 
             if (aggregatedTest.width < THREAD_METHODS_TIMEOUT_THRESHOLD_MS) {
                 continue
@@ -232,7 +233,9 @@ class FlameChartAggregator {
         }
 
         val parentMethodTime = aggregated.values.sumByDouble { data ->
-            if (data.countAggregated.toDouble() / chartLayerLists.size > INCLUDE_METHOD_THRESHOLD) {
+            if (data.countAggregated.toDouble() / chartLayerLists.size
+                > INCLUDE_METHOD_THRESHOLD
+            ) {
                 data.meanWidth
             } else 0.0
         }

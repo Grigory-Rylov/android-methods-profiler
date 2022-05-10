@@ -1,4 +1,4 @@
-package com.github.grishberg.profiler.comparator.model
+package com.github.grishberg.profiler.comparator.aggregator.model
 
 class FlameProfileData(
     val name: String,
