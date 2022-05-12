@@ -35,15 +35,13 @@ class MethodsPopupMenu(
         accelerator = createAccelerator('M')
     }
     private val compareTracesItem = JMenuItem("Compare")
+    private val compareFlameChartItem = JMenuItem("Compare flame chart")
 
     init {
         add(copyNameMenuItem)
         add(copyStackTraceMenuItem)
         add(addBookmark)
         add(flameChartMenuItem)
-        if (main.isCompareMenuItemEnabled) {
-            add(compareTracesItem)
-        }
 
         addBookmark.addActionListener {
             main.addBookmark()
@@ -67,10 +65,6 @@ class MethodsPopupMenu(
             }
         }
 
-        compareTracesItem.addActionListener {
-            main.onCompareMenuItemClicked()
-        }
-
         val stageForMethod = stagesFacade.stageForMethod(selectedMethod)
         if (stageForMethod != null) {
             add(removeStageMenuItem)
@@ -87,6 +81,17 @@ class MethodsPopupMenu(
                     stagesFacade.createStage(selectedMethod, result.title, result.color)
                 }
             }
+        }
+
+        if (main.isCompareMenuItemEnabled) {
+            add(compareTracesItem)
+            add(compareFlameChartItem)
+        }
+        compareTracesItem.addActionListener {
+            main.onCompareMenuItemClicked()
+        }
+        compareFlameChartItem.addActionListener{
+            main.onCompareFlameChartMenuItemClicked()
         }
     }
 }

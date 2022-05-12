@@ -103,7 +103,13 @@ class FlameChartAggregator {
         threadMethods: List<ProfileData>,
         threadName: String
     ): FlameProfileData {
-        val rootSources = threadMethods.filter { it.level == 0 }
+        val rootSources = if (threadMethods.size == 1) {
+            // Situation when comparing selected nodes
+            rootLevel = threadMethods.first().level
+            threadMethods
+        } else {
+            threadMethods.filter { it.level == 0 }
+        }
         if (rootSources.isEmpty()) {
             return FlameProfileData(threadName, 1, 0.0, Double.MIN_VALUE, 0.0)
         }

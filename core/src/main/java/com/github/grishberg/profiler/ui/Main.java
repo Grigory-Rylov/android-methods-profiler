@@ -1046,6 +1046,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
+    public void onCompareFlameChartMenuItemClicked() {
+        if (comparatorUIListener != null) {
+            ProfileData selected = chart.getSelected();
+            assert selected != null;
+            comparatorUIListener.onCompareFlameChartMenuItemClick(selected);
+        }
+    }
+
     public void selectProfileData(ProfileData profileData) {
         chart.selectProfileData(profileData);
     }

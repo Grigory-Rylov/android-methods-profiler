@@ -1,23 +1,35 @@
 package com.github.grishberg.profiler.comparator
 
 import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.chart.flame.FlameChartController
+import com.github.grishberg.profiler.chart.flame.FlameChartDialog
+import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorRepository
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl
 import com.github.grishberg.profiler.common.TraceContainer
 import com.github.grishberg.profiler.common.UrlOpener
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.common.updates.UpdatesChecker
+import com.github.grishberg.profiler.comparator.aggregator.AggregatedFlameChartComparator
+import com.github.grishberg.profiler.comparator.aggregator.FlameChartAggregator
 import com.github.grishberg.profiler.ui.AppIconDelegate
 import com.github.grishberg.profiler.ui.FramesManager
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.Main.StartMode
 import com.github.grishberg.profiler.ui.ViewFactory
 import com.github.grishberg.profiler.ui.theme.ThemeController
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.system.exitProcess
 
 interface ComparatorUIListener {
     fun onCompareMenuItemClick(profileData: ProfileData)
+
+    fun onCompareFlameChartMenuItemClick(profileData: ProfileData)
 
     fun onFrameSelected(frame: ProfileData?)
 
@@ -37,6 +49,8 @@ class TraceComparatorApp(
     private val appFilesDir: String,
 ) {
     private val traceComparator = TraceComparator(logger)
+    private val coroutineScope = MainScope()
+    private val dispatchers = CoroutinesDispatchersImpl()
     private var referenceWindow: Main? = null
     private var testedWindow: Main? = null
     private var selectedReferenceFrame: ProfileData? = null
@@ -74,6 +88,44 @@ class TraceComparatorApp(
         testedWindow?.updateCompareResult(testCompareRes)
     }
 
+    fun compareFlameCharts(reference: ProfileData, tested: ProfileData) {
+        coroutineScope.launch(dispatchers.ui) {
+            val aggregator = FlameChartAggregator()
+            val comparator = AggregatedFlameChartComparator()
+            val refWindowController = createFlameChartController()
+            val testWindowController = createFlameChartController()
+            val refWindow = refWindowController.createFlameChartWindow().apply {
+                title = "reference"
+            }
+            val testWindow = testWindowController.createFlameChartWindow().apply {
+                title = "tested"
+            }
+            refWindowController.foundInfoListener = refWindow
+            refWindowController.dialogView = refWindow
+            testWindowController.foundInfoListener = testWindow
+            testWindowController.dialogView = testWindow
+
+            refWindowController.showDialog()
+            testWindowController.showDialog()
+
+            val aggregatedRef =
+                withContext(coroutineScope.coroutineContext + dispatchers.worker) {
+                    aggregator.aggregate(listOf(listOf(reference)), "")
+                }
+            val aggregatedTest =
+                withContext(coroutineScope.coroutineContext + dispatchers.worker) {
+                    aggregator.aggregate(listOf(listOf(tested)), "")
+                }
+
+            withContext(coroutineScope.coroutineContext + dispatchers.worker) {
+                comparator.compare(aggregatedRef, aggregatedTest)
+            }
+
+            refWindowController.showAggregatedFlameChart(aggregatedRef)
+            testWindowController.showAggregatedFlameChart(aggregatedTest)
+        }
+    }
+
     private fun onParseTracesFinished(analyzerResults: List<TraceContainer>) {
         val compareResult = traceComparator.compare(analyzerResults[0].result, analyzerResults[1].result)
         referenceWindow?.highlightCompareResult(compareResult.first)
@@ -100,9 +152,29 @@ class TraceComparatorApp(
         )
     }
 
-    private fun findAndCompare(node: ProfileData, trace: TraceContainer, findMode: FindMode) {
-        val foundNodes = TraceProfileDataFinder(trace.result).findToCompare(node)
+    private fun findAndCompare(
+        node: ProfileData,
+        trace: TraceContainer,
+        findMode: FindMode
+    )  = findAndCall(node, trace, findMode) { reference, tested ->
+        compare(reference, tested)
+    }
 
+    private fun findAndCompareFlameCharts(
+        node: ProfileData,
+        trace: TraceContainer,
+        findMode: FindMode
+    ) = findAndCall(node, trace, findMode) { reference, tested ->
+        compareFlameCharts(reference, tested)
+    }
+
+    private fun findAndCall(
+        node: ProfileData,
+        trace: TraceContainer,
+        findMode: FindMode,
+        onFind: (ProfileData, ProfileData) -> Unit
+    ) {
+        val foundNodes = TraceProfileDataFinder(trace.result).findToCompare(node)
         val error = if (foundNodes.isEmpty()) {
             "${node.name} not found on this trace. " +
                     "Try select it manually and repeat compare"
@@ -121,8 +193,26 @@ class TraceComparatorApp(
             val windowFindIn = if (findMode == FindMode.FIND_TESTED) testedWindow else referenceWindow
             windowFindIn?.switchThread(foundNodeInfo.thread)
 
-            compare(reference, tested)
+            onFind(reference, tested)
         }
+    }
+
+    private fun createFlameChartController(): FlameChartController {
+        return FlameChartController(
+            MethodsColorImpl(methodsColorRepository),
+            settings,
+            logger,
+            coroutineScope,
+            dispatchers,
+        )
+    }
+
+    private fun FlameChartController.createFlameChartWindow(): FlameChartDialog {
+        return FlameChartDialog(
+            this,
+            themeController.palette,
+            Main.DEFAULT_FOUND_INFO_MESSAGE,
+        )
     }
 
     private enum class FindMode {
@@ -132,9 +222,13 @@ class TraceComparatorApp(
 
     private inner class ReferenceComparatorUIListener : ComparatorUIListener {
 
-        override fun onCompareMenuItemClick(profileData: ProfileData) {
+        private fun onMenuItemClick(
+            profileData: ProfileData,
+            onBothSelected: (ProfileData, ProfileData) -> Unit,
+            onTestedNotSelected: (ProfileData, TraceContainer, FindMode) -> Unit
+        ) {
             selectedTestedFrame?.let { tested ->
-                compare(profileData, tested)
+                onBothSelected(profileData, tested)
                 return
             }
 
@@ -154,9 +248,23 @@ class TraceComparatorApp(
             }
 
             if (traceContainer != null) {
-                findAndCompare(profileData, traceContainer, FindMode.FIND_TESTED)
+                onTestedNotSelected(profileData, traceContainer, FindMode.FIND_TESTED)
             }
         }
+
+        override fun onCompareMenuItemClick(profileData: ProfileData) =
+            onMenuItemClick(
+                profileData,
+                this@TraceComparatorApp::compare,
+                this@TraceComparatorApp::findAndCompare
+            )
+
+        override fun onCompareFlameChartMenuItemClick(profileData: ProfileData) =
+            onMenuItemClick(
+                profileData,
+                this@TraceComparatorApp::compareFlameCharts,
+                this@TraceComparatorApp::findAndCompareFlameCharts,
+            )
 
         override fun onFrameSelected(frame: ProfileData?) {
             selectedReferenceFrame = frame
@@ -171,10 +279,14 @@ class TraceComparatorApp(
 
     private inner class TestedComparatorUIListener : ComparatorUIListener {
 
-        override fun onCompareMenuItemClick(profileData: ProfileData) {
+        private fun onMenuItemClick(
+            profileData: ProfileData,
+            onBothSelected: (ProfileData, ProfileData) -> Unit,
+            onReferenceNotSelected: (ProfileData, TraceContainer, FindMode) -> Unit
+        ) {
             val reference = selectedReferenceFrame
             if (reference != null) {
-                compare(reference, profileData)
+                onBothSelected(reference, profileData)
                 return
             }
 
@@ -190,9 +302,23 @@ class TraceComparatorApp(
             }
 
             if (traceContainer != null) {
-                findAndCompare(profileData, traceContainer, FindMode.FIND_REFERENCE)
+                onReferenceNotSelected(profileData, traceContainer, FindMode.FIND_REFERENCE)
             }
         }
+
+        override fun onCompareMenuItemClick(profileData: ProfileData) =
+            onMenuItemClick(
+                profileData,
+                this@TraceComparatorApp::compare,
+                this@TraceComparatorApp::findAndCompare,
+            )
+
+        override fun onCompareFlameChartMenuItemClick(profileData: ProfileData) =
+            onMenuItemClick(
+                profileData,
+                this@TraceComparatorApp::compareFlameCharts,
+                this@TraceComparatorApp::findAndCompareFlameCharts,
+            )
 
         override fun onFrameSelected(frame: ProfileData?) {
             selectedTestedFrame = frame
