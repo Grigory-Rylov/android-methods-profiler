@@ -165,8 +165,11 @@ class FlameChartAggregator {
 
         for (entry in sorted) {
             val child = entry.value.children.first()
-            val top = calculateTopForLevel(entry.value.children.first())
+            val top = calculateTopForLevel(child)
             val width = (parent.width * entry.value.width) / childrenCallTimeout
+            if (width <= 0.0) {
+                continue
+            }
             val cmpChild = FlameProfileData(
                 child.name,
                 entry.value.count,
