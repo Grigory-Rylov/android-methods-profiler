@@ -6,9 +6,11 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
-import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain;
-import com.github.grishberg.profiler.comparator.TraceComparator;
+import com.github.grishberg.profiler.comparator.AggregateParseArgsResult;
+import com.github.grishberg.profiler.comparator.CompareTracesParseArgsResult;
+import com.github.grishberg.profiler.comparator.LauncherArgsParser;
 import com.github.grishberg.profiler.comparator.TraceComparatorApp;
+import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain;
 import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import com.github.grishberg.profiler.ui.StandaloneAppDialogFactory;
@@ -18,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Launcher {
@@ -39,7 +40,7 @@ public class Launcher {
                     settings, log, sViewFactory, methodsColorRepository
             );
 
-    private static final TraceComparator sTraceComparator = new TraceComparator(log);
+    private static final LauncherArgsParser sArgsParser = new LauncherArgsParser();
 
     static {
         initDefaultSettings(settings, log);
@@ -54,50 +55,44 @@ public class Launcher {
 
     public static void main(String[] args) {
         if (args.length >= 5 && args[0].equals("--agg")) {
-            assert args[1].equals("-ref");
-            ArrayList<File> reference = new ArrayList<>();
-            ArrayList<File> tested = new ArrayList<>();
-            int index = 2;
-            while (!args[index].equals("-tested")) {
-                reference.add(new File(args[index]));
-                index++;
-                if (index >= args.length) {
-                    System.out.println("Aggregate should contain -ref and -tested params");
-                    return;
-                }
-            }
-            index++;
-            while (index < args.length) {
-                tested.add(new File(args[index]));
-                index++;
-            }
-            AggregatorMain app = sFramesManager.createAggregatorFrame();
-            app.aggregateAndCompareTraces(reference, tested);
+            launchAggregateAndCompareFlameCharts(args);
         } else if (args.length > 0 && args[0].equals("--cmp")) {
-            TraceComparatorApp app = sFramesManager.createComparatorFrame();
-            String reference = null;
-            String tested = null;
-            if (args.length > 1) {
-                reference = args[1];
-            }
-            if (args.length > 2) {
-                tested = args[2];
-            }
-            sMainWidowStarted = true;
-            app.createFrames(reference, tested);
+            launchCompareTraces(args);
         } else {
-            Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
-            sMainWidowStarted = true;
-            if (sPendingFile != null) {
-                app.openTraceFile(sPendingFile);
-                sPendingFile = null;
-            }
+            launchDefault(args);
+        }
+    }
 
-            if (args.length > 0) {
-                File f = new File(args[0]);
-                if (f.isFile()) {
-                    app.openTraceFile(f);
-                }
+    private static void launchAggregateAndCompareFlameCharts(String[] args) {
+        AggregateParseArgsResult parsed = sArgsParser.parseAggregateArgs(args);
+
+        if (parsed == null) {
+            return;
+        }
+
+        AggregatorMain app = sFramesManager.createAggregatorFrame();
+        app.aggregateAndCompareTraces(parsed.getReference(), parsed.getTested());
+    }
+
+    private static void launchCompareTraces(String[] args) {
+        CompareTracesParseArgsResult parsed = sArgsParser.parseCompareTracesArgs(args);
+        TraceComparatorApp app = sFramesManager.createComparatorFrame();
+        sMainWidowStarted = true;
+        app.createFrames(parsed.getReference(), parsed.getTested());
+    }
+
+    private static void launchDefault(String[] args) {
+        Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
+        sMainWidowStarted = true;
+        if (sPendingFile != null) {
+            app.openTraceFile(sPendingFile);
+            sPendingFile = null;
+        }
+
+        if (args.length > 0) {
+            File f = new File(args[0]);
+            if (f.isFile()) {
+                app.openTraceFile(f);
             }
         }
     }
