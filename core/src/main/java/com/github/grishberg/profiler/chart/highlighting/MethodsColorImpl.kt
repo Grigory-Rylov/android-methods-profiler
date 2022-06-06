@@ -1,13 +1,19 @@
 package com.github.grishberg.profiler.chart.highlighting
 
 import com.github.grishberg.profiler.chart.ProfileRectangle
-import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
+import com.github.grishberg.profiler.comparator.aggregator.model.FlameMarkType
+import com.github.grishberg.profiler.comparator.model.MarkType
 import java.awt.Color
 
 interface MethodsColor {
     fun getColorForMethod(profile: ProfileRectangle): Color
 
     fun getColorForMethod(name: String): Color
+
+    fun getColorForCompare(markType: MarkType, name: String): Color
+
+    fun getColorForMethod(method: AggregatedFlameProfileDataImpl): Color
 }
 
 class MethodsColorImpl(
@@ -27,6 +33,13 @@ class MethodsColorImpl(
     private val activityStartColor = Color(197, 219, 187)
     private val activityResumeColor = Color(211, 216, 255)
     private val requestLayoutColor = Color(0xFFA7A3)
+
+    private val compareComparedColor = Color(0xCCCCCC)
+    private val compareOldColor = Color(255, 50, 0)
+    private val compareMaybeOldColor = Color(255, 120, 0)
+    private val compareNewColor = Color(0, 255, 0)
+    private val compareMaybeNewColor = Color(0, 255, 190)
+    private val compareChangeOrderColor = Color(0, 120, 255)
 
     init {
         colors.addAll(methodsColors.getColors())
@@ -94,6 +107,25 @@ class MethodsColorImpl(
         return otherColor
     }
 
+    override fun getColorForCompare(markType: MarkType, name: String): Color {
+        return when (markType) {
+            MarkType.NONE -> getColorForMethod(name)
+            MarkType.OLD -> compareOldColor
+            MarkType.NEW -> compareNewColor
+            MarkType.CHANGE_ORDER -> compareChangeOrderColor
+            MarkType.COMPARED -> compareComparedColor
+        }
+    }
+
+    override fun getColorForMethod(method: AggregatedFlameProfileDataImpl): Color {
+        return when (method.mark) {
+            FlameMarkType.NONE -> compareComparedColor
+            FlameMarkType.NEW_NEW -> compareNewColor
+            FlameMarkType.OLD_OLD -> compareOldColor
+            FlameMarkType.MAYBE_NEW -> compareMaybeNewColor
+            FlameMarkType.MAYBE_OLD -> compareMaybeOldColor
+        }
+    }
 
     private fun isDrawMethod(name: String): Boolean {
         return name == "android.view.ViewRootImpl.performDraw" || name == "android.view.ViewRootImpl.draw"

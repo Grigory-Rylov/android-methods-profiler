@@ -8,6 +8,7 @@ import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.darker
 import com.github.grishberg.profiler.common.settings.SettingsFacade
+import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.ui.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -19,7 +20,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
-import java.util.ArrayList
+import javax.swing.JFrame
 import kotlin.math.min
 
 interface View {
@@ -64,6 +65,8 @@ class FlameChartController(
         }
     var foundInfoListener: FoundInfoListener<FlameRectangle>? = null
     var dialogView: DialogView? = null
+    var currentSelectedElement: FlameRectangle? = null
+        private set
 
     private val textUtils = TextUtils()
 
@@ -72,7 +75,6 @@ class FlameChartController(
     private val foundItems = ArrayList<FlameRectangle>()
     private var currentFocusedFoundElement: Int = -1
 
-    private var currentSelectedElement: FlameRectangle? = null
     private val rectangles = mutableListOf<FlameRectangle>()
     private val edgesColor = Color(0, 0, 0, 131)
     private val defaultFillColor = Color(0xD7AE65)
@@ -130,6 +132,53 @@ class FlameChartController(
 
             view?.redraw()
             view?.showDialog()
+        }
+    }
+
+    fun showAggregatedFlameChart(aggregatedChart: AggregatedFlameProfileDataImpl) {
+        rectangles.clear()
+        val result = aggregatedChart.toRectangles()
+        rectangles.addAll(result.rectangles)
+        val bounds =
+            Rectangle2D.Double(
+                result.minLeftOffset,
+                0.0,
+                result.maxRightOffset - result.minLeftOffset,
+                result.topOffset + 15.0
+            )
+        view?.bounds = bounds
+        view?.fitZoom(bounds)
+
+        view?.redraw()
+        view?.showDialog()
+    }
+
+    private fun AggregatedFlameProfileDataImpl.toRectangles(): Result {
+        val result = mutableListOf<FlameRectangle>()
+        for (child in children) {
+            toRectangle(child, result)
+        }
+        val topOffset = children.minOf { it.top }
+        for (child in result) {
+            child.y -= topOffset
+        }
+        return Result(result, left, -topOffset, left + width)
+    }
+
+    private fun toRectangle(node: AggregatedFlameProfileDataImpl, fillIn: MutableList<FlameRectangle>) {
+        fillIn.add(
+            FlameRectangle(
+                node.left,
+                node.top,
+                node.width,
+                15.0,
+                node.name,
+                node.mean.toInt(),  // TODO: allow to show double?
+                methodsColor.getColorForMethod(node),
+            )
+        )
+        for (child in node.children) {
+            toRectangle(child, fillIn)
         }
     }
 
@@ -226,7 +275,7 @@ class FlameChartController(
             var left = parentLeft
             for (root in rootSources) {
                 for (child in root.children) {
-                    val childHolder = children.getOrPut(child.name, { ChildHolder() })
+                    val childHolder = children.getOrPut(child.name) { ChildHolder() }
                     val left = calculateStartXForTime(child)
                     val right = calculateEndXForTime(child)
                     val width = right - left

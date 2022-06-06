@@ -50,7 +50,7 @@ class TraceAnalyzer(
             }
 
             val thread = vmTraceHandler.threads[id]
-            val threadName = if (thread == null) "Thread-$threadIndex" else thread!!
+            val threadName = thread ?: "Thread-$threadIndex"
 
             sortedThreads.add(ThreadItemImpl(threadName, id))
             threadIndex++

@@ -13,6 +13,7 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
+import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.ui.BookMarkInfo;
 import com.github.grishberg.profiler.ui.SimpleComponentListener;
 import com.github.grishberg.profiler.ui.TimeFormatter;
@@ -21,6 +22,7 @@ import com.github.grishberg.profiler.ui.theme.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.lang.model.type.ArrayType;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -343,6 +345,58 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         updateStages(threadId, objectsForThread);
         rebuildData(objectsForThread);
         repaint();
+    }
+
+    public void highlightCompare(ComparableProfileData rootCompareData, int threadId) {
+        requestFocus();
+        updateBounds(threadId);
+
+        currentThreadId = threadId;
+
+        updateMarkersState();
+        updatePreviewImage();
+
+        currentSelectedElement = -1;
+
+        List<ProfileRectangle> objectsForThread = new ArrayList<>();
+        objects.put(threadId, objectsForThread);
+
+        updateStages(threadId, objectsForThread);
+
+        if (rootCompareData.getProfileData().getLevel() != -1) throw new IllegalStateException("Root has level -1");
+        rebuildDataWithCompare(rootCompareData, objectsForThread);
+        repaint();
+    }
+
+    public void updateCompare(ComparableProfileData root, int threadId) {
+        Map<String, ProfileRectangle> objectsForThread = new HashMap<>();
+        List<ProfileRectangle> rectangles = objects.get(threadId);
+        for (ProfileRectangle rectangle : rectangles) {
+            rectangle.setColor(methodsColor.getColorForMethod(rectangle));
+            objectsForThread.put(rectangle.toString(), rectangle);
+        }
+        updateCompare(root, objectsForThread);
+        repaint();
+    }
+
+    private void updateCompare(ComparableProfileData root, Map<String, ProfileRectangle> objectsForThread) {
+        ProfileRectangle rect = createProfileRectangle(root.getProfileData());
+        ProfileRectangle currentRect = objectsForThread.get(rect.toString());
+        currentRect.setColor(methodsColor.getColorForCompare(root.getMark(), root.getName()));
+        for (ComparableProfileData child : root.getChildren()) {
+            updateCompare(child, objectsForThread);
+        }
+    }
+
+    private void rebuildDataWithCompare(ComparableProfileData root, List<ProfileRectangle> objectsForThread) {
+        if (root.getProfileData().getLevel() != -1) {
+            ProfileRectangle rect = createProfileRectangle(root.getProfileData());
+            rect.setColor(methodsColor.getColorForCompare(root.getMark(), root.getName()));
+            objectsForThread.add(rect);
+        }
+        for (ComparableProfileData child : root.getChildren()) {
+            rebuildDataWithCompare(child, objectsForThread);
+        }
     }
 
     private void updateStages(int threadId, List<ProfileRectangle> objectsForThread) {

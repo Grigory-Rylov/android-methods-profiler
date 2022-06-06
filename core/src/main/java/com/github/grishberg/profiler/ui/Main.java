@@ -34,6 +34,9 @@ import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
 import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel;
+import com.github.grishberg.profiler.comparator.ComparatorUIListener;
+import com.github.grishberg.profiler.comparator.OpenTraceToCompareCallback;
+import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
 import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
@@ -147,6 +150,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     @Nullable
     private TraceContainer resultContainer;
 
+    @Nullable
+    private final ComparatorUIListener comparatorUIListener;
+
     public Main(StartMode startMode,
                 SettingsFacade settings,
                 AppLogger log,
@@ -158,7 +164,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 AppIconDelegate appIconDelegate,
                 MethodsColorRepository methodsColorRepository,
                 String appFilesDir,
-                boolean allowModalDialogs) {
+                boolean allowModalDialogs,
+                @Nullable ComparatorUIListener comparatorUIListener) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
@@ -166,6 +173,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         this.urlOpener = urlOpener;
         this.appFilesDir = appFilesDir;
         this.allowModalDialogs = allowModalDialogs;
+        this.comparatorUIListener = comparatorUIListener;
         themeController.applyTheme();
 
         String title = viewFactory.getTitle();
@@ -330,7 +338,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         FlameChartDialog flameChartDialog = new FlameChartDialog(
                 flameChartController,
                 themeController.getPalette(),
-                Main.DEFAULT_FOUND_INFO_MESSAGE);
+                Main.DEFAULT_FOUND_INFO_MESSAGE,
+                null);
         flameChartController.setFoundInfoListener(flameChartDialog);
         flameChartController.setDialogView(flameChartDialog);
 
@@ -368,6 +377,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 coroutineScope.destroy();
                 framesManager.onFrameClosed();
+                if (comparatorUIListener != null) {
+                    comparatorUIListener.onWindowClosed();
+                }
             }
         });
 
@@ -418,7 +430,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         updatesInfoPanel.showUpdate();
     }
 
-    private void switchThread(ThreadItem thread) {
+    public void switchThread(ThreadItem thread) {
         switchThreadsButton.switchThread(thread);
         chart.switchThread(thread.getThreadId());
         pluginsFacade.setCurrentThread(thread);
@@ -810,6 +822,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.requestFocus();
         @Nullable
         ProfileData selectedData = chart.findDataByPositionAndSelect(x, y);
+        if (comparatorUIListener != null) {
+            comparatorUIListener.onFrameSelected(selectedData);
+        }
         if (selectedData != null) {
             showMethodInfoInTopPanel(selectedData);
             return selectedData;
@@ -999,6 +1014,54 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         showProgressDialog(file);
     }
 
+    public void openCompareTraceFile(File file, OpenTraceToCompareCallback callback) {
+        currentOpenedFile = file;
+        new ParseToCompareWorker(file, callback).execute();
+        showProgressDialog(file);
+    }
+
+    public void highlightCompareResult(ComparableProfileData rootCompareData) {
+        assert resultContainer != null;
+        chart.highlightCompare(rootCompareData, resultContainer.getResult().getMainThreadId());
+    }
+
+    public void updateCompareResult(ComparableProfileData rootCompareData) {
+        assert resultContainer != null;
+        ThreadItem currentThread = pluginsFacade.getCurrentThread();
+        if (currentThread == null) {
+            return;
+        }
+        chart.updateCompare(rootCompareData, currentThread.getThreadId());
+    }
+
+    public boolean isCompareMenuItemEnabled() {
+        return comparatorUIListener != null;
+    }
+
+    public void onCompareMenuItemClicked() {
+        if (comparatorUIListener != null) {
+            ProfileData selected = chart.getSelected();
+            assert selected != null;
+            comparatorUIListener.onCompareMenuItemClick(selected);
+        }
+    }
+
+    public void onCompareFlameChartMenuItemClicked() {
+        if (comparatorUIListener != null) {
+            ProfileData selected = chart.getSelected();
+            assert selected != null;
+            comparatorUIListener.onCompareFlameChartMenuItemClick(selected);
+        }
+    }
+
+    public void selectProfileData(ProfileData profileData) {
+        chart.selectProfileData(profileData);
+    }
+
+    public void fitSelectedElement() {
+        chart.fitSelectedElement();
+    }
+
     private void showProgressDialog(File file) {
         loadingDialog.setLocationRelativeTo(frame);
         loadingDialog.setVisible(true);
@@ -1006,6 +1069,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private void hideProgressDialog() {
         loadingDialog.setVisible(false);
+    }
+
+    public void showErrorDialog(String title, String errorMessage) {
+        JOptionPane.showMessageDialog(
+                frame,
+                errorMessage,
+                title,
+                JOptionPane.ERROR_MESSAGE
+        );
     }
 
     @Override
@@ -1071,6 +1143,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
         MethodsPopupMenu menu = new MethodsPopupMenu(this, frame, chart, selected, stagesFacade);
         menu.show(chart, clickedPoint.x, clickedPoint.y);
+    }
+
+    @Nullable
+    public TraceContainer getResultContainer() {
+        return resultContainer;
     }
 
     private void findInMethod() {
@@ -1142,6 +1219,29 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             } catch (Exception e) {
                 e.printStackTrace();
                 log.e("Parse trace file exception: ", e);
+            }
+        }
+    }
+
+    private class ParseToCompareWorker extends ParseWorker {
+
+        private final OpenTraceToCompareCallback callback;
+
+        private ParseToCompareWorker(File traceFile, OpenTraceToCompareCallback callback) {
+            super(traceFile, null);
+            this.callback = callback;
+        }
+
+        @Override
+        protected void done() {
+            super.done();
+            try {
+                TraceContainer traceContainer = get().traceContainer;
+                if (traceContainer != null) {
+                    callback.onTraceOpened(traceContainer);
+                }
+            } catch (Exception e) {
+                log.e("In callback exception occured:", e);
             }
         }
     }

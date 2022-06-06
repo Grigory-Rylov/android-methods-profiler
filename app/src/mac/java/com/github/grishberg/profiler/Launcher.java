@@ -6,6 +6,11 @@ import com.github.grishberg.profiler.common.AppLogger;
 import com.github.grishberg.profiler.common.SimpleConsoleLogger;
 import com.github.grishberg.profiler.common.settings.JsonSettings;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
+import com.github.grishberg.profiler.comparator.AggregateParseArgsResult;
+import com.github.grishberg.profiler.comparator.CompareTracesParseArgsResult;
+import com.github.grishberg.profiler.comparator.LauncherArgsParser;
+import com.github.grishberg.profiler.comparator.TraceComparatorApp;
+import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain;
 import com.github.grishberg.profiler.ui.FramesManager;
 import com.github.grishberg.profiler.ui.Main;
 import com.github.grishberg.profiler.ui.StandaloneAppDialogFactory;
@@ -13,7 +18,7 @@ import com.github.grishberg.profiler.ui.StandaloneAppFramesManagerFramesManager;
 import com.github.grishberg.profiler.ui.ViewFactory;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.File;
 import java.util.List;
 
@@ -35,6 +40,8 @@ public class Launcher {
                     settings, log, sViewFactory, methodsColorRepository
             );
 
+    private static final LauncherArgsParser sArgsParser = new LauncherArgsParser();
+
     static {
         initDefaultSettings(settings, log);
 
@@ -47,6 +54,34 @@ public class Launcher {
     }
 
     public static void main(String[] args) {
+        if (args.length >= 5 && args[0].equals("--agg")) {
+            launchAggregateAndCompareFlameCharts(args);
+        } else if (args.length > 0 && args[0].equals("--cmp")) {
+            launchCompareTraces(args);
+        } else {
+            launchDefault(args);
+        }
+    }
+
+    private static void launchAggregateAndCompareFlameCharts(String[] args) {
+        AggregateParseArgsResult parsed = sArgsParser.parseAggregateArgs(args);
+
+        if (parsed == null) {
+            return;
+        }
+
+        AggregatorMain app = sFramesManager.createAggregatorFrame();
+        app.aggregateAndCompareTraces(parsed.getReference(), parsed.getTested());
+    }
+
+    private static void launchCompareTraces(String[] args) {
+        CompareTracesParseArgsResult parsed = sArgsParser.parseCompareTracesArgs(args);
+        TraceComparatorApp app = sFramesManager.createComparatorFrame();
+        sMainWidowStarted = true;
+        app.createFrames(parsed.getReference(), parsed.getTested());
+    }
+
+    private static void launchDefault(String[] args) {
         Main app = sFramesManager.createMainFrame(Main.StartMode.DEFAULT);
         sMainWidowStarted = true;
         if (sPendingFile != null) {
