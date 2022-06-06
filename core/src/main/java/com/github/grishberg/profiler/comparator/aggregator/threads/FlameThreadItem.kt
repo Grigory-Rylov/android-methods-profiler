@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.comparator.aggregator.threads
 
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.core.ThreadItem
 
 data class FlameThreadItem(override val name: String) : ThreadItem {
     override val threadId: Int = -1

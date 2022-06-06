@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.comparator.model
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 
 class ComparableProfileData(
     val id: CompareID,

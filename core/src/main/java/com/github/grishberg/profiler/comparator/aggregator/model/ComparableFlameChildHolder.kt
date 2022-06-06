@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.comparator.aggregator.model
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import kotlin.math.max
 
 data class ComparableFlameChildHolder(

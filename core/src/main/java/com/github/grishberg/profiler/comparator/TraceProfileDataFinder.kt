@@ -1,8 +1,8 @@
 package com.github.grishberg.profiler.comparator
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ProfileData
-import com.github.grishberg.android.profiler.core.ThreadItem
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ThreadItem
 
 data class ProfileDataSearchInfo(
     val node: ProfileData,

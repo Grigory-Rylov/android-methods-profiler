@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.comparator
 
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.flame.FlameChartController
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl
@@ -148,6 +148,7 @@ class TraceComparatorApp(
             appIconDelegate,
             methodsColorRepository,
             appFilesDir,
+            true,
             comparatorUIListener
         )
     }

@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.comparator
 
-import com.github.grishberg.android.profiler.core.AnalyzerResult
-import com.github.grishberg.android.profiler.core.ProfileData
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData
