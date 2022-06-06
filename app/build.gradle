@@ -45,9 +45,9 @@ dependencies {
     implementation group: 'com.android.tools.ddms', name: 'ddmlib', version: '26.6.3'
     implementation 'com.google.code.gson:gson:2.8.6'
 
-    compile "org.slf4j:slf4j-api:1.7.25"
-    compile "org.slf4j:slf4j-log4j12:1.7.25"
-    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    implementation "org.slf4j:slf4j-api:1.7.25"
+    implementation "org.slf4j:slf4j-log4j12:1.7.25"
+    implementation group: 'log4j', name: 'log4j', version: '1.2.17'
 
     testImplementation "junit:junit:4.12"
     testImplementation 'org.mockito:mockito-core:2.23.0'
