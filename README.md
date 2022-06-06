@@ -111,6 +111,9 @@ If you want to find methods that ends with *SomeClass.someMethod* then type *Som
 
 If there is no results in current thread, profiler will search it in another threads and ask you to switch to another thread if threre is any results - this can be very useful!
 
+## Compare traces
+You can compare your traces with YAMP. Check [README.md](core/src/main/java/com/github/grishberg/profiler/comparator/README.md)
+
 ## Settings
 Settings are stored in `$HOME/android-methods-profiler/.android-methods-profiler-settings.json`
 
