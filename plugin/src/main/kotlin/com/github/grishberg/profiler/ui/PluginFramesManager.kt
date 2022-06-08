@@ -6,6 +6,8 @@ import com.github.grishberg.profiler.chart.highlighting.PluginMethodsColorReposi
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.UrlOpener
 import com.github.grishberg.profiler.common.updates.UpdatesChecker
+import com.github.grishberg.profiler.comparator.TraceComparatorApp
+import com.github.grishberg.profiler.comparator.aggregator.AggregatorMain
 import com.github.grishberg.profiler.ui.theme.ThemeController
 
 class PluginFramesManager(
@@ -27,7 +29,8 @@ class PluginFramesManager(
             iconDelegate,
             methodsColorRepository,
             "<not used>",
-            false
+            false,
+            null
         )
     }
 
@@ -37,5 +40,13 @@ class PluginFramesManager(
         override var checkForUpdatesState = false
         override fun checkForUpdates(callback: UpdatesChecker.UpdatesFoundAction) = Unit
         override fun shouldAddToMenu() = false
+    }
+
+    override fun createAggregatorFrame(): AggregatorMain {
+        throw IllegalStateException("Not support yet on plugin")
+    }
+
+    override fun createComparatorFrame(): TraceComparatorApp {
+        throw IllegalStateException("Not support yet on plugin")
     }
 }
