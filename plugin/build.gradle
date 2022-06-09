@@ -70,8 +70,7 @@ task(verifySetup) {
 patchPluginXml {
     sinceBuild("211")
     changeNotes """
-      Support Android Studio Chipmunk.<br>
-      Fixed recording bug.<br>
+      Fixed swithing threads and other dialogs result.<br>
       """
 }
 

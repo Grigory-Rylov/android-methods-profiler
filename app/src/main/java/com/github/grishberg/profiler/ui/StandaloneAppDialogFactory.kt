@@ -55,7 +55,7 @@ class StandaloneAppDialogFactory(
     override val shouldShowSetAdbMenu = true
 
     override fun createHighlightDialog(owner: JFrame): HighlightDialog {
-        return HighlightDialog(owner, methodsColorRepository, this, true)
+        return HighlightDialog(owner, methodsColorRepository, this)
     }
 
     override fun createElementWithColorDialog(owner: Dialog, title: String): ElementWithColorDialog {

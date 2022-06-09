@@ -29,11 +29,10 @@ class HighlightDialog(
     owner: Frame,
     methodsColorRepository: MethodsColorRepository,
     private val dialogFactory: ElementWithColorDialogFactory,
-    allowModalDialogs: Boolean,
 ) : CloseByEscapeDialog(
     owner,
     "Highlight settings",
-    allowModalDialogs
+    true
 ), HighlightDialogView {
     private val logic = HighlightListDialogLogic(methodsColorRepository)
     private val listModel = DefaultListModel<ColorInfo>()

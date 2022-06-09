@@ -322,7 +322,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.setRightClickListener(this);
         chart.setGridEnabled(true);
 
-        newBookmarkDialog = new NewBookmarkDialog(frame, allowModalDialogs);
+        newBookmarkDialog = new NewBookmarkDialog(frame);
         newBookmarkDialog.pack();
 
         loadingDialog = new LoadingDialog(frame, appIconDelegate, allowModalDialogs);
@@ -331,7 +331,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         methodTraceRecordDialog = viewFactory.createJavaMethodsRecorderDialog(
                 coroutineScope, coroutinesDispatchers, frame, settings, log);
 
-        scaleRangeDialog = new ScaleRangeDialog(frame, allowModalDialogs);
+        scaleRangeDialog = new ScaleRangeDialog(frame);
 
         flameChartController = new FlameChartController(methodsColor, settings, log,
                 coroutineScope, coroutinesDispatchers);
@@ -707,7 +707,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
 
         ThreadsSelectionController controller = new ThreadsSelectionController();
-        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log, allowModalDialogs);
+        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log);
         dialog.showThreads(resultContainer.getResult().getThreads());
         dialog.setLocationRelativeTo(chart);
         dialog.setVisible(true);
@@ -776,7 +776,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private void setupAndroidHome() {
-        SetAndroidHomeDialog dialog = new SetAndroidHomeDialog(frame, settings, allowModalDialogs);
+        SetAndroidHomeDialog dialog = new SetAndroidHomeDialog(frame, settings);
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
@@ -1085,7 +1085,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         hoverInfoPanel.hidePanel();
 
         FlatMethodsReportGenerator generator = new FlatMethodsReportGenerator(chart.getData());
-        ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator, allowModalDialogs);
+        ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator);
         reportsGeneratorDialog.pack();
 
         reportsGeneratorDialog.setLocationRelativeTo(frame);

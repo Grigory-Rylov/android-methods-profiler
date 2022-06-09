@@ -57,14 +57,14 @@ class PluginDialogFactory(
 
 
     override fun createHighlightDialog(owner: JFrame): HighlightDialog {
-        return HighlightDialog(owner, methodsColorRepository, this, false)
+        return HighlightDialog(owner, methodsColorRepository, this)
     }
 
     override fun createElementWithColorDialog(owner: Dialog, title: String): ElementWithColorDialog {
-        return ElementWithColorDialog(owner, title, false)
+        return ElementWithColorDialog(owner, title, true)
     }
 
     override fun createElementWithColorDialog(owner: JFrame, title: String): ElementWithColorDialog {
-        return ElementWithColorDialog(owner, title, false)
+        return ElementWithColorDialog(owner, title, true)
     }
 }

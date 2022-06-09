@@ -24,8 +24,7 @@ class ReportsGeneratorDialog(
     owner: Frame,
     private val settings: SettingsFacade,
     private val reportsGeneratorDelegate: ReportGenerator,
-    modal: Boolean,
-) : CloseByEscapeDialog(owner, "Generate methods report", modal), ActionListener {
+) : CloseByEscapeDialog(owner, "Generate methods report", true), ActionListener {
 
     private val constructorsCheckbox: JCheckBox
     private val durationLimit: JNumberField
