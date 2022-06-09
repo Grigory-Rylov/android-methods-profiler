@@ -126,10 +126,10 @@ To scale application on hi-res displays on linux, try to edit `/opt/android-meth
 
 # Building
 ## App
-Execute `./gradlew clean buildInstaller -Pbuild_type=app` , release will be placed at `app/build/release`
+Execute `./gradlew clean :app:buildInstaller` , release will be placed at `app/build/release`
 
 ## Plugin
-Execute `./gradlew clean buildPlugin -Pbuild_type=plugin` , plugin wiil be placed at `plugin/build/`
+Execute `./gradlew clean :plugin:buildPlugin` , plugin wiil be placed at `plugin/build/`
 
 # License
 
