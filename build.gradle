@@ -44,6 +44,6 @@ allprojects {
 subprojects {
     apply plugin: 'idea'
     ext {
-        productVersion = '22.06.08.0'
+        productVersion = '22.06.09.0'
     }
 }

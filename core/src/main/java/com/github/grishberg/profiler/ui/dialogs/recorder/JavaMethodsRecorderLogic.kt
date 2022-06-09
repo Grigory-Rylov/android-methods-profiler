@@ -258,7 +258,7 @@ class JavaMethodsDialogLogic(
                 view.setStatusTextAndColor("Start activity $it", Color.BLACK)
             }
             val waitForApplicationTimeout =
-                if (pkgName.isEmpty()) DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT else 5
+                if (activity.isNullOrEmpty()) DEFAULT_WAIT_FOR_APPLICATION_TIMEOUT else 5
 
             val methodTraceRecorder = methodTraceRecorderFactory.create(
                 stateMachine, view.isSystraceStageEnabled,

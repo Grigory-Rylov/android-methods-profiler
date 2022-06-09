@@ -71,6 +71,7 @@ patchPluginXml {
     sinceBuild("211")
     changeNotes """
       Fixed swithing threads and other dialogs result.<br>
+      Fixed waiting for application 120 sec when acitivy is not entered.<br>
       """
 }
 
