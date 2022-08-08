@@ -1,37 +1,64 @@
 package com.github.grishberg.profiler.chart
 
+import com.github.grishberg.profiler.core.ThreadItem
 import com.github.grishberg.profiler.core.AnalyzerResult
 import com.github.grishberg.profiler.core.ProfileData
 
-class Finder(
-    private val analyzerResult: AnalyzerResult
-) {
-    fun findInThread(textToFind: String, ignoreCase: Boolean, exceptThreadId: Int = -1): FindResult {
-        for (currentData in analyzerResult.data) {
-            val threadId = currentData.key
+class Finder {
+    private val currentFindResult = mutableListOf<FindResult>()
+
+    fun lastFindResult(): List<FindResult> = currentFindResult
+
+    fun findInThread(
+        analyzerResult: AnalyzerResult,
+        textToFind: String,
+        ignoreCase: Boolean,
+        exceptThreadId: Int = -1
+    ): List<FindResult> {
+        val result = mutableListOf<FindResult>()
+        for (threadData in analyzerResult.data) {
+            val threadId = threadData.key
             if (exceptThreadId == threadId) {
                 continue
             }
-            val profileList = currentData.value
-
+            val profileList = threadData.value
 
             val shouldEndsWithText: Boolean = textToFind.endsWith("()")
             val targetString = prepareTextToFind(shouldEndsWithText, textToFind, ignoreCase)
 
+            val foundMethods = mutableListOf<ProfileData>()
             for (i in profileList.indices) {
-                val profileData = profileList[i]
-                val lowerCasedName: String = if (ignoreCase) profileData.name.toLowerCase() else profileData.name
+                val currentMethod = profileList[i]
+                val lowerCasedName: String = if (ignoreCase) currentMethod.name.toLowerCase() else currentMethod.name
                 val isEquals: Boolean =
                     if (shouldEndsWithText) lowerCasedName.endsWith(targetString) else lowerCasedName.contains(
                         targetString
                     )
                 if (isEquals) {
-                    return FindResult(listOf(profileData), threadId)
+                    foundMethods.add(currentMethod)
                 }
+            }
+            if (foundMethods.isNotEmpty()) {
+                val threadItem = analyzerResult.threads.find { it.threadId == threadId }!!
+                result.add(FindResult(foundMethods, threadId, threadItem))
             }
         }
 
-        return FindResult(emptyList(), -1)
+        currentFindResult.clear()
+        currentFindResult.addAll(currentFindResult)
+        return result
+    }
+
+    fun generateFoundThreadNames(): String {
+        if (currentFindResult.isEmpty()) {
+            return ""
+        }
+        val threadNames = currentFindResult.map { it.threadItem.name }
+        return threadNames.joinToString("\n")
+    }
+
+    fun getResultForThread(threadId: Int): FindResult? {
+        return currentFindResult.find { it.threadId == threadId }
     }
 
     private fun prepareTextToFind(
@@ -48,5 +75,9 @@ class Finder(
         return targetString
     }
 
-    data class FindResult(val foundResult: List<ProfileData>, val threadId: Int)
+    data class FindResult(
+        val foundResult: List<ProfileData>,
+        val threadId: Int,
+        val threadItem: ThreadItem
+    )
 }

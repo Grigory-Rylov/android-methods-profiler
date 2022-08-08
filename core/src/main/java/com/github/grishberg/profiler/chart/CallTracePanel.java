@@ -100,6 +100,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private PreviewImageRepository previewImageRepository;
     private CallTracePreviewPanel previewPanel;
     private Palette palette;
+    private Finder methodsFinder;
     private boolean isThreadTime;
     private String fontName;
     private final Font labelFont;
@@ -120,7 +121,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
                           Bookmarks bookmarks,
                           PreviewImageRepository previewImageRepository,
                           CallTracePreviewPanel previewPanel,
-                          Palette palette) {
+                          Palette palette,
+                          Finder methodsFinder) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundInfoListener = foundInfoListener;
@@ -131,6 +133,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         this.previewImageRepository = previewImageRepository;
         this.previewPanel = previewPanel;
         this.palette = palette;
+        this.methodsFinder = methodsFinder;
         this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         this.bookmarks = bookmarks;
         stagesFacade.setRepaintDelegate(this);
@@ -840,14 +843,26 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     public void findItems(String textToFind, boolean ignoreCase) {
+        //TODO: launch in worker thread.
+        isSearchingInProgress = true;
+        methodsFinder.findInThread(result, textToFind, ignoreCase, -1);
         boolean shouldEndsWithText = textToFind.endsWith("()");
         if (shouldEndsWithText) {
             textToFind = textToFind.substring(0, textToFind.length() - 2);
         }
-        isSearchingInProgress = true;
         String targetString = ignoreCase ? textToFind.toLowerCase() : textToFind;
 
         foundItems.clear();
+
+        @Nullable
+        final Finder.FindResult resultForThread = methodsFinder.getResultForThread(currentThreadId);
+
+        if (resultForThread == null) {
+            foundInfoListener.onNotFound(textToFind, ignoreCase);
+            isSearchingInProgress = false;
+            repaint();
+            return;
+        }
 
         List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
         for (int i = 0; i < objectsForThread.size(); i++) {
@@ -862,12 +877,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
                 element.isFoundElement = false;
             }
         }
-        if (foundItems.isEmpty()) {
-            foundInfoListener.onNotFound(textToFind, ignoreCase);
-            isSearchingInProgress = false;
-            repaint();
-            return;
-        }
+
         currentFocusedFoundElement = 0;
         ProfileRectangle element = foundItems.get(currentFocusedFoundElement);
         foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, element.profileData);

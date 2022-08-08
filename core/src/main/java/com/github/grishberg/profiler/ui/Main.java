@@ -89,6 +89,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.util.List;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         FoundInfoListener<ProfileData>, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
@@ -146,6 +147,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final MethodsColorImpl methodsColor;
     private JToolBar toolBar = new JToolBar();
     private boolean allowModalDialogs;
+    private final Finder methodsFinder;
 
     @Nullable
     private TraceContainer resultContainer;
@@ -288,6 +290,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
                 coroutineScope, coroutinesDispatchers);
 
+        methodsFinder = new Finder();
         chart = new CallTracePanel(
                 timeFormatter,
                 methodsColor,
@@ -300,7 +303,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 bookmarks,
                 previewImageRepository,
                 previewPanel,
-                themeController.getPalette());
+                themeController.getPalette(),
+                methodsFinder);
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -876,6 +880,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void onFound(int count, int selectedIndex, ProfileData profileData) {
         foundInfo.setText(String.format("found %d, current %d", count, selectedIndex));
         showMethodInfoInTopPanel(profileData);
+
+        if (methodsFinder.lastFindResult().size() > 1) {
+            JOptionPane.showMessageDialog(frame, "Found results in multiple threads: \n\"" +
+                            methodsFinder.generateFoundThreadNames() +
+                            "\"\n");
+        }
     }
 
     @Override
@@ -886,32 +896,24 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (resultContainer == null || thread == null) {
             return;
         }
-        Finder finder = new Finder(resultContainer.getResult());
-        Finder.FindResult result = finder.findInThread(text, ignoreCase, thread.getThreadId());
-        if (result.getFoundResult().isEmpty()) {
+        List<Finder.FindResult> result = methodsFinder.findInThread(
+                resultContainer.getResult(),
+                text,
+                ignoreCase,
+                thread.getThreadId()
+        );
+        if (result.isEmpty()) {
             JOptionPane.showMessageDialog(chart, "Not found");
             return;
         }
 
-        int threadIndex = 0;
-        for (ThreadItem item : resultContainer.getResult().getThreads()) {
-            if (item.getThreadId() == result.getThreadId()) {
-                break;
-            }
-            threadIndex++;
-        }
-        ThreadItem foundThreadItem = resultContainer.getResult().getThreads().get(threadIndex);
-        if (foundThreadItem == null) {
-            JOptionPane.showMessageDialog(chart, "Not found");
-            return;
-        }
-
-        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Found results in another thread: \"" + foundThreadItem.getName() +
-                        "\"\nShould switch to this thread?",
+        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Found results in another thread: \"" +
+                        methodsFinder.generateFoundThreadNames() +
+                        "\"\nShould switch to first thread?",
                 "Found in another thread", JOptionPane.YES_NO_OPTION) == 0;
 
         if (shouldSwitchThread) { //The ISSUE is here
-            switchThread(foundThreadItem);
+            switchThread(result.get(0).getThreadItem());
             chart.requestFocus();
             chart.findItems(text, ignoreCase);
         }
