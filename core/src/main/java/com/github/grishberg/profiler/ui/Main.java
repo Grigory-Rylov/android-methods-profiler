@@ -1,8 +1,5 @@
 package com.github.grishberg.profiler.ui;
 
-import com.github.grishberg.profiler.core.AnalyzerResult;
-import com.github.grishberg.profiler.core.ProfileData;
-import com.github.grishberg.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
 import com.github.grishberg.profiler.chart.Bookmarks;
@@ -10,7 +7,7 @@ import com.github.grishberg.profiler.chart.BookmarksRectangle;
 import com.github.grishberg.profiler.chart.CallTracePanel;
 import com.github.grishberg.profiler.chart.CallTracePreviewPanel;
 import com.github.grishberg.profiler.chart.Finder;
-import com.github.grishberg.profiler.chart.FoundInfoListener;
+import com.github.grishberg.profiler.chart.FoundNavigationListener;
 import com.github.grishberg.profiler.chart.MethodsPopupMenu;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
@@ -37,6 +34,9 @@ import com.github.grishberg.profiler.common.updates.UpdatesInfoPanel;
 import com.github.grishberg.profiler.comparator.ComparatorUIListener;
 import com.github.grishberg.profiler.comparator.OpenTraceToCompareCallback;
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
+import com.github.grishberg.profiler.core.AnalyzerResult;
+import com.github.grishberg.profiler.core.ProfileData;
+import com.github.grishberg.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
 import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
 import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
@@ -49,7 +49,6 @@ import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialogView;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
-import com.github.grishberg.profiler.ui.dialogs.recorder.RecordedResult;
 import com.github.grishberg.profiler.ui.theme.ThemeController;
 import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import org.jetbrains.annotations.NotNull;
@@ -89,10 +88,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.List;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundInfoListener<ProfileData>, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
+        FoundNavigationListener<ProfileData>, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
     @Nullable
     private File currentOpenedFile;
 
@@ -290,7 +288,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
                 coroutineScope, coroutinesDispatchers);
 
-        methodsFinder = new Finder();
+        methodsFinder = new Finder(coroutineScope, coroutinesDispatchers);
+        methodsFinder.setListener(new MethodsFinderListener());
+
         chart = new CallTracePanel(
                 timeFormatter,
                 methodsColor,
@@ -303,8 +303,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 bookmarks,
                 previewImageRepository,
                 previewPanel,
-                themeController.getPalette(),
-                methodsFinder);
+                themeController.getPalette());
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -876,47 +875,113 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         // do nothing
     }
 
-    @Override
-    public void onFound(int count, int selectedIndex, ProfileData profileData) {
-        foundInfo.setText(String.format("found %d, current %d", count, selectedIndex));
-        showMethodInfoInTopPanel(profileData);
+    private void findMethods() {
+        final String textToFind = findClassText.getText();
+        if (textToFind == null || textToFind.length() == 0) {
+            return;
+        }
 
-        if (methodsFinder.lastFindResult().size() > 1) {
-            JOptionPane.showMessageDialog(frame, "Found results in multiple threads: \n\"" +
-                            methodsFinder.generateFoundThreadNames() +
-                            "\"\n");
+        methodsFinder.findMethods(resultContainer.getResult(), textToFind, !caseInsensitiveToggle.isSelected());
+    }
+
+    private class MethodsFinderListener implements Finder.FindResultListener {
+        @Override
+        public void onFindDone(@NotNull Finder.FindResult findResult) {
+            if (findResult.getThreadResults().isEmpty()) {
+                JOptionPane.showMessageDialog(chart, "Not found");
+                return;
+            }
+
+            ThreadItem currentThread = switchThreadsButton.getCurrentThread();
+            if (resultContainer == null || currentThread == null) {
+                return;
+            }
+
+            Finder.ThreadFindResult threadFindResult = findResult.getResultForThread(currentThread.getThreadId());
+            if (threadFindResult == null) {
+                onResultsFoundInOtherThreads(findResult);
+                return;
+            }
+
+            onResultsFoundInCurrentAndOtherThreads(threadFindResult, findResult);
         }
     }
 
-    @Override
-    public void onNotFound(String text, boolean ignoreCase) {
-        foundInfo.setText("not found");
-
-        ThreadItem thread = switchThreadsButton.getCurrentThread();
-        if (resultContainer == null || thread == null) {
-            return;
-        }
-        List<Finder.FindResult> result = methodsFinder.findInThread(
-                resultContainer.getResult(),
-                text,
-                ignoreCase,
-                thread.getThreadId()
-        );
-        if (result.isEmpty()) {
-            JOptionPane.showMessageDialog(chart, "Not found");
-            return;
-        }
-
-        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Found results in another thread: \"" +
-                        methodsFinder.generateFoundThreadNames() +
-                        "\"\nShould switch to first thread?",
+    private void onResultsFoundInOtherThreads(Finder.FindResult findResult) {
+        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Found results in another threads: \n" +
+                        findResult.generateFoundThreadNames() +
+                        "\n\nShould switch to first one?",
                 "Found in another thread", JOptionPane.YES_NO_OPTION) == 0;
 
         if (shouldSwitchThread) { //The ISSUE is here
-            switchThread(result.get(0).getThreadItem());
-            chart.requestFocus();
-            chart.findItems(text, ignoreCase);
+            Finder.ThreadFindResult firstThreadResult = findResult.getThreadResults().get(0);
+            switchThread(firstThreadResult.getThreadItem());
+            chart.renderFoundItems(firstThreadResult);
         }
+    }
+
+    private void onResultsFoundInCurrentAndOtherThreads(Finder.ThreadFindResult threadFindResult, Finder.FindResult findResult) {
+        JOptionPane.showMessageDialog(frame, "Found results in multiple threads: \n" +
+                findResult.generateFoundThreadNames() +
+                "\"\n");
+
+        chart.renderFoundItems(threadFindResult);
+    }
+
+    @Override
+    public void onSelected(int count, int selectedIndex, ProfileData selectedElement) {
+        foundInfo.setText(String.format("found %d, current %d", count, selectedIndex));
+        showMethodInfoInTopPanel(selectedElement);
+    }
+
+    @Override
+    public void onNavigatedOverLastItem() {
+        if (methodsFinder.getSearchResultThreadsCount() == 1) {
+            chart.resetFoundItemToStart();
+            return;
+        }
+
+        ThreadItem nextThread = methodsFinder.getNextThread();
+
+        //if has any result in previous threads - ask and switch
+        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Switch to results in thread: \"" +
+                        nextThread.getName() +
+                        "\"",
+                "Switch to another thread", JOptionPane.YES_NO_OPTION) == 0;
+
+        if (shouldSwitchThread) {
+            methodsFinder.switchNextThread();
+            switchThread(nextThread);
+            chart.renderFoundItems(methodsFinder.getCurrentThreadResult());
+        } else {
+            chart.resetFoundItemToStart();
+        }
+
+        chart.requestFocus();
+    }
+
+    @Override
+    public void onNavigatedOverFirstItem() {
+        if (methodsFinder.getSearchResultThreadsCount() == 1) {
+            chart.resetFoundItemToEnd();
+            return;
+        }
+
+        ThreadItem previousThread = methodsFinder.getPreviousThread();
+
+        //if has any result in previous threads - ask and switch
+        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Switch to results in thread: \"" +
+                        previousThread.getName() +
+                        "\"",
+                "Switch to another thread", JOptionPane.YES_NO_OPTION) == 0;
+
+        if (shouldSwitchThread) {
+            methodsFinder.switchPreviousThread();
+            switchThread(previousThread);
+            chart.renderFoundItems(methodsFinder.getCurrentThreadResult());
+        }
+        chart.resetFoundItemToEnd();
+        chart.requestFocus();
     }
 
     public void findAllChildren() {
@@ -1152,23 +1217,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return resultContainer;
     }
 
-    private void findInMethod() {
-        String textToFind = findClassText.getText();
-        if (textToFind != null && textToFind.length() > 0) {
-            chart.findItems(textToFind, !caseInsensitiveToggle.isSelected());
-            chart.requestFocus();
-            return;
-        }
-    }
-
     private class FindInMethodsAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            findInMethod();
+            findMethods();
         }
     }
-
-
 
     private class ParseWorker extends SwingWorker<WorkerResult, WorkerResult> {
         private final File traceFile;
@@ -1286,11 +1340,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private class CaseChangeFlagListener implements ChangeListener {
         private boolean oldSelectedState = false;
+
         @Override
         public void stateChanged(ChangeEvent e) {
-            if (oldSelectedState != caseInsensitiveToggle.isSelected()){
+            if (oldSelectedState != caseInsensitiveToggle.isSelected()) {
                 oldSelectedState = caseInsensitiveToggle.isSelected();
-                findInMethod();
+                findMethods();
             }
         }
     }
