@@ -1,7 +1,5 @@
 package com.github.grishberg.profiler.chart;
 
-import com.github.grishberg.profiler.core.AnalyzerResult;
-import com.github.grishberg.profiler.core.ProfileData;
 import com.github.grishberg.profiler.analyzer.AnalyzerResultImpl;
 import com.github.grishberg.profiler.analyzer.ThreadTimeBoundsImpl;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
@@ -14,6 +12,8 @@ import com.github.grishberg.profiler.common.SimpleMouseListener;
 import com.github.grishberg.profiler.common.TraceContainer;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
+import com.github.grishberg.profiler.core.AnalyzerResult;
+import com.github.grishberg.profiler.core.ProfileData;
 import com.github.grishberg.profiler.ui.BookMarkInfo;
 import com.github.grishberg.profiler.ui.SimpleComponentListener;
 import com.github.grishberg.profiler.ui.TimeFormatter;
@@ -22,7 +22,6 @@ import com.github.grishberg.profiler.ui.theme.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.lang.model.type.ArrayType;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -57,7 +56,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private static final double MINIMUM_WIDTH_IN_PX = 1;
     private static final AnalyzerResultImpl RESULT_STUB = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
 
-    private final FoundInfoListener<ProfileData> foundInfoListener;
+    private final FoundNavigationListener<ProfileData> foundNavigationListener;
     private boolean init = true;
 
     private final Bookmarks bookmarks;
@@ -111,7 +110,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
     public CallTracePanel(TimeFormatter timeFormatter,
                           MethodsColorImpl methodsColor,
-                          FoundInfoListener foundInfoListener,
+                          FoundNavigationListener foundInfoListener,
                           SettingsFacade settings,
                           AppLogger logger,
                           DependenciesFoundAction dependenciesFoundAction,
@@ -123,7 +122,7 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
                           Palette palette) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
-        this.foundInfoListener = foundInfoListener;
+        this.foundNavigationListener = foundInfoListener;
         this.settings = settings;
         this.logger = logger;
         this.stagesFacade = stagesFacade;
@@ -839,39 +838,28 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         return -1;
     }
 
-    public void findItems(String textToFind, boolean ignoreCase) {
-        boolean shouldEndsWithText = textToFind.endsWith("()");
-        if (shouldEndsWithText) {
-            textToFind = textToFind.substring(0, textToFind.length() - 2);
-        }
+    public void renderFoundItems(Finder.ThreadFindResult threadFindResult) {
         isSearchingInProgress = true;
-        String targetString = ignoreCase ? textToFind.toLowerCase() : textToFind;
-
         foundItems.clear();
 
         List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
         for (int i = 0; i < objectsForThread.size(); i++) {
             ProfileRectangle element = objectsForThread.get(i);
 
-            String lowerCasedName = ignoreCase ? element.profileData.getName().toLowerCase() : element.profileData.getName();
-            boolean isEquals = shouldEndsWithText ? lowerCasedName.endsWith(targetString) : lowerCasedName.contains(targetString);
-            if (isEquals) {
+            if (threadFindResult.hasMethod(element.profileData)) {
                 foundItems.add(element);
                 element.isFoundElement = true;
             } else {
                 element.isFoundElement = false;
             }
         }
-        if (foundItems.isEmpty()) {
-            foundInfoListener.onNotFound(textToFind, ignoreCase);
-            isSearchingInProgress = false;
-            repaint();
-            return;
-        }
+
         currentFocusedFoundElement = 0;
         ProfileRectangle element = foundItems.get(currentFocusedFoundElement);
-        foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, element.profileData);
+        foundNavigationListener.onSelected(foundItems.size(), currentFocusedFoundElement, element.profileData);
         zoomAndPanDelegate.fitZoom(element, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
+
+        requestFocus();
     }
 
     private void navigateToElement(Shape element) {
@@ -965,24 +953,39 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (foundItems.size() > 0) {
             currentFocusedFoundElement--;
             if (currentFocusedFoundElement < 0) {
-                currentFocusedFoundElement = foundItems.size() - 1;
+                foundNavigationListener.onNavigatedOverFirstItem();
+                return;
             }
-            ProfileRectangle found = foundItems.get(currentFocusedFoundElement);
-            zoomAndPanDelegate.fitZoom(found, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
-            foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, found.profileData);
+
+            focusFoundItem(currentFocusedFoundElement);
         }
+    }
+
+    public void resetFoundItemToEnd() {
+        currentFocusedFoundElement = foundItems.size() - 1;
+        focusFoundItem(currentFocusedFoundElement);
+    }
+
+    private void focusFoundItem(int currentFocusedFoundElement) {
+        ProfileRectangle found = foundItems.get(currentFocusedFoundElement);
+        zoomAndPanDelegate.fitZoom(found, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
+        foundNavigationListener.onSelected(foundItems.size(), currentFocusedFoundElement, found.profileData);
     }
 
     public void focusNextFoundItem() {
         if (foundItems.size() > 0) {
             currentFocusedFoundElement++;
             if (currentFocusedFoundElement >= foundItems.size()) {
-                currentFocusedFoundElement = 0;
+                foundNavigationListener.onNavigatedOverLastItem();
+                return;
             }
-            ProfileRectangle found = foundItems.get(currentFocusedFoundElement);
-            zoomAndPanDelegate.fitZoom(found, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
-            foundInfoListener.onFound(foundItems.size(), currentFocusedFoundElement, found.profileData);
+            focusFoundItem(currentFocusedFoundElement);
         }
+    }
+
+    public void resetFoundItemToStart() {
+        currentFocusedFoundElement = 0;
+        focusFoundItem(currentFocusedFoundElement);
     }
 
     public void focusPrevMarker() {

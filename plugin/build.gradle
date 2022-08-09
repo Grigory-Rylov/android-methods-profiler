@@ -34,7 +34,7 @@ if (!hasProperty('studioCompilePath')) {
 intellij {
     updateSinceUntilBuild false
     plugins ['android']
-    version "212-EAP-SNAPSHOT"
+    version "213-EAP-SNAPSHOT"
 }
 
 runIde {
@@ -70,8 +70,7 @@ task(verifySetup) {
 patchPluginXml {
     sinceBuild("211")
     changeNotes """
-      Fixed swithing threads and other dialogs result.<br>
-      Fixed waiting for application 120 sec when acitivy is not entered.<br>
+      Notify found results in other threads.<br>
       """
 }
 
