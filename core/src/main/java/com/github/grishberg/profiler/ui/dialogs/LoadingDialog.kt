@@ -10,6 +10,7 @@ import javax.swing.JPanel
 import javax.swing.WindowConstants
 
 class LoadingDialog(
+    title: String = "Loading...",
     owner: Frame,
     appIconDelegate: AppIconDelegate,
     allowModalDialogs: Boolean,
@@ -23,7 +24,7 @@ class LoadingDialog(
         val iconLabel = JLabel()
         appIconDelegate.updateLoadingIcon(iconLabel)
 
-        val label = JLabel("Loading...")
+        val label = JLabel(title)
         label.setHorizontalAlignment(JLabel.CENTER);
         iconLabel.setHorizontalAlignment(JLabel.CENTER);
         panel.add(iconLabel, BorderLayout.CENTER)

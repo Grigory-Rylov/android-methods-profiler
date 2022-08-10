@@ -80,6 +80,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JLabel foundInfo;
     private final NewBookmarkDialog newBookmarkDialog;
     private final LoadingDialog loadingDialog;
+    private final LoadingDialog searchingDialog;
     private final JavaMethodsRecorderDialogView methodTraceRecordDialog;
     private final ScaleRangeDialog scaleRangeDialog;
     private final SwitchThreadButton switchThreadsButton;
@@ -290,8 +291,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         newBookmarkDialog = new NewBookmarkDialog(frame);
         newBookmarkDialog.pack();
 
-        loadingDialog = new LoadingDialog(frame, appIconDelegate, allowModalDialogs);
+        loadingDialog = new LoadingDialog("Loading...", frame, appIconDelegate, allowModalDialogs);
         loadingDialog.pack();
+
+        searchingDialog = new LoadingDialog("Searching...", frame, appIconDelegate, true);
+        searchingDialog.pack();
 
         methodTraceRecordDialog = viewFactory.createJavaMethodsRecorderDialog(
                 coroutineScope, coroutinesDispatchers, frame, settings, log);
@@ -855,11 +859,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
 
         methodsFinder.findMethods(resultContainer.getResult(), textToFind, !caseInsensitiveToggle.isSelected());
+        showSearchingProgressDialog();
     }
 
     private class MethodsFinderListener implements Finder.FindResultListener {
         @Override
         public void onFindDone(@NotNull Finder.FindResult findResult) {
+            hideSerchingProgressDialog();
+
             if (findResult.getThreadResults().isEmpty()) {
                 JOptionPane.showMessageDialog(chart, "Not found");
                 return;
@@ -1055,13 +1062,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     public void openTraceFile(File file, SystraceRecordResult systraceRecords) {
         currentOpenedFile = file;
         new ParseWorker(file, systraceRecords).execute();
-        showProgressDialog(file);
+        showProgressDialog();
     }
 
     public void openCompareTraceFile(File file, OpenTraceToCompareCallback callback) {
         currentOpenedFile = file;
         new ParseToCompareWorker(file, callback).execute();
-        showProgressDialog(file);
+        showProgressDialog();
     }
 
     public void highlightCompareResult(ComparableProfileData rootCompareData) {
@@ -1106,7 +1113,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         chart.fitSelectedElement();
     }
 
-    private void showProgressDialog(File file) {
+    private void showProgressDialog() {
         loadingDialog.setLocationRelativeTo(frame);
         loadingDialog.setVisible(true);
     }
@@ -1114,6 +1121,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private void hideProgressDialog() {
         loadingDialog.setVisible(false);
     }
+
+    private void showSearchingProgressDialog() {
+        searchingDialog.setLocationRelativeTo(frame);
+        searchingDialog.setVisible(true);
+    }
+
+    private void hideSerchingProgressDialog() {
+        searchingDialog.setVisible(false);
+    }
+
 
     public void showErrorDialog(String title, String errorMessage) {
         JOptionPane.showMessageDialog(
