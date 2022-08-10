@@ -1,10 +1,10 @@
 package com.github.grishberg.profiler.chart.threads
 
-import com.github.grishberg.profiler.core.ThreadItem
 import com.github.grishberg.profiler.chart.preview.PREVIEW_IMAGE_HEIGHT
 import com.github.grishberg.profiler.chart.preview.PREVIEW_IMAGE_WIDTH
 import com.github.grishberg.profiler.chart.preview.PreviewImageRepository
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.core.ThreadItem
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.Color
 import java.awt.Dimension
@@ -13,11 +13,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.AbstractAction
-import javax.swing.JScrollPane
-import javax.swing.JTable
-import javax.swing.KeyStroke
-import javax.swing.ListSelectionModel
+import javax.swing.*
 import kotlin.math.max
 
 
@@ -25,11 +21,12 @@ private const val THREAD_NAME_WIDTH = 180
 private const val SELECT_ACTION = "Select"
 
 class ThreadsViewDialog(
-    private val frame: Frame,
-    private val controller: ThreadsSelectionController,
-    private val previewImageRepository: PreviewImageRepository,
+    title: String,
+    frame: Frame,
+    controller: ThreadsSelectionController,
+    previewImageRepository: PreviewImageRepository,
     private val logger: AppLogger
-) : CloseByEscapeDialog(frame, "Select thread", true), ThreadsSelectionView {
+) : CloseByEscapeDialog(frame, title, true), ThreadsSelectionView {
 
     private val model = ThreadListModel(previewImageRepository)
     var selectedThreadItem: ThreadItem? = null

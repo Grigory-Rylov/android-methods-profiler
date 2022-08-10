@@ -1,14 +1,7 @@
 package com.github.grishberg.profiler.ui;
 
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
-import com.github.grishberg.profiler.chart.Bookmarks;
-import com.github.grishberg.profiler.chart.BookmarksRectangle;
-import com.github.grishberg.profiler.chart.CallTracePanel;
-import com.github.grishberg.profiler.chart.CallTracePreviewPanel;
-import com.github.grishberg.profiler.chart.Finder;
-import com.github.grishberg.profiler.chart.FoundNavigationListener;
-import com.github.grishberg.profiler.chart.MethodsPopupMenu;
+import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
@@ -20,13 +13,7 @@ import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
 import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
-import com.github.grishberg.profiler.common.AppLogger;
-import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
-import com.github.grishberg.profiler.common.FileSystem;
-import com.github.grishberg.profiler.common.MainScope;
-import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
-import com.github.grishberg.profiler.common.TraceContainer;
-import com.github.grishberg.profiler.common.UrlOpener;
+import com.github.grishberg.profiler.common.*;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
@@ -38,12 +25,7 @@ import com.github.grishberg.profiler.core.AnalyzerResult;
 import com.github.grishberg.profiler.core.ProfileData;
 import com.github.grishberg.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
-import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
-import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
-import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog;
-import com.github.grishberg.profiler.ui.dialogs.ReportsGeneratorDialog;
-import com.github.grishberg.profiler.ui.dialogs.ScaleRangeDialog;
-import com.github.grishberg.profiler.ui.dialogs.SetAndroidHomeDialog;
+import com.github.grishberg.profiler.ui.dialogs.*;
 import com.github.grishberg.profiler.ui.dialogs.highlighting.HighlightDialog;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
@@ -54,40 +36,20 @@ import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.SwingWorker;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.util.List;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         FoundNavigationListener<ProfileData>, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
@@ -709,16 +671,27 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             return;
         }
 
-        ThreadsSelectionController controller = new ThreadsSelectionController();
-        ThreadsViewDialog dialog = new ThreadsViewDialog(frame, controller, previewImageRepository, log);
-        dialog.showThreads(resultContainer.getResult().getThreads());
-        dialog.setLocationRelativeTo(chart);
-        dialog.setVisible(true);
-        ThreadItem selected = dialog.getSelectedThreadItem();
+        ThreadItem selected = showThreadsDialog(resultContainer.getResult().getThreads(), "Select thread");
         if (selected == null) {
             return;
         }
         switchThread(selected);
+        if (methodsFinder.isSearchingModeEnabled()) {
+            Finder.ThreadFindResult resultForThread = methodsFinder.getResultForThread(selected);
+            if (resultForThread != null) {
+                methodsFinder.setCurrentThreadResultForThread(selected);
+                chart.renderFoundItems(resultForThread);
+            }
+        }
+    }
+
+    private ThreadItem showThreadsDialog(List<ThreadItem> threads, String title) {
+        ThreadsSelectionController controller = new ThreadsSelectionController();
+        ThreadsViewDialog dialog = new ThreadsViewDialog(title, frame, controller, previewImageRepository, log);
+        dialog.showThreads(threads);
+        dialog.setLocationRelativeTo(chart);
+        dialog.setVisible(true);
+        return dialog.getSelectedThreadItem();
     }
 
     public void switchMainThread() {
@@ -908,15 +881,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private void onResultsFoundInOtherThreads(Finder.FindResult findResult) {
-        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Found results in another threads: \n" +
-                        findResult.generateFoundThreadNames() +
-                        "\n\nShould switch to first one?",
-                "Found in another thread", JOptionPane.YES_NO_OPTION) == 0;
+        ThreadItem selectedThread = showThreadsDialog(findResult.getThreadList(), "Found results in another threads");
 
-        if (shouldSwitchThread) { //The ISSUE is here
-            Finder.ThreadFindResult firstThreadResult = findResult.getThreadResults().get(0);
-            switchThread(firstThreadResult.getThreadItem());
-            chart.renderFoundItems(firstThreadResult);
+        if (selectedThread != null) {
+            switchThread(selectedThread);
+            chart.renderFoundItems(findResult.getThreadResult(selectedThread));
         }
     }
 
@@ -1189,6 +1158,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             chart.requestFocus();
         }
         chart.disableSearching();
+        methodsFinder.disableSearching();
         foundInfo.setText(DEFAULT_FOUND_INFO_MESSAGE);
     }
 
