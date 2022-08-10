@@ -18,6 +18,9 @@ class Finder(
 
     var listener: FindResultListener? = null
 
+    var isSearchingModeEnabled = false
+        private set
+
     private var currentSelectedThreadIndex: Int = -1
 
     private var currentFindResult: FindResult = FindResult(emptyList())
@@ -27,6 +30,24 @@ class Finder(
     }
 
     fun getCurrentThreadResult(): ThreadFindResult = currentFindResult.threadResults[currentSelectedThreadIndex]
+
+    fun getResultForThread(threadItem: ThreadItem): ThreadFindResult? {
+        for (i in currentFindResult.threadResults.indices) {
+            if (currentFindResult.threadResults[i].threadItem == threadItem) {
+                return currentFindResult.threadResults[i]
+            }
+        }
+        return null
+    }
+
+    fun setCurrentThreadResultForThread(threadItem: ThreadItem) {
+        for (i in currentFindResult.threadResults.indices) {
+            if (currentFindResult.threadResults[i].threadItem == threadItem) {
+                currentSelectedThreadIndex = i
+                return
+            }
+        }
+    }
 
     fun getNextThread(): ThreadItem {
         val index = getNextThreadIndex()
@@ -40,6 +61,12 @@ class Finder(
 
     fun switchNextThread() {
         currentSelectedThreadIndex = getNextThreadIndex()
+    }
+
+    fun disableSearching() {
+        isSearchingModeEnabled = false
+        currentSelectedThreadIndex = -1
+        currentFindResult = FindResult(emptyList())
     }
 
     private fun getNextThreadIndex(): Int {
@@ -74,6 +101,7 @@ class Finder(
         textToFind: String,
         ignoreCase: Boolean,
     ) {
+        isSearchingModeEnabled = true
         currentSelectedThreadIndex = -1
         coroutineScope.launch {
             val data = withContext(dispatchers.worker) {
@@ -153,6 +181,11 @@ class Finder(
         fun getResultForThread(threadId: Int): ThreadFindResult? {
             return threadResults.find { it.threadId == threadId }
         }
+
+        fun getThreadResult(threadItem: ThreadItem): ThreadFindResult =
+            threadResults.find { it.threadItem == threadItem }!!
+
+        fun getThreadList(): List<ThreadItem> = threadResults.map { it.threadItem }
     }
 
     data class ThreadFindResult(
