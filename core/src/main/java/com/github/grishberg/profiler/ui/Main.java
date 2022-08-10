@@ -876,7 +876,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 return;
             }
 
-            onResultsFoundInCurrentAndOtherThreads(threadFindResult, findResult);
+            if (findResult.getThreadResults().size() > 1) {
+                onResultsFoundInCurrentAndOtherThreads(threadFindResult, findResult);
+                return;
+            }
+
+            onResultsFoundInCurrentThread(threadFindResult);
         }
     }
 
@@ -891,9 +896,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private void onResultsFoundInCurrentAndOtherThreads(Finder.ThreadFindResult threadFindResult, Finder.FindResult findResult) {
         JOptionPane.showMessageDialog(frame, "Found results in multiple threads: \n" +
-                findResult.generateFoundThreadNames() +
-                "\"\n");
+                findResult.generateFoundThreadNames());
 
+        chart.renderFoundItems(threadFindResult);
+    }
+
+    private void onResultsFoundInCurrentThread(Finder.ThreadFindResult threadFindResult) {
         chart.renderFoundItems(threadFindResult);
     }
 
