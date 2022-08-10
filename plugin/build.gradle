@@ -71,6 +71,7 @@ patchPluginXml {
     sinceBuild("211")
     changeNotes """
       Notify found results in other threads.<br>
+      Allow switch to prev/next thread with found results.<br>
       """
 }
 
