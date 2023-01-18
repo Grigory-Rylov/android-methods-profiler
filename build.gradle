@@ -38,9 +38,3 @@ allprojects {
         }
     }
 }
-subprojects {
-    apply plugin: 'idea'
-    ext {
-        productVersion = '23.01.16.0'
-    }
-}

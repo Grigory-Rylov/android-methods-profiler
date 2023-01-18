@@ -3,8 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.jvm'
 }
 
-group 'com.github.grishberg'
-version = ext.productVersion
+def properties(String key) {
+    return project.findProperty(key).toString()
+}
+
+group = properties("pluginGroup")
+version = properties("pluginVersion")
 
 sourceCompatibility = 11
 
