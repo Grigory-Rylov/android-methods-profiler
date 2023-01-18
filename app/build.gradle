@@ -1,5 +1,3 @@
-import org.gradle.internal.os.OperatingSystem
-
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm'
@@ -8,25 +6,7 @@ plugins {
 group 'com.github.grishberg'
 version = ext.productVersion
 
-def use_jdk8 = project.hasProperty("use_jdk8")
-
-if (use_jdk8) {
-    sourceCompatibility = 8
-} else {
-    sourceCompatibility = 11
-}
-
-sourceSets {
-    main {
-        java {
-            if (use_jdk8) {
-                srcDir 'src/linux/java'
-            } else {
-                srcDir 'src/mac/java'
-            }
-        }
-    }
-}
+sourceCompatibility = 11
 
 repositories {
     mavenCentral()
@@ -66,30 +46,14 @@ task fatJar(type: Jar) {
                 'Implementation-Title': 'Android Methods Profiler',
                 'Implementation-Version': version
     }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     baseName = 'android-methods-profiler'
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
         exclude "MaterialUISwingDemo*.class" exclude "module-info.class"
     }
     with jar
-}
-
-String installerScript = ""
-
-if (OperatingSystem.current().isLinux()) {
-    installerScript = "buildScripts/linuxApplication"
-} else if (OperatingSystem.current().isWindows()) {
-    installerScript = ""
-} else if (OperatingSystem.current().isMacOsX()) {
-    installerScript = "buildScripts/macOsApplication"
-}
-
-// ./gradlew clean buildInstaller
-task buildInstaller(type: Exec) {
-    dependsOn fatJar
-    workingDir '.'
-    commandLine "./${installerScript}"
-    args version
 }

@@ -433,7 +433,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 appIconDelegate);
         toolBar.add(button);
 
-        button = makeToolbarButton("New", "newFile",
+        button = makeToolbarButton("New", " newFile",
                 Actions.RECORD_NEW_TRACE,
                 "Record new method trace from device",
                 appIconDelegate);

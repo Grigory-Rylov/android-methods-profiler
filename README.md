@@ -21,17 +21,9 @@ by searching for "Launch YAMP" in "Find Actions" (osx: cmd+shift+a, windows/linu
 
 https://plugins.jetbrains.com/plugin/16167-yamp
 
-### Mac OS X
-1. Open DMG file
-2. Drag Android Methods Profiler icon into Applications shurtcut 
-3. Open Applications and right mouse click on **Android Methods Profiler** and select "Open" (only first launch)
-
-### Linux
-Open terminal and execute `sudo dpkg -i android-methods-profiler_{YOUR_VERSION}_all.deb`
-
-If some older files cannot be overwritten, try `sudo dpkg -i --force-overwrite android-methods-profiler_{YOUR_VERSION}_all.deb`
-
-To launch type in terminal `andoid-methods-profiler` or `yamp`. Or you can open in menu by pressing Meta
+### Standalone app
+1. Download android-methods-profiler_{YOUR_VERSION}.jar
+2. execute `java -jar android-methods-profiler_{YOUR_VERSION}.jar`
 
 ## Keymap
 Read about keymap [there](docs/KEYMAP.MD)
@@ -126,10 +118,10 @@ To scale application on hi-res displays on linux, try to edit `/opt/android-meth
 
 # Building
 ## App
-Execute `./gradlew clean :app:buildInstaller` , release will be placed at `app/build/release`
+Execute `./gradlew clean :app:fatJar` , release will be placed at `app/build/libs`
 
 ## Plugin
-Execute `./gradlew clean :plugin:buildPlugin` , plugin wiil be placed at `plugin/build/`
+Execute `./gradlew clean :plugin:buildPlugin` , plugin will be placed at `plugin/build/distributions`
 
 # License
 

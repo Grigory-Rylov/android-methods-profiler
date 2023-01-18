@@ -14,11 +14,8 @@ plugins {
     id 'idea'
 }
 
-def use_jdk8 = project.hasProperty("use_jdk8")
 
-if (!use_jdk8) {
-    idea.project.jdkName = '11'
-}
+idea.project.jdkName = '11'
 
 allprojects {
     apply plugin: "kotlin"
@@ -44,6 +41,6 @@ allprojects {
 subprojects {
     apply plugin: 'idea'
     ext {
-        productVersion = '22.08.10.0'
+        productVersion = '23.01.16.0'
     }
 }

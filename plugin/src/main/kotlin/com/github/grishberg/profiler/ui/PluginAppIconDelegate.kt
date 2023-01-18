@@ -1,12 +1,8 @@
 package com.github.grishberg.profiler.ui
 
-import com.android.tools.adtui.ImageUtils
 import com.intellij.openapi.util.IconLoader
-import com.intellij.util.IconUtil
-import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.UIUtil
 import java.awt.Frame
-import java.awt.image.BufferedImage
+import javax.swing.Icon
 import javax.swing.ImageIcon
 import javax.swing.JLabel
 
@@ -20,18 +16,11 @@ class PluginAppIconDelegate(private val iconSize: Int = ICON_SIZE) : AppIconDele
         iconLabel.icon = imageIcon
     }
 
-    override fun loadIcon(path: String, altText: String): ImageIcon {
+    override fun loadIcon(path: String, altText: String): Icon {
         val icon = IconLoader.getIcon("/$path", this.javaClass)
-        val image: BufferedImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon))
-        if (UIUtil.isRetina()) {
-            val retinaIcon = getRetinaIcon(image)
-            if (retinaIcon != null) {
-                return retinaIcon
-            }
+        if (icon is ImageIcon) {
+            icon.setDescription(altText)
         }
-        return ImageIcon(image, altText)
+        return icon
     }
-
-    private fun getRetinaIcon(image: BufferedImage) =
-        takeIf { UIUtil.isRetina() }?.let { ImageUtils.convertToRetina(image) }?.let { RetinaImageIcon(it) }
 }
