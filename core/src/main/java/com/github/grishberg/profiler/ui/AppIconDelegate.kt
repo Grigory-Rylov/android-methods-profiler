@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.ui
 
 import java.awt.Frame
-import javax.swing.ImageIcon
+import javax.swing.Icon
 import javax.swing.JLabel
 
 interface AppIconDelegate {
@@ -9,5 +9,5 @@ interface AppIconDelegate {
 
     fun updateLoadingIcon(label: JLabel)
 
-    fun loadIcon(name: String, altText: String = ""): ImageIcon
+    fun loadIcon(name: String, altText: String = ""): Icon
 }
