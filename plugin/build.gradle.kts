@@ -24,7 +24,7 @@ repositories {
 }
 
 intellij {
-    pluginName.set(properties("pluginName"))
+    pluginName.set("plugin_".plus(properties("pluginName")))
     version.set(properties("platformVersion"))
     type.set(properties("platformType"))
 
