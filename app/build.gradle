@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm'
@@ -11,6 +13,14 @@ group = properties("pluginGroup")
 version = properties("pluginVersion")
 
 sourceCompatibility = 11
+
+java.sourceSets.main.java {
+    if (OperatingSystem.current().isMacOsX()) {
+        srcDir 'src/mac/java'
+    } else {
+        srcDir 'src/default/java'
+    }
+}
 
 repositories {
     mavenCentral()
@@ -53,11 +63,30 @@ task fatJar(type: Jar) {
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    baseName = 'android-methods-profiler'
+    archivesBaseName = 'yamp'
+
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
         exclude "MaterialUISwingDemo*.class" exclude "module-info.class"
     }
     with jar
+}
+
+String installerScript = ""
+if (OperatingSystem.current().isLinux()) {
+    installerScript = "build_scripts/linuxApplication"
+} else if (OperatingSystem.current().isWindows()) {
+    installerScript = ""
+} else if (OperatingSystem.current().isMacOsX()) {
+    installerScript = "build_scripts/macosx.sh"
+}
+
+// ./gradlew clean buildInstaller
+task buildInstaller(type: Exec) {
+    dependsOn fatJar
+    workingDir '.'
+    println("Current WD: " + workingDir)
+    commandLine "./${installerScript}"
+    args version
 }
