@@ -16,7 +16,7 @@ plugins {
 fun properties(key: String) = project.findProperty(key).toString()
 
 group = properties("pluginGroup")
-version = properties("pluginVersion")
+version = properties("yampVersion")
 
 // Configure project's dependencies
 repositories {
@@ -59,7 +59,7 @@ dependencies {
 tasks {
 
     patchPluginXml {
-        version.set(properties("pluginVersion"))
+        version.set(properties("yampVersion"))
         sinceBuild.set(properties("pluginSinceBuild"))
         untilBuild.set(properties("pluginUntilBuild"))
 

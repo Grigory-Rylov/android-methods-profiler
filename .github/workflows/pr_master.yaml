@@ -22,9 +22,20 @@ jobs:
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
 
         with:
-          arguments: jatJar
+          arguments: fatJar
+
+      - name : Retrieve Version
+        run: |
+          echo "::set-output name=VERSION_NAME::$(${{github.workspace}}/gradlew -q printVersionName)"
+        id: yamp_version
+
+      - name: Get version
+        run:
+          echo "version_name=${{steps.yamp_version.outputs.VERSION_NAME}}" >> $GITHUB_ENV
+
+      - run: echo ${{env.version_name}}
 
       - uses: actions/upload-artifact@v3
         with:
           name: Package
-          path: build/libs
+          path: app/build/libs
