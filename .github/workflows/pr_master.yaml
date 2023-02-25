@@ -37,5 +37,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: Package
+          name: yamp-${{env.version_name}}
           path: app/build/libs
