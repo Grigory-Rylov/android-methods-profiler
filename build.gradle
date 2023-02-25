@@ -38,3 +38,7 @@ allprojects {
         }
     }
 }
+
+task printVersionName {
+    println project.findProperty("yampVersion").toString()
+}
