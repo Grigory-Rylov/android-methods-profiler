@@ -51,4 +51,5 @@ class PluginState : SettingsFacade {
     override var hierarchicalStagesMode: Boolean = true
     override var shouldShowToolbar: Boolean = true
     override var caseSensitive: Boolean = false
+    var lastVersion: String = ""
 }

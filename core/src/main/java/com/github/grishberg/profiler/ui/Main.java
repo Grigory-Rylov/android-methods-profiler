@@ -433,7 +433,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 appIconDelegate);
         toolBar.add(button);
 
-        button = makeToolbarButton("New", " newFile",
+        button = makeToolbarButton("New", "newFile",
                 Actions.RECORD_NEW_TRACE,
                 "Record new method trace from device",
                 appIconDelegate);
@@ -447,13 +447,13 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             String toolTipText,
             AppIconDelegate appIconDelegate) {
 
-        String imageLocation = "images/" + iconName + ".svg";
+        String imageLocation = "images/" + iconName.strip() + ".svg";
 
         JButton button = new JButton();
         button.setActionCommand(actionCommand.name());
-        button.setToolTipText(toolTipText);
+        button.setToolTipText(toolTipText.strip());
         button.addActionListener(this);
-        button.setIcon(appIconDelegate.loadIcon(imageLocation, altText));
+        button.setIcon(appIconDelegate.loadIcon(imageLocation, altText.strip()));
         return button;
     }
 
