@@ -1,7 +1,7 @@
 package com.github.grishberg.profiler.androidstudio
 
 import com.android.ddmlib.IDevice
-import com.android.tools.idea.gradle.project.model.AndroidModuleModel
+import com.android.tools.idea.model.AndroidModel
 import com.android.tools.idea.run.activity.ActivityLocator
 import com.android.tools.idea.run.activity.DefaultActivityLocator
 import com.github.grishberg.profiler.common.AppLogger
@@ -37,7 +37,7 @@ class PluginProjectInfo(
             val facet = facets.firstOrNull()
             if (facet != null) {
                 try {
-                    val applicationId = AndroidModuleModel.get(facet)?.applicationId
+                    val applicationId = AndroidModel.get(facet)?.applicationId
                     logger.d("selected applicationId =$applicationId")
                     return applicationId
                 } catch (e: Throwable) {

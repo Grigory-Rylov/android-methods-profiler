@@ -29,6 +29,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.grishberg.profiler.androidstudio.StorageService"/>
+        <notificationGroup id="Support YAMP Notification" displayType="STICKY_BALLOON"/>
     </extensions>
 
     <actions>
