@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.8.0'
 
     repositories {
         mavenCentral()
@@ -15,7 +15,7 @@ plugins {
 }
 
 
-idea.project.jdkName = '11'
+idea.project.jdkName = '17'
 
 allprojects {
     apply plugin: "kotlin"

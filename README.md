@@ -121,6 +121,17 @@ Execute `./gradlew clean :app:fatJar` , release will be placed at `app/build/lib
 ## Plugin
 Execute `./gradlew clean :plugin:buildPlugin` , plugin will be placed at `plugin/build/distributions`
 
+# Support me if you like YAMP =)
+**ETH ERC20 tokens** : `0x25Ca16AD3c4e9BD1e6e5FDD77eDB019386B68591`
+
+**BNB BEP20 tokens** : `0x25Ca16AD3c4e9BD1e6e5FDD77eDB019386B68591`
+
+**USDT TRC20** : `TSo3X6K54nYq3S64wML4M4xFgTNiENkHwC`
+
+**BTC** : `bc1qmm5lp389scuk2hghgyzdztddwgjnxqa2awrrue`
+
+https://www.tinkoff.ru/cf/4KNjR2SMOAj
+
 # License
 
 YAMP is released under the [Apache License, Version 2.0](LICENSE.txt).
