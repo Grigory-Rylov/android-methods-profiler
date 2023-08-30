@@ -31,8 +31,9 @@ class ShowProfilerAction : AnAction() {
         val projectInfo = PluginProjectInfo(project, logger)
         val projectInfoProvider = ProjectInfoProvider(projectInfo, settings)
         val methodsColorRepository = PluginMethodsColorRepository(settings, ColorInfoAdapter(logger))
+        val adbWrapper = AsAdbWrapper(project, PluginLogger())
         val viewFactory: ViewFactory =
-            PluginDialogFactory(project.context().adb, projectInfoProvider, methodsColorRepository)
+            PluginDialogFactory(adbWrapper, projectInfoProvider, methodsColorRepository)
         val themeController = PluginThemeController()
         val framesManager: FramesManager = PluginFramesManager(
             settings,

@@ -35,17 +35,12 @@
     <actions>
         <group id="YAMP.TopMenu"
                text="YAMP"
-               description="YAMP Toolbar Menu">
+               description="YAMP toolbar menu">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="ShowProfilerAction"
                     class="com.github.grishberg.profiler.androidstudio.ShowProfilerAction"
                     text="_Launch YAMP"
-                    description="Launch Yet Another Profiler for Android"/>
+                    description="Launch yet another profiler for android"/>
         </group>
     </actions>
-    <project-components>
-        <component>
-            <implementation-class>com.github.grishberg.profiler.androidstudio.PluginContext</implementation-class>
-        </component>
-    </project-components>
 </idea-plugin>
