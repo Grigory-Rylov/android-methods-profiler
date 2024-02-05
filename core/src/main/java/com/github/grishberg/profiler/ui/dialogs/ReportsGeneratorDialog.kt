@@ -16,6 +16,7 @@ import javax.swing.JComponent
 import javax.swing.JFileChooser
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.border.EmptyBorder
 import javax.swing.filechooser.FileNameExtensionFilter
 
@@ -28,6 +29,7 @@ class ReportsGeneratorDialog(
 
     private val constructorsCheckbox: JCheckBox
     private val durationLimit: JNumberField
+    private val packageFilter: JTextField
 
     init {
         val content = JPanel()
@@ -59,6 +61,11 @@ class ReportsGeneratorDialog(
             "minimum duration", durationLimit, "If checked - will be exported only constructors"
         )
 
+        packageFilter = JTextField(20)
+        addLabelAndField(
+            content, labelConstraints, fieldConstraints,
+            "package filter", packageFilter, "If not empty - show methods with given package prefix"
+        )
         fieldConstraints.gridy++
         fieldConstraints.gridwidth = 2
 
@@ -102,11 +109,11 @@ class ReportsGeneratorDialog(
 
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             var fileToSave = fileChooser.selectedFile
-            if (fileToSave.extension.toLowerCase() != "txt") {
+            if (fileToSave.extension.lowercase() != "txt") {
                 fileToSave = File(fileToSave.absolutePath + ".txt")
             }
             settings.reportsFileDialogDir = fileToSave.parent
-            reportsGeneratorDelegate.generate(fileToSave, constructorsCheckbox.isSelected, durationLimit.value as Int)
+            reportsGeneratorDelegate.generate(fileToSave, constructorsCheckbox.isSelected, durationLimit.value as Int, packageFilter.text.trim())
             isVisible = false
         }
     }

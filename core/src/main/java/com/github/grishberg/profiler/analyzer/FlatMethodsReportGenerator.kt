@@ -12,7 +12,7 @@ class FlatMethodsReportGenerator(
     private val data: CallTracePanel.ProfilerPanelData
 ) : ReportGenerator {
 
-    override fun generate(file: File, onlyConstructor: Boolean, minimumDurationInMs: Int) {
+    override fun generate(file: File, onlyConstructor: Boolean, minimumDurationInMs: Int, packageFilter: String) {
         val fos = FileOutputStream(file)
 
         BufferedWriter(OutputStreamWriter(fos)).use { bw ->
@@ -24,7 +24,8 @@ class FlatMethodsReportGenerator(
                     it.profileData.threadEndTimeInMillisecond - it.profileData.threadStartTimeInMillisecond
                 val globalDuration =
                     it.profileData.globalEndTimeInMillisecond - it.profileData.globalStartTimeInMillisecond
-                if (threadDuration > minimumDurationInMs && (!onlyConstructor || isConstructor(it.profileData.name))) {
+                if (threadDuration > minimumDurationInMs && (!onlyConstructor || isConstructor(it.profileData.name)) &&
+                    (packageFilter.isEmpty() || it.profileData.name.startsWith(packageFilter))) {
                     bw.write(
                         String.format(
                             "%s\t%.3f\t%.3f\t%.3f\t%.3f",
