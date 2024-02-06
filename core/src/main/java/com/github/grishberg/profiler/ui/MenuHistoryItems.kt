@@ -7,7 +7,7 @@ import javax.swing.JMenu
 import javax.swing.JMenuItem
 
 private const val MAX_HISTORY_SIZE = 10
-private const val FILE_MENU_ITEMS_COUNT_BEFORE_HISTORY = 11
+private const val FILE_MENU_ITEMS_COUNT_BEFORE_HISTORY = 14
 
 
 class MenuHistoryItems(

@@ -322,7 +322,7 @@ class KeyBinder(
 
     private inner class GenerateReportsAction : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
-            dialogDelegate.showReportsDialog()
+            dialogDelegate.showCurrentThreadMethodsReportsDialog()
         }
     }
 

@@ -3,7 +3,6 @@ package com.github.grishberg.profiler.ui.dialogs
 import com.github.grishberg.profiler.analyzer.ReportGenerator
 import com.github.grishberg.profiler.common.JNumberField
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.ui.Main
 import java.awt.Frame
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -58,7 +57,7 @@ class ReportsGeneratorDialog(
         durationLimit.value = 0
         addLabelAndField(
             content, labelConstraints, fieldConstraints,
-            "minimum duration", durationLimit, "If checked - will be exported only constructors"
+            "minimum duration", durationLimit, "Minimum global time duration in ms"
         )
 
         packageFilter = JTextField(20)
@@ -113,7 +112,12 @@ class ReportsGeneratorDialog(
                 fileToSave = File(fileToSave.absolutePath + ".txt")
             }
             settings.reportsFileDialogDir = fileToSave.parent
-            reportsGeneratorDelegate.generate(fileToSave, constructorsCheckbox.isSelected, durationLimit.value as Int, packageFilter.text.trim())
+            reportsGeneratorDelegate.generate(
+                fileToSave,
+                constructorsCheckbox.isSelected,
+                durationLimit.value as Int,
+                packageFilter.text.trim()
+            )
             isVisible = false
         }
     }
