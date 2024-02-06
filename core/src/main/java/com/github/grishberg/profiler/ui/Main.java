@@ -1,6 +1,8 @@
 package com.github.grishberg.profiler.ui;
 
+import com.github.grishberg.profiler.analyzer.AllThreadsMethodsReportGenerator;
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
+import com.github.grishberg.profiler.analyzer.ReportGenerator;
 import com.github.grishberg.profiler.chart.*;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
@@ -492,6 +494,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         JMenuItem deleteCurrentFile = new JMenuItem("Delete current file");
 
+        JMenuItem generateCurrentThreadMethodsReportFor = new JMenuItem("Current thread methods duration report");
+        generateCurrentThreadMethodsReportFor.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('P'));
+
+        JMenuItem generateAllThreadMethodsReportFor = new JMenuItem("All threads methods duration report");
+
+
         file.add(openFile);
         file.add(openFileInNewWindow);
         file.add(openMappingFile);
@@ -502,6 +510,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         file.addSeparator();
         file.add(openTracesDirInExternalFileManager);
         file.add(deleteCurrentFile);
+        file.addSeparator();
+        file.add(generateCurrentThreadMethodsReportFor);
+        file.add(generateAllThreadMethodsReportFor);
+
 
         openFile.addActionListener(arg0 -> showOpenFileChooser(false));
         openFileInNewWindow.addActionListener(arg0 -> showOpenFileChooser(true));
@@ -511,6 +523,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         exportTraceWithBookmarks.addActionListener(arg0 -> exportTraceWithBookmarks());
         openTracesDirInExternalFileManager.addActionListener(arg -> openTracesDirInExternalFileManager());
         deleteCurrentFile.addActionListener(arg -> deleteCurrentFile());
+        generateCurrentThreadMethodsReportFor.addActionListener(arg -> showCurrentThreadMethodsReportsDialog());
+        generateAllThreadMethodsReportFor.addActionListener(arg -> showAllThreadReportsDialog());
+
         file.addSeparator();
         return file;
     }
@@ -1142,10 +1157,32 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void showReportsDialog() {
+    public void showCurrentThreadMethodsReportsDialog() {
+        final TraceContainer currentResultContainer = resultContainer;
+        if (currentResultContainer == null) {
+            log.d("There is no any opened trace file");
+            return;
+        }
         hoverInfoPanel.hidePanel();
 
-        FlatMethodsReportGenerator generator = new FlatMethodsReportGenerator(chart.getData());
+        FlatMethodsReportGenerator generator = new FlatMethodsReportGenerator(chart.getCurrentThreadMethods(), chart.getData().markersData);
+        ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator);
+        reportsGeneratorDialog.pack();
+
+        reportsGeneratorDialog.setLocationRelativeTo(frame);
+        reportsGeneratorDialog.setVisible(true);
+    }
+
+    @Override
+    public void showAllThreadReportsDialog() {
+        final TraceContainer currentResultContainer = resultContainer;
+        if (currentResultContainer == null) {
+            log.d("There is no any opened trace file");
+            return;
+        }
+        hoverInfoPanel.hidePanel();
+
+        final ReportGenerator generator = new AllThreadsMethodsReportGenerator(currentResultContainer.getResult());
         ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator);
         reportsGeneratorDialog.pack();
 

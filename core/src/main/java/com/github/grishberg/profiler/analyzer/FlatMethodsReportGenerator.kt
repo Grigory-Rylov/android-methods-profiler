@@ -1,41 +1,51 @@
 package com.github.grishberg.profiler.analyzer
 
-import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.chart.BookmarksRectangle
 import com.github.grishberg.profiler.chart.CallTracePanel
+import com.github.grishberg.profiler.core.ProfileData
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 
 class FlatMethodsReportGenerator(
-    private val data: CallTracePanel.ProfilerPanelData
+    private val profileData: List<ProfileData>,
+    private val markers: List<BookmarksRectangle> = emptyList(),
 ) : ReportGenerator {
 
-    override fun generate(file: File, onlyConstructor: Boolean, minimumDurationInMs: Int) {
+    override fun generate(
+        file: File,
+        onlyConstructor: Boolean,
+        minimumDurationInMs: Int,
+        packageFilter: String
+    ) {
         val fos = FileOutputStream(file)
 
         BufferedWriter(OutputStreamWriter(fos)).use { bw ->
             bw.write("name\tglobal time\tthread time\tglobal self time\tthread self time")
             bw.newLine()
 
-            data.profileData.forEach {
-                val threadDuration =
-                    it.profileData.threadEndTimeInMillisecond - it.profileData.threadStartTimeInMillisecond
-                val globalDuration =
-                    it.profileData.globalEndTimeInMillisecond - it.profileData.globalStartTimeInMillisecond
-                if (threadDuration > minimumDurationInMs && (!onlyConstructor || isConstructor(it.profileData.name))) {
+            profileData.forEach {
+                val threadDuration = it.threadEndTimeInMillisecond - it.threadStartTimeInMillisecond
+                val globalDuration = it.globalEndTimeInMillisecond - it.globalStartTimeInMillisecond
+                if (threadDuration > minimumDurationInMs && (!onlyConstructor || isConstructor(it.name)) && (packageFilter.isEmpty() || it.name.startsWith(
+                        packageFilter
+                    ))
+                ) {
                     bw.write(
                         String.format(
                             "%s\t%.3f\t%.3f\t%.3f\t%.3f",
-                            it.profileData.name, globalDuration, threadDuration,
-                            it.profileData.globalSelfTime, it.profileData.threadSelfTime
+                            it.name,
+                            globalDuration,
+                            threadDuration,
+                            it.globalSelfTime,
+                            it.threadSelfTime
                         )
                     )
                     bw.newLine()
                 }
 
-                val markerRectangle = findMarkerForElement(it.profileData)
+                val markerRectangle = findMarkerForElement(it)
                 if (markerRectangle != null) {
                     bw.write("<marker>: ${markerRectangle.name}")
                     bw.newLine()
@@ -45,7 +55,7 @@ class FlatMethodsReportGenerator(
     }
 
     private fun findMarkerForElement(profileData: ProfileData): BookmarksRectangle? {
-        for (marker in data.markersData) {
+        for (marker in markers) {
             if (marker.isForElement(profileData)) {
                 return marker
             }
