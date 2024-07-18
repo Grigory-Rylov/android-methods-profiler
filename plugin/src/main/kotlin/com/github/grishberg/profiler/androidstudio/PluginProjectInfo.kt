@@ -5,29 +5,37 @@ import com.android.tools.idea.model.AndroidModel
 import com.android.tools.idea.run.activity.ActivityLocator
 import com.android.tools.idea.run.activity.DefaultActivityLocator
 import com.github.grishberg.profiler.common.AppLogger
+import com.intellij.facet.FacetManager
+import com.intellij.openapi.module.ModuleManager
 import com.github.grishberg.profiler.ui.dialogs.recorder.ProjectInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.android.facet.AndroidFacet
 import org.jetbrains.android.sdk.AndroidSdkUtils
-import org.jetbrains.android.util.AndroidUtils
 
 class PluginProjectInfo(
-    project: Project,
-    private val logger: AppLogger
+    project: Project, private val logger: AppLogger
 ) : ProjectInfo {
+
     override val packageName: String?
     override val activityName: String?
 
     init {
-        val facets = AndroidUtils.getApplicationFacets(project)
+        val facets = getAndroidFacets(project)
         packageName = createPackageName(facets)
         val devices = AndroidSdkUtils.getDebugBridge(project)?.devices ?: emptyArray()
         activityName = try {
             getDefaultActivityName(facets, devices)
         } catch (e: ActivityLocator.ActivityLocatorException) {
             null
+        }
+    }
+
+    fun getAndroidFacets(project: Project): List<AndroidFacet> {
+        val modules = ModuleManager.getInstance(project).modules
+        return modules.flatMap { module ->
+            FacetManager.getInstance(module).allFacets.filterIsInstance<AndroidFacet>()
         }
     }
 
