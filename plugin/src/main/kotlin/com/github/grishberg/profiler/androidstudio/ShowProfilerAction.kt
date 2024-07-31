@@ -24,7 +24,7 @@ class ShowProfilerAction : AnAction() {
     }
 
     private fun actionPerformed(e: AnActionEvent, project: Project) {
-        val settings: PluginState = StorageService.getInstance().state ?: PluginState()
+        val settings: PluginState = StorageService.getInstance(project).state ?: PluginState()
         settings.updateBaseDir(project)
 
         val logger = PluginLogger()
