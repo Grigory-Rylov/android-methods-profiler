@@ -61,7 +61,7 @@ tasks {
 
         changeNotes.set(
             """
-            Fixed Android Studio Giraffe support.<br>
+            Fixed Android Studio Koala support.<br>
           """
         )
     }

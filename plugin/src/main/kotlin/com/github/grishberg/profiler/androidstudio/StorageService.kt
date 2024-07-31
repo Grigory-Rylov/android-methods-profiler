@@ -1,13 +1,12 @@
 package com.github.grishberg.profiler.androidstudio
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.project.Project
 
 @State(
-    name = "PluginSettingsState",
-    storages = [Storage("yamp-settings.xml")]
+    name = "PluginSettingsState", storages = [Storage("yamp-settings.xml")]
 )
 class StorageService : PersistentStateComponent<PluginState> {
     private var storage = PluginState()
@@ -20,8 +19,8 @@ class StorageService : PersistentStateComponent<PluginState> {
 
     companion object {
         @JvmStatic
-        fun getInstance(): PersistentStateComponent<PluginState> {
-            return ServiceManager.getService(StorageService::class.java)
+        fun getInstance(project: Project): PersistentStateComponent<PluginState> {
+            return project.getService(StorageService::class.java)
         }
     }
 }
