@@ -39,6 +39,7 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
     private final Rectangle visibleScreenBounds = new Rectangle();
 
     private ScrollBoundsStrategy boundsStrategy;
+    private Point2D dataLeftTopCorner = new Point2D.Double();
     private Point2D dataRightBottomCorner = new Point2D.Double();
 
     public ZoomAndPanDelegate(Component targetComponent, int topOffset, ScrollBoundsStrategy boundsStrategy) {
@@ -50,9 +51,11 @@ public class ZoomAndPanDelegate implements MouseListener, MouseMotionListener, M
         targetComponent.addMouseWheelListener(this);
     }
 
-    public void updateRightBottomCorner(double maxX, double maxY) {
+    public void updateBounds(double minX, double maxX, double maxY) {
         dataRightBottomCorner.setLocation(maxX, maxY);
+        dataLeftTopCorner.setLocation(minX, 0.0);
     }
+
 
     public void setMouseEventsListener(MouseEventsListener l) {
         mouseEventsListener = l;

@@ -39,7 +39,7 @@ class CalledStacktrace(
         addChildrenStrategy = findChildrenStrategy
         clearAllData()
         lastSelectedElement = profileData
-        renderer.currentThreadId = threadId
+        renderer.setCurrentThreadId(threadId)
 
         if (foundProfileData.isNotEmpty()) {
             dependenciesFoundAction?.onDependenciesFound(foundProfileData)
@@ -68,7 +68,7 @@ class CalledStacktrace(
         if (!found.name.endsWith(".<init>")) {
             return
         }
-        renderer.currentThreadId = threadId
+        renderer.setCurrentThreadId(threadId)
         lastSelectedElement = found
 
         //TODO: use coroutine
@@ -111,7 +111,7 @@ class CalledStacktrace(
     ) {
         addChildrenStrategy = findDaggerCallerMethodStrategy
         clearAllData()
-        renderer.currentThreadId = threadId
+        renderer.setCurrentThreadId(threadId)
         lastSelectedElement = found
         lastDaggerFactory = null
 
@@ -180,7 +180,7 @@ class CalledStacktrace(
 
     fun removeElements() {
         lastSelectedElement = null
-        renderer.currentThreadId = -1
+        renderer.setCurrentThreadId(-1)
         clearAllData()
     }
 

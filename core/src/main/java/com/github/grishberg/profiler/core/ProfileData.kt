@@ -11,4 +11,5 @@ interface ProfileData {
     val globalSelfTime: Double
     val parent: ProfileData?
     val children: List<ProfileData>
+    val extendedData: ExtendedData?
 }

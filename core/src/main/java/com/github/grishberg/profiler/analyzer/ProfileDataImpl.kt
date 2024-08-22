@@ -1,5 +1,6 @@
 package com.github.grishberg.profiler.analyzer
 
+import com.github.grishberg.profiler.core.ExtendedData
 import com.github.grishberg.profiler.core.ProfileData
 
 data class ProfileDataImpl(
@@ -11,7 +12,8 @@ data class ProfileDataImpl(
     override var globalEndTimeInMillisecond: Double = -1.0,
     override var threadSelfTime: Double = 0.0,
     override var globalSelfTime: Double = 0.0,
-    override var parent: ProfileDataImpl? = null
+    override var parent: ProfileDataImpl? = null,
+    override var extendedData: ExtendedData? = null,
 ) : ProfileData {
     private val _children = mutableListOf<ProfileDataImpl>()
     override val children: List<ProfileDataImpl> = _children

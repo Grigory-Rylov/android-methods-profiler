@@ -7,7 +7,10 @@ import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 
 interface SelectionRenderer {
-    var currentThreadId: Int
+    val currentThreadId: Int
+
+    fun setCurrentThreadId(id: Int)
+
     fun draw(
         g: Graphics2D, at: AffineTransform, fm: FontMetrics, threadId: Int,
         selected: ProfileRectangle?,
@@ -40,7 +43,13 @@ class ElementsSelectionRenderer(
     private val callTraceItems = mutableListOf<ProfileRectangle>()
     private var callerRectangles = mutableListOf<ProfileRectangle>()
 
-    override var currentThreadId = -1
+    private var _currentThreadId = -1
+    override val currentThreadId
+        get() = _currentThreadId
+
+    override fun setCurrentThreadId(id: Int) {
+        _currentThreadId = id
+    }
 
     override fun draw(
         g: Graphics2D, at: AffineTransform, fm: FontMetrics, threadId: Int,
@@ -131,7 +140,7 @@ class ElementsSelectionRenderer(
     }
 
     override fun clear() {
-        currentThreadId = -1
+        _currentThreadId = -1
         callTraceItems.clear()
         callerRectangles.clear()
     }

@@ -18,16 +18,16 @@ class PreviewImageFactoryImpl(
     private val methodHeight = 2
 
     override fun createPreview(
-        width: Int,
-        height: Int,
+        panelWidthPx: Int,
+        panelHeightPx: Int,
         result: AnalyzerResult,
         threadId: Int,
         previewType: PreviewType
     ): BufferedImage {
-        val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+        val image = BufferedImage(panelWidthPx, panelHeightPx, BufferedImage.TYPE_INT_RGB)
 
         val g = image.createGraphics()
-        drawMethods(result, threadId, previewType, g, width, height)
+        drawMethods(result, threadId, previewType, g, panelWidthPx, panelHeightPx)
         return image
     }
 
@@ -41,13 +41,18 @@ class PreviewImageFactoryImpl(
         g.fillRect(0, 0, width, height)
 
         g.scale(1.0, 0.5)
+        val minLeft = when (previewType) {
+            PreviewType.PREVIEW_GLOBAL -> result.globalTimeBounds.getValue(threadId).minTime
+            PreviewType.PREVIEW_THREAD -> result.threadTimeBounds.getValue(threadId).minTime
+            PreviewType.THREAD_SWITCHER -> result.globalTimeBounds.getValue(result.mainThreadId).minTime
+        }
         val maxRight = when (previewType) {
             PreviewType.PREVIEW_GLOBAL -> result.globalTimeBounds.getValue(threadId).maxTime
             PreviewType.PREVIEW_THREAD -> result.threadTimeBounds.getValue(threadId).maxTime
             PreviewType.THREAD_SWITCHER -> result.globalTimeBounds.getValue(result.mainThreadId).maxTime
         }
 
-        val widthFactor: Double = maxRight / width
+        val widthFactor: Double = (maxRight - minLeft) / width
 
         val methods = result.data.getValue(threadId)
 
@@ -71,7 +76,7 @@ class PreviewImageFactoryImpl(
             val w = (right - left) / widthFactor
             val h = bottom - top
 
-            val l = left / widthFactor
+            val l = (left - minLeft) / widthFactor
 
             g.fillRect(l.toInt(), top, w.toInt(), h)
         }
@@ -93,7 +98,7 @@ class PreviewImageFactoryImpl(
             val w = (right - left) / widthFactor
             val h = result.maxLevel * methodHeight
 
-            val l = left / widthFactor
+            val l = (left - minLeft) / widthFactor
             g.color = bookmark.color
             g.fillRect(l.toInt(), 0, ceil(w).toInt(), h)
         }
