@@ -2,6 +2,7 @@ package com.github.grishberg.profiler.analyzer
 
 import com.github.grishberg.profiler.common.TestLogger
 import java.io.File
+import junit.framework.TestCase
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 
@@ -13,6 +14,14 @@ internal class TraceAnalyzerTest {
     fun `test simplePerf trace parsing`() {
         val result = underTest.analyze(getSimplePerfFile())
         assertNotNull(result)
+
+        TestCase.assertEquals(24, result.threads.size)
+
+        val mainThreadData = result.data[result.mainThreadId]
+
+        assertNotNull(mainThreadData)
+
+        TestCase.assertEquals(38319, mainThreadData!!.size)
     }
 
     @Test
