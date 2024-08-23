@@ -61,7 +61,7 @@ tasks {
 
         changeNotes.set(
             """
-            Fixed Android Studio Koala support.<br>
+            Support SimplePerf viewer.<br>
           """
         )
     }
