@@ -7,7 +7,6 @@ import java.awt.FontMetrics
 import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 import java.awt.geom.Line2D
-import java.util.ArrayList
 
 private const val AXISES_COUNT = 10
 private const val MINIMUM_DURATION = 1.0 / 1000000000.0
@@ -21,6 +20,7 @@ class Grid(
     private val labelFont: Font,
     private val labelFontMetrics: FontMetrics
 ) {
+
     private val labelColor = Color(246, 255, 241)
     private val lineColor = Color(191, 198, 187, 120)
 
@@ -60,6 +60,8 @@ class Grid(
             return
         }
         val transformedScreenWidth = screenRight - screenLeft
+        //adjustScale(screenWidth.toDouble())
+
         while (transformedScreenWidth < minScreenRange) {
             if (distance / k < MINIMUM_DURATION) {
                 return
@@ -84,6 +86,7 @@ class Grid(
         while (distance > 0 && firstLineX < screenLeft && firstLineX - distance < screenLeft) {
             firstLineX += distance
         }
+
         var x: Double = firstLineX
 
         var n = 0

@@ -1,20 +1,27 @@
 package com.github.grishberg.profiler.chart
 
-import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.ProfileDataImpl
 import com.github.grishberg.profiler.common.AppLogger
+import com.github.grishberg.profiler.core.ProfileData
 import com.nhaarman.mockitokotlin2.mock
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import java.awt.FontMetrics
 import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 internal class CalledStacktraceTest {
+
     val callers = mutableListOf<ProfileData>()
     val callTraceItems = mutableListOf<ProfileData>()
     val renderer = object : SelectionRenderer {
-        override var currentThreadId: Int = -1
+        private var _currentThreadId: Int = -1
+        override val currentThreadId: Int
+            get() = _currentThreadId
+
+        override fun setCurrentThreadId(id: Int) {
+            _currentThreadId = id
+        }
 
         override fun draw(
             g: Graphics2D,
@@ -57,23 +64,18 @@ internal class CalledStacktraceTest {
     val createdStubDrawable = profileData("stub.CustomPanelStubDrawable.<init>")
     val createdChildDimensionProvider = profileData("common.DimensionProvider.<init>")
     val caller = profileData("panel.CustomPanelController.<init>")
-    val parent = profileData("MainActivity.onCreate")
-        .child("di.DaggerCustomPanelComponent.getPanelController").apply {
+    val parent = profileData("MainActivity.onCreate").child("di.DaggerCustomPanelComponent.getPanelController").apply {
             child("panel.CustomPanelDataSource.<init>")
-            child("dagger.internal.DoubleCheck.get")
-                .child("di.CustomPanelModule_ProvideCustomPanelViewFactory.get")
+            child("dagger.internal.DoubleCheck.get").child("di.CustomPanelModule_ProvideCustomPanelViewFactory.get")
                 .child("di.CustomPanelModule_ProvideCustomPanelViewFactory.get").apply {
                     child("common.DimensionProvider_Factory.get").child("common.DimensionProvider_Factory.get")
-                        .child("common.DimensionProvider_Factory.newInstance")
-                        .addChild(createdChildDimensionProvider)
+                        .child("common.DimensionProvider_Factory.newInstance").addChild(createdChildDimensionProvider)
                     child("di.CustomPanelModule_ProvideCustomPanelViewFactory.provideCustomPanelView").apply {
-                        child("di.CustomPanelModule.provideCustomPanelView")
-                            .addChild(customPanelView)
+                        child("di.CustomPanelModule.provideCustomPanelView").addChild(customPanelView)
                         child("dagger.internal.Preconditions.checkNotNull")
                     }
                 }
-            child("di.DaggerCustomPanelComponent.getCustomPanelStubDrawable")
-                .addChild(createdStubDrawable)
+            child("di.DaggerCustomPanelComponent.getCustomPanelStubDrawable").addChild(createdStubDrawable)
             addChild(caller)
         }
 

@@ -6,6 +6,7 @@ import com.github.grishberg.profiler.comparator.findAllOf
 import com.github.grishberg.profiler.comparator.aggregator.model.AggregatedFlameProfileDataImpl
 import com.github.grishberg.profiler.comparator.aggregator.model.ComparableFlameChildHolder
 import com.github.grishberg.profiler.comparator.aggregator.model.FlameProfileData
+import com.github.grishberg.profiler.core.ExtendedData
 import kotlin.math.min
 
 private const val INCLUDE_METHOD_THRESHOLD = 0.4
@@ -135,6 +136,7 @@ class FlameChartAggregator {
             override val threadEndTimeInMillisecond = Double.MAX_VALUE
             override val threadSelfTime = Double.MAX_VALUE
             override val threadStartTimeInMillisecond = Double.MIN_VALUE
+            override val extendedData: ExtendedData? =  null
         }
 
         processChildrenToAggregate(listOf(fakeParent), fakeRoot)

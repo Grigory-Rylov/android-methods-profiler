@@ -12,6 +12,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.github.Grishberg:simpleperf-parser:1.0.6'
     implementation 'com.github.Grigory-Rylov:adb-facade-core:0.1.8'
     implementation 'com.github.Grigory-Rylov:andoid_method_trace_recorder:2.1.0'
     implementation 'com.github.Grigory-Rylov:proguard-deobfuscator:0.4.0'

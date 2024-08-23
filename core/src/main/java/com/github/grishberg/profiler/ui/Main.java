@@ -1264,7 +1264,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                             systraceRecords);
                 }
                 pluginsFacade.setCurrentTraceProfiler(traceContainerResult);
-                ThreadItem firstThread = resultContainer.getResult().getThreads().get(0);
+                int mainThreadId = resultContainer.getResult().getMainThreadId();
+                List<ThreadItem> threads = resultContainer.getResult().getThreads();
+                ThreadItem firstThread = threads.get(0);
+
+                for (int i = 0; i < threads.size(); i++) {
+                    if (mainThreadId == threads.get(i).getThreadId()){
+                        firstThread = threads.get(i);
+                        break;
+                    }
+                }
                 switchThreadsButton.switchThread(firstThread);
                 pluginsFacade.setCurrentThread(firstThread);
             } catch (Exception e) {

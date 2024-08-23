@@ -8,4 +8,6 @@ interface AnalyzerResult {
     val threads: List<ThreadItem>
     val mainThreadId: Int
     val startTimeUs: Long // start recording time in System.upTimeInMs()
+    val minThreadTime: Double
+    val minGlobalTime: Double
 }

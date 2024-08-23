@@ -14,25 +14,13 @@ import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.comparator.model.ComparableProfileData;
 import com.github.grishberg.profiler.core.AnalyzerResult;
 import com.github.grishberg.profiler.core.ProfileData;
+import com.github.grishberg.profiler.core.ThreadTimeBounds;
 import com.github.grishberg.profiler.ui.BookMarkInfo;
 import com.github.grishberg.profiler.ui.SimpleComponentListener;
 import com.github.grishberg.profiler.ui.TimeFormatter;
 import com.github.grishberg.profiler.ui.ZoomAndPanDelegate;
 import com.github.grishberg.profiler.ui.theme.Palette;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -46,15 +34,30 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CallTracePanel extends JPanel implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
+public class CallTracePanel extends JPanel
+    implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
+
     public static final int TOP_OFFSET = 20;
     public static final int MARKER_LABEL_TEXT_MIN_WIDTH = 20;
     private static final int FIT_PADDING = 80;
     private static final int SCALE_FONT_SIZE = 13;
     private static final double NOT_FOUND_ITEM_DARKEN_FACTOR = 0.5;
     private static final double MINIMUM_WIDTH_IN_PX = 1;
-    private static final AnalyzerResultImpl RESULT_STUB = new AnalyzerResultImpl(Collections.emptyMap(), Collections.emptyMap(), 0, Collections.emptyMap(), Collections.emptyList(), 0, -1);
+    private static final AnalyzerResultImpl RESULT_STUB =
+        new AnalyzerResultImpl(Collections.emptyMap(),
+            Collections.emptyMap(),
+            0,
+            Collections.emptyMap(),
+            Collections.emptyList(),
+            0,
+            -1,
+            0.0,
+            0.0
+        );
 
     private final FoundNavigationListener<ProfileData> foundNavigationListener;
     private boolean init = true;
@@ -68,8 +71,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private int leftSymbolOffset = 4;
     private int fontTopOffset = 4;
     private double maxRightOffset;
+    private double minLeftOffset;
     private double maxBottomOffset;
-    private double minTime;
     private int minLevel;
     private Dimension screenSize;
 
@@ -108,18 +111,20 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private final MethodsNameDrawer cellPaintDelegate = new MethodsNameDrawer(leftSymbolOffset);
     private final ElementColor colorBuffer = new ElementColor();
 
-    public CallTracePanel(TimeFormatter timeFormatter,
-                          MethodsColorImpl methodsColor,
-                          FoundNavigationListener foundInfoListener,
-                          SettingsFacade settings,
-                          AppLogger logger,
-                          DependenciesFoundAction dependenciesFoundAction,
-                          StagesFacade stagesFacade,
-                          SystraceStagesFacade systraceStagesFacade,
-                          Bookmarks bookmarks,
-                          PreviewImageRepository previewImageRepository,
-                          CallTracePreviewPanel previewPanel,
-                          Palette palette) {
+    public CallTracePanel(
+        TimeFormatter timeFormatter,
+        MethodsColorImpl methodsColor,
+        FoundNavigationListener foundInfoListener,
+        SettingsFacade settings,
+        AppLogger logger,
+        DependenciesFoundAction dependenciesFoundAction,
+        StagesFacade stagesFacade,
+        SystraceStagesFacade systraceStagesFacade,
+        Bookmarks bookmarks,
+        PreviewImageRepository previewImageRepository,
+        CallTracePreviewPanel previewPanel,
+        Palette palette
+    ) {
         this.timeFormatter = timeFormatter;
         this.methodsColor = methodsColor;
         this.foundNavigationListener = foundInfoListener;
@@ -130,7 +135,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         this.previewImageRepository = previewImageRepository;
         this.previewPanel = previewPanel;
         this.palette = palette;
-        this.zoomAndPanDelegate = new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
+        this.zoomAndPanDelegate =
+            new ZoomAndPanDelegate(this, TOP_OFFSET, new ZoomAndPanDelegate.LeftTopBounds());
         this.bookmarks = bookmarks;
         stagesFacade.setRepaintDelegate(this);
         stagesFacade.setLabelPaintDelegate(this);
@@ -185,9 +191,11 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
                 double offset = 0;
                 if (isThreadTime) {
-                    offset = result.getThreadTimeBounds().get(currentThreadId).getMaxTime() * offsetInPercent;
+                    offset = result.getThreadTimeBounds().get(currentThreadId).getMaxTime() *
+                        offsetInPercent;
                 } else {
-                    offset = result.getGlobalTimeBounds().get(currentThreadId).getMaxTime() * offsetInPercent;
+                    offset = result.getGlobalTimeBounds().get(currentThreadId).getMaxTime() *
+                        offsetInPercent;
                 }
                 zoomAndPanDelegate.scrollTo(offset);
             }
@@ -198,10 +206,14 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (result == RESULT_STUB) {
             return;
         }
-        PreviewType previewType = isThreadTime ? PreviewType.PREVIEW_THREAD : PreviewType.PREVIEW_GLOBAL;
-        BufferedImage cachedImage = previewImageRepository.preparePreview(currentThreadId, previewType, (image, threadId) -> {
-            previewPanel.setImage(image);
-        });
+        PreviewType previewType =
+            isThreadTime ? PreviewType.PREVIEW_THREAD : PreviewType.PREVIEW_GLOBAL;
+        BufferedImage cachedImage = previewImageRepository.preparePreview(currentThreadId,
+            previewType,
+            (image, threadId) -> {
+                previewPanel.setImage(image);
+            }
+        );
         if (cachedImage != null) {
             previewPanel.setImage(cachedImage);
         }
@@ -215,10 +227,17 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             Rectangle rect = transformedShape.getBounds();
 
             int cx = (rect.x + rect.width / 2);
-            int labelTextWidth = Math.max(labelFontMetrics.stringWidth(bookmark.getName()), MARKER_LABEL_TEXT_MIN_WIDTH);
+            int labelTextWidth = Math.max(
+                labelFontMetrics.stringWidth(bookmark.getName()),
+                MARKER_LABEL_TEXT_MIN_WIDTH
+            );
 
             // header background
-            Rectangle labelRect = new Rectangle(cx - labelTextWidth / 2 - leftSymbolOffset, 0, labelTextWidth + 2 * leftSymbolOffset, TOP_OFFSET);
+            Rectangle labelRect = new Rectangle(cx - labelTextWidth / 2 - leftSymbolOffset,
+                0,
+                labelTextWidth + 2 * leftSymbolOffset,
+                TOP_OFFSET
+            );
             if (labelRect.contains(point)) {
                 if (rightClickListener != null) {
                     rightClickListener.onBookmarkRightClicked(point.x, point.y, bookmark);
@@ -230,34 +249,35 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     public void setMouseEventListener(ZoomAndPanDelegate.MouseEventsListener l) {
-        ZoomAndPanDelegate.MouseEventsListener delegate = new ZoomAndPanDelegate.MouseEventsListener() {
-            @Override
-            public void onMouseClicked(Point point, double x, double y) {
-                l.onMouseClicked(point, x, y);
-            }
+        ZoomAndPanDelegate.MouseEventsListener delegate =
+            new ZoomAndPanDelegate.MouseEventsListener() {
+                @Override
+                public void onMouseClicked(Point point, double x, double y) {
+                    l.onMouseClicked(point, x, y);
+                }
 
-            @Override
-            public void onMouseMove(Point point, double x, double y) {
-                l.onMouseMove(point, x, y);
-            }
+                @Override
+                public void onMouseMove(Point point, double x, double y) {
+                    l.onMouseMove(point, x, y);
+                }
 
-            @Override
-            public void onMouseExited() {
-                l.onMouseExited();
-            }
+                @Override
+                public void onMouseExited() {
+                    l.onMouseExited();
+                }
 
-            @Override
-            public void onControlMouseClicked(Point point, double x, double y) {
-                l.onControlMouseClicked(point, x, y);
-                findCreatedByDagger(x, y);
-            }
+                @Override
+                public void onControlMouseClicked(Point point, double x, double y) {
+                    l.onControlMouseClicked(point, x, y);
+                    findCreatedByDagger(x, y);
+                }
 
-            @Override
-            public void onControlShiftMouseClicked(Point point, double x, double y) {
-                l.onControlShiftMouseClicked(point, x, y);
-                findDaggerCaller(x, y);
-            }
-        };
+                @Override
+                public void onControlShiftMouseClicked(Point point, double x, double y) {
+                    l.onControlShiftMouseClicked(point, x, y);
+                    findDaggerCaller(x, y);
+                }
+            };
         zoomAndPanDelegate.setMouseEventsListener(delegate);
     }
 
@@ -303,14 +323,17 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         switchThread(result.getMainThreadId());
 
         this.minLevel = 0;
-        this.minTime = 0;
 
         maxBottomOffset = calculateTopForLevel(result.getMaxLevel()) + levelHeight;
         bookmarks.set(trace.getBookmarks());
         bookmarks.setup(maxBottomOffset, isThreadTime);
 
         zoomAndPanDelegate.setTransform(new AffineTransform());
-        zoomAndPanDelegate.fitZoom(new Rectangle.Double(0, 0, maxRightOffset, maxBottomOffset), 0, ZoomAndPanDelegate.VerticalAlign.NONE);
+        zoomAndPanDelegate.fitZoom(
+            new Rectangle.Double(minLeftOffset, 0, maxRightOffset - minLeftOffset, maxBottomOffset),
+            0,
+            ZoomAndPanDelegate.VerticalAlign.NONE
+        );
         removeSelection();
         previewImageRepository.setAnalyzerResult(result);
         updatePreviewImage();
@@ -362,7 +385,9 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
         updateStages(threadId, objectsForThread);
 
-        if (rootCompareData.getProfileData().getLevel() != -1) throw new IllegalStateException("Root has level -1");
+        if (rootCompareData.getProfileData().getLevel() != -1) {
+            throw new IllegalStateException("Root has level -1");
+        }
         rebuildDataWithCompare(rootCompareData, objectsForThread);
         repaint();
     }
@@ -378,7 +403,10 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         repaint();
     }
 
-    private void updateCompare(ComparableProfileData root, Map<String, ProfileRectangle> objectsForThread) {
+    private void updateCompare(
+        ComparableProfileData root,
+        Map<String, ProfileRectangle> objectsForThread
+    ) {
         ProfileRectangle rect = createProfileRectangle(root.getProfileData());
         ProfileRectangle currentRect = objectsForThread.get(rect.toString());
         currentRect.setColor(methodsColor.getColorForCompare(root.getMark(), root.getName()));
@@ -387,7 +415,10 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         }
     }
 
-    private void rebuildDataWithCompare(ComparableProfileData root, List<ProfileRectangle> objectsForThread) {
+    private void rebuildDataWithCompare(
+        ComparableProfileData root,
+        List<ProfileRectangle> objectsForThread
+    ) {
         if (root.getProfileData().getLevel() != -1) {
             ProfileRectangle rect = createProfileRectangle(root.getProfileData());
             rect.setColor(methodsColor.getColorForCompare(root.getMark(), root.getName()));
@@ -399,23 +430,33 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     private void updateStages(int threadId, List<ProfileRectangle> objectsForThread) {
-        stagesFacade.onThreadSwitched(objectsForThread,
-                threadId == result.getMainThreadId(),
-                isThreadTime,
-                TOP_OFFSET);
-        systraceStagesFacade.onThreadSwitched(objectsForThread,
-                threadId == result.getMainThreadId(),
-                isThreadTime,
-                TOP_OFFSET);
+        stagesFacade.onThreadSwitched(
+            objectsForThread,
+            threadId == result.getMainThreadId(),
+            isThreadTime,
+            TOP_OFFSET
+        );
+        systraceStagesFacade.onThreadSwitched(
+            objectsForThread,
+            threadId == result.getMainThreadId(),
+            isThreadTime,
+            TOP_OFFSET
+        );
     }
 
     private void updateBounds(int threadId) {
         if (isThreadTime) {
-            maxRightOffset = result.getThreadTimeBounds().getOrDefault(threadId, new ThreadTimeBoundsImpl()).getMaxTime();
+            ThreadTimeBounds threadTimeBounds = result.getThreadTimeBounds()
+                .getOrDefault(threadId, new ThreadTimeBoundsImpl());
+            maxRightOffset = threadTimeBounds.getMaxTime();
+            minLeftOffset = threadTimeBounds.getMinTime();
         } else {
-            maxRightOffset = result.getGlobalTimeBounds().getOrDefault(threadId, new ThreadTimeBoundsImpl()).getMaxTime();
+            ThreadTimeBounds threadTimeBounds = result.getGlobalTimeBounds()
+                .getOrDefault(threadId, new ThreadTimeBoundsImpl());
+            maxRightOffset = threadTimeBounds.getMaxTime();
+            minLeftOffset = threadTimeBounds.getMinTime();
         }
-        zoomAndPanDelegate.updateRightBottomCorner(maxBottomOffset, maxBottomOffset);
+        zoomAndPanDelegate.updateBounds(minLeftOffset, maxRightOffset, maxBottomOffset);
     }
 
     private void rebuildData(List<ProfileRectangle> objectsForThread) {
@@ -438,11 +479,12 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         double width = right - left;
 
         return new ProfileRectangle(
-                left,
-                top,
-                width,
-                levelHeight,
-                record);
+            left,
+            top,
+            width,
+            levelHeight,
+            record
+        );
     }
 
     private void updateData() {
@@ -517,8 +559,9 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
     private void draw(Graphics2D g) {
         g.setRenderingHint(
-                RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+            RenderingHints.KEY_TEXT_ANTIALIASING,
+            RenderingHints.VALUE_TEXT_ANTIALIAS_GASP
+        );
 
         int fontSize = settings.getFontSize();
         fontName = "Arial";
@@ -536,12 +579,25 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         double screenTop = 0;
         double screenRight = 0;
         double screenBottom = 0;
+        if (result != null) {
+            Map<Integer, ThreadTimeBounds> bounds;
+            if (isThreadTime) {
+                bounds = result.getThreadTimeBounds();
+            } else {
+                bounds = result.getGlobalTimeBounds();
+            }
+            ThreadTimeBounds currentBound = bounds.get(currentThreadId);
+            if (currentBound != null) {
+                screenLeft = currentBound.getMinTime();
+            }
+        }
         g.setColor(palette.getTraceBackgroundColor());
         g.fillRect(0, 0, getWidth(), getHeight());
 
         try {
             Point2D.Double leftTop = zoomAndPanDelegate.transformPoint(new Point(0, 0));
-            Point2D.Double rightBottom = zoomAndPanDelegate.transformPoint(new Point(screenSize.width, screenSize.height));
+            Point2D.Double rightBottom =
+                zoomAndPanDelegate.transformPoint(new Point(screenSize.width, screenSize.height));
 
             screenLeft = leftTop.x;
             screenTop = leftTop.y;
@@ -558,7 +614,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
         FontMetrics fm = getFontMetrics(g.getFont());
 
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
 
         // draw rectangles
         for (int i = 0; i < objectsForThread.size(); i++) {
@@ -599,13 +656,26 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             double left = Math.max(0, bounds.x);
             double right = Math.min(screenSize.width, bounds.x + bounds.width);
             cellPaintDelegate.drawLabel(g, fm, element.profileData.getName(),
-                    left, right, bounds.y + bounds.height - fontTopOffset);
+                left, right, bounds.y + bounds.height - fontTopOffset
+            );
         }
 
         // draw selections
         @Nullable
-        ProfileRectangle selected = currentSelectedElement >= 0 ? objectsForThread.get(currentSelectedElement) : null;
-        calledStacktrace.draw(g, at, fm, currentThreadId, selected, minimumSizeInMs, screenLeft, screenTop, screenRight, screenBottom);
+        ProfileRectangle selected =
+            currentSelectedElement >= 0 ? objectsForThread.get(currentSelectedElement) : null;
+        calledStacktrace.draw(
+            g,
+            at,
+            fm,
+            currentThreadId,
+            selected,
+            minimumSizeInMs,
+            screenLeft,
+            screenTop,
+            screenRight,
+            screenBottom
+        );
 
         // toolbar background.
         g.setColor(toolbarColor);
@@ -658,25 +728,37 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             Rectangle rect = transformedShape.getBounds();
 
             int cx = (rect.x + rect.width / 2);
-            int labelTextWidth = Math.max(fm.stringWidth(bookmark.getName()), MARKER_LABEL_TEXT_MIN_WIDTH);
+            int labelTextWidth =
+                Math.max(fm.stringWidth(bookmark.getName()), MARKER_LABEL_TEXT_MIN_WIDTH);
 
             // header background
             g.setColor(bookmark.getHeaderColor());
-            g.fillRect(cx - labelTextWidth / 2 - leftSymbolOffset, 0, labelTextWidth + 2 * leftSymbolOffset, TOP_OFFSET);
+            g.fillRect(
+                cx - labelTextWidth / 2 - leftSymbolOffset,
+                0,
+                labelTextWidth + 2 * leftSymbolOffset,
+                TOP_OFFSET
+            );
 
             g.setColor(bookmark.getHeaderTitleColor());
             if (bookmark.getName().length() > 0) {
-                g.drawString(bookmark.getName(), cx - labelTextWidth / 2, labelFontMetrics.getHeight());
+                g.drawString(
+                    bookmark.getName(),
+                    cx - labelTextWidth / 2,
+                    labelFontMetrics.getHeight()
+                );
             }
         }
     }
 
     @Override
-    public void drawLabel(Graphics2D g,
-                          FontMetrics fm,
-                          String name,
-                          Rectangle horizontalBounds,
-                          int topPosition) {
+    public void drawLabel(
+        Graphics2D g,
+        FontMetrics fm,
+        String name,
+        Rectangle horizontalBounds,
+        int topPosition
+    ) {
         int leftPosition = horizontalBounds.x + leftSymbolOffset;
         if (leftPosition < 0) {
             leftPosition = 0;
@@ -696,13 +778,16 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     private void calculateColorProfileData(
-            ProfileRectangle element,
-            List<ProfileRectangle> objects) {
-        boolean isSelectedElement = currentSelectedElement >= 0 && element == objects.get(currentSelectedElement);
+        ProfileRectangle element,
+        List<ProfileRectangle> objects
+    ) {
+        boolean isSelectedElement =
+            currentSelectedElement >= 0 && element == objects.get(currentSelectedElement);
 
         if (isSearchingInProgress) {
             if (element.isFoundElement) {
-                boolean isFocusedElement = currentFocusedFoundElement >= 0 && element == foundItems.get(currentFocusedFoundElement);
+                boolean isFocusedElement = currentFocusedFoundElement >= 0 &&
+                    element == foundItems.get(currentFocusedFoundElement);
                 Color color = isSelectedElement ? selectedFoundColor : foundColor;
                 if (isFocusedElement && !isSelectedElement) {
                     color = focusedFoundColor;
@@ -731,10 +816,12 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     public static Color darker(Color color, Double darkenFactor) {
-        return new Color(Math.max((int) (color.getRed() * darkenFactor), 0),
-                Math.max((int) (color.getGreen() * darkenFactor), 0),
-                Math.max((int) (color.getBlue() * darkenFactor), 0),
-                color.getAlpha());
+        return new Color(
+            Math.max((int) (color.getRed() * darkenFactor), 0),
+            Math.max((int) (color.getGreen() * darkenFactor), 0),
+            Math.max((int) (color.getBlue() * darkenFactor), 0),
+            color.getAlpha()
+        );
     }
 
     @NotNull
@@ -824,10 +911,11 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     private int findElementIndexByXY(double x, double y) {
-        if (x < 0 || x > maxRightOffset || y < 0) {
+        if (x < minLeftOffset || x > maxRightOffset || y < 0) {
             return -1;
         }
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         for (int i = 0; i < objectsForThread.size(); i++) {
             ProfileRectangle currentElement = objectsForThread.get(i);
 
@@ -842,7 +930,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         isSearchingInProgress = true;
         foundItems.clear();
 
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         for (int i = 0; i < objectsForThread.size(); i++) {
             ProfileRectangle element = objectsForThread.get(i);
 
@@ -856,14 +945,21 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
         currentFocusedFoundElement = 0;
         ProfileRectangle element = foundItems.get(currentFocusedFoundElement);
-        foundNavigationListener.onSelected(foundItems.size(), currentFocusedFoundElement, element.profileData);
+        foundNavigationListener.onSelected(
+            foundItems.size(),
+            currentFocusedFoundElement,
+            element.profileData
+        );
         zoomAndPanDelegate.fitZoom(element, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
 
         requestFocus();
     }
 
     private void navigateToElement(Shape element) {
-        zoomAndPanDelegate.navigateToRectangle(element.getBounds2D(), ZoomAndPanDelegate.VerticalAlign.ENABLED);
+        zoomAndPanDelegate.navigateToRectangle(
+            element.getBounds2D(),
+            ZoomAndPanDelegate.VerticalAlign.ENABLED
+        );
     }
 
     private void navigateToElement(Shape element, ZoomAndPanDelegate.VerticalAlign verticalAlign) {
@@ -876,18 +972,18 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
     private void addBookmark(ProfileRectangle foundElement, Color color, String title) {
         bookmarks.add(
-                new BookmarksRectangle(
-                        title,
-                        color,
-                        foundElement.profileData.getThreadStartTimeInMillisecond(),
-                        foundElement.profileData.getThreadEndTimeInMillisecond(),
-                        foundElement.profileData.getGlobalStartTimeInMillisecond(),
-                        foundElement.profileData.getGlobalEndTimeInMillisecond(),
-                        foundElement.profileData.getLevel(),
-                        currentThreadId,
-                        maxBottomOffset,
-                        isThreadTime
-                )
+            new BookmarksRectangle(
+                title,
+                color,
+                foundElement.profileData.getThreadStartTimeInMillisecond(),
+                foundElement.profileData.getThreadEndTimeInMillisecond(),
+                foundElement.profileData.getGlobalStartTimeInMillisecond(),
+                foundElement.profileData.getGlobalEndTimeInMillisecond(),
+                foundElement.profileData.getLevel(),
+                currentThreadId,
+                maxBottomOffset,
+                isThreadTime
+            )
         );
         previewImageRepository.clear();
         updatePreviewImage();
@@ -898,7 +994,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             return;
         }
 
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         ProfileRectangle selected = objectsForThread.get(currentSelectedElement);
         addBookmark(selected, bookMarkInfo.getColor(), bookMarkInfo.getTitle());
         repaint();
@@ -945,7 +1042,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             return null;
         }
 
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         return objectsForThread.get(currentSelectedElement).profileData;
     }
 
@@ -969,7 +1067,11 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     private void focusFoundItem(int currentFocusedFoundElement) {
         ProfileRectangle found = foundItems.get(currentFocusedFoundElement);
         zoomAndPanDelegate.fitZoom(found, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
-        foundNavigationListener.onSelected(foundItems.size(), currentFocusedFoundElement, found.profileData);
+        foundNavigationListener.onSelected(
+            foundItems.size(),
+            currentFocusedFoundElement,
+            found.profileData
+        );
     }
 
     public void focusNextFoundItem() {
@@ -1029,7 +1131,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (currentSelectedElement < 0) {
             return;
         }
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         navigateToElement(objectsForThread.get(currentSelectedElement));
     }
 
@@ -1037,7 +1140,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (currentSelectedElement < 0) {
             return null;
         }
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         ProfileRectangle selected = objectsForThread.get(currentSelectedElement);
         return createStackTrace(selected);
     }
@@ -1056,7 +1160,11 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
 
     public void resetZoom() {
         zoomAndPanDelegate.setTransform(new AffineTransform());
-        zoomAndPanDelegate.fitZoom(new Rectangle.Double(0, 0, maxRightOffset, maxBottomOffset), 0, ZoomAndPanDelegate.VerticalAlign.NONE);
+        zoomAndPanDelegate.fitZoom(
+            new Rectangle.Double(minLeftOffset, 0, maxRightOffset - minLeftOffset, maxBottomOffset),
+            0,
+            ZoomAndPanDelegate.VerticalAlign.NONE
+        );
         repaint();
     }
 
@@ -1065,7 +1173,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (foundItems.size() > 0) {
             rectangle = foundItems.get(currentFocusedFoundElement);
         } else if (currentSelectedElement >= 0) {
-            List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+            List<ProfileRectangle> objectsForThread =
+                objects.getOrDefault(currentThreadId, Collections.emptyList());
             rectangle = objectsForThread.get(currentSelectedElement);
         }
 
@@ -1073,7 +1182,11 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
             return;
         }
 
-        zoomAndPanDelegate.fitZoom(rectangle, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
+        zoomAndPanDelegate.fitZoom(
+            rectangle,
+            FIT_PADDING,
+            ZoomAndPanDelegate.VerticalAlign.ENABLED
+        );
     }
 
     public void scaleScreenToRange(double start, double end) {
@@ -1129,7 +1242,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
      */
     public void selectProfileData(ProfileData selectedElement) {
         ProfileRectangle selectedRectangle = createProfileRectangle(selectedElement);
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         currentSelectedElement = objectsForThread.indexOf(selectedRectangle);
         if (currentSelectedElement < 0) {
             return;
@@ -1154,7 +1268,8 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
         if (currentSelectedElement < 0) {
             return null;
         }
-        List<ProfileRectangle> objectsForThread = objects.getOrDefault(currentThreadId, Collections.emptyList());
+        List<ProfileRectangle> objectsForThread =
+            objects.getOrDefault(currentThreadId, Collections.emptyList());
         return objectsForThread.get(currentSelectedElement);
     }
 
@@ -1194,16 +1309,21 @@ public class CallTracePanel extends JPanel implements ProfileDataDimensionDelega
     }
 
     public class ProfilerPanelData {
+
         public final List<ProfileRectangle> profileData;
         public final List<BookmarksRectangle> markersData;
 
-        public ProfilerPanelData(List<ProfileRectangle> profileData, List<BookmarksRectangle> markersData) {
+        public ProfilerPanelData(
+            List<ProfileRectangle> profileData,
+            List<BookmarksRectangle> markersData
+        ) {
             this.profileData = profileData;
             this.markersData = markersData;
         }
     }
 
     public interface OnRightClickListener {
+
         /**
          * Is called when right-clicked on bookmark.
          */
