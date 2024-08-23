@@ -1,121 +1,150 @@
-package com.github.grishberg.profiler.ui;
+package com.github.grishberg.profiler.ui
 
-import com.github.grishberg.profiler.core.ProfileData;
+import com.github.grishberg.profiler.core.ExtendedData
+import com.github.grishberg.profiler.core.ProfileData
+import java.awt.Color
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.geom.Rectangle2D
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.geom.Rectangle2D;
+class InfoPanel(private val parent: JPanel) : JComponent() {
 
-public class InfoPanel extends JComponent {
-    private static final int PADDING = 10;
-    private static final int TEXT_INNER_SPACE = 4;
-    private static final int TOP_PANEL_OFFSET = PADDING;
-    private static final int LEFT_PANEL_OFFSET = PADDING;
-    private final JPanel parent;
-    private int x;
-    private int y;
-    private int textSize = 13;
-    private String classNameText;
-    private String rangeText;
-    private String durationText;
-    private final Color backgroundColor = new Color(47, 47, 47);
-    private final Color labelColor = new Color(191, 198, 187);
-    private final Font font;
-    private boolean isThreadTime;
-    private final FontMetrics fontMetrics;
-    private int rectHeight;
-    private int rectWidth;
-    private Rectangle2D classNameRect = new Rectangle2D.Double();
-    private Rectangle2D rangeRect = new Rectangle2D.Double();
-    private Rectangle2D durationRect = new Rectangle2D.Double();
+    private var x = 0
+    private var y = 0
+    private val textSize = 13
+    private var classNameText: String? = null
+    private var rangeText: String? = null
+    private var durationText: String? = null
+    private var isUserCodeText: String? = null
+    private var fileName: String? = null
+    private var vAddress: String? = null
 
-    public InfoPanel(JPanel chart) {
-        parent = chart;
-        hidePanel();
-        font = new Font("Arial", Font.BOLD, textSize);
-        fontMetrics = getFontMetrics(font);
+    private val backgroundColor = Color(47, 47, 47)
+    private val labelColor = Color(191, 198, 187)
+    private val font: Font
+    private var isThreadTime = false
+    private val fontMetrics: FontMetrics
+    private var rectHeight = 0
+    private var rectWidth = 0
+    private var classNameRect: Rectangle2D = Rectangle2D.Double()
+    private var rangeRect: Rectangle2D = Rectangle2D.Double()
+    private var durationRect: Rectangle2D = Rectangle2D.Double()
+    private var isUserCodeRect: Rectangle2D = Rectangle2D.Double()
+    private var fileNameRect: Rectangle2D = Rectangle2D.Double()
+    private var vAddressRect: Rectangle2D = Rectangle2D.Double()
+
+    init {
+        hidePanel()
+        font = Font("Arial", Font.BOLD, textSize)
+        fontMetrics = getFontMetrics(font)
     }
 
-    public void changeTimeMode(boolean isThreadTime) {
-        this.isThreadTime = isThreadTime;
+    fun changeTimeMode(isThreadTime: Boolean) {
+        this.isThreadTime = isThreadTime
     }
 
-    public void hidePanel() {
-        setVisible(false);
+    fun hidePanel() {
+        isVisible = false
     }
 
     // use the xy coordinates to update the mouse cursor text/label
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.setFont(font);
+    override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        g.font = font
         if (rectWidth == 0 || rectHeight == 0) {
-            return;
+            return
+        }
+        var topOffset: Int
+        g.color = backgroundColor
+        g.fillRect(x, y, rectWidth, rectHeight)
+        g.color = labelColor
+        topOffset = this.y + textSize + PADDING
+        g.drawString(classNameText, x + PADDING, topOffset)
+        topOffset += TEXT_INNER_SPACE + classNameRect.height.toInt()
+        g.drawString(rangeText, x + PADDING, topOffset)
+        topOffset += TEXT_INNER_SPACE + durationRect.height.toInt()
+        g.drawString(durationText, x + PADDING, topOffset)
+
+        fileName?.let {
+            topOffset += TEXT_INNER_SPACE + fileNameRect.height.toInt()
+            g.drawString(fileName, x + PADDING, topOffset)
         }
 
-        g.setColor(backgroundColor);
-        g.fillRect(x, y, rectWidth, rectHeight);
+        vAddress?.let {
+            topOffset += TEXT_INNER_SPACE + vAddressRect.height.toInt()
+            g.drawString(vAddress, x + PADDING, topOffset)
+        }
 
-        g.setColor(labelColor);
-
-        int classNameY = this.y + textSize + PADDING;
-        g.drawString(classNameText, x + PADDING, classNameY);
-
-        int rangeTextY = classNameY + TEXT_INNER_SPACE + (int) classNameRect.getHeight();
-        g.drawString(rangeText, x + PADDING, rangeTextY);
-
-        int durationTextY = rangeTextY + TEXT_INNER_SPACE + (int) durationRect.getHeight();
-        g.drawString(durationText, x + PADDING, durationTextY);
+        isUserCodeText?.let {
+            topOffset += TEXT_INNER_SPACE + isUserCodeRect.height.toInt()
+            g.drawString(isUserCodeText, x + PADDING, topOffset)
+        }
     }
 
-    public void setText(Point point, ProfileData selectedData) {
-        Point parentLocation = parent.getLocation();
-        int topOffset = parentLocation.y;
-        int horizontalOffset = parentLocation.x;
-
-        double start;
-        double end;
-
+    fun setText(point: Point, selectedData: ProfileData) {
+        val parentLocation = parent.location
+        val topOffset = parentLocation.y
+        val horizontalOffset = parentLocation.x
+        val start: Double
+        val end: Double
         if (isThreadTime) {
-            start = selectedData.getThreadStartTimeInMillisecond();
-            end = selectedData.getThreadEndTimeInMillisecond();
+            start = selectedData.threadStartTimeInMillisecond
+            end = selectedData.threadEndTimeInMillisecond
         } else {
-            start = selectedData.getGlobalStartTimeInMillisecond();
-            end = selectedData.getGlobalEndTimeInMillisecond();
+            start = selectedData.globalStartTimeInMillisecond
+            end = selectedData.globalEndTimeInMillisecond
         }
-        rangeText = String.format("%.3f ms - %.3f ms", start, end);
-        durationText = String.format("%.3f ms", end - start);
+        rangeText = String.format("%.3f ms - %.3f ms", start, end)
+        durationText = String.format("%.3f ms", end - start)
+        classNameText = selectedData.name
+        classNameRect = fontMetrics.getStringBounds(classNameText, null)
+        rangeRect = fontMetrics.getStringBounds(rangeText, null)
+        durationRect = fontMetrics.getStringBounds(durationText, null)
+        rectHeight =
+            PADDING * 2 + classNameRect.height.toInt() + rangeRect.height.toInt() + durationRect.height.toInt() + TEXT_INNER_SPACE * 2 + PADDING / 2
 
-        classNameText = selectedData.getName();
-        classNameRect = fontMetrics.getStringBounds(classNameText, null);
-        rangeRect = fontMetrics.getStringBounds(rangeText, null);
-        durationRect = fontMetrics.getStringBounds(durationText, null);
-
-        rectHeight = PADDING * 2 + (int) classNameRect.getHeight()
-                + (int) rangeRect.getHeight()
-                + (int) durationRect.getHeight()
-                + TEXT_INNER_SPACE * 2 + PADDING / 2;
-        rectWidth = PADDING + (int) Math.max(durationRect.getWidth(),
-                Math.max(classNameRect.getWidth(), rangeRect.getWidth())) + PADDING;
-
-        x = point.x + horizontalOffset + LEFT_PANEL_OFFSET;
-        y = point.y + topOffset + TOP_PANEL_OFFSET;
-
-        if ((point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET) > 0) ||
-                (x + rectWidth - horizontalOffset > parent.getWidth() &&
-                        (point.x + horizontalOffset) > parent.getWidth() * 0.66)) {
-            x = point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET);
-        }
-
-        if (y + rectHeight - topOffset > parent.getHeight()) {
-            y = point.y + topOffset - rectHeight;
+        val extendedData = selectedData.extendedData
+        if (extendedData is ExtendedData.CppFunctionData) {
+            isUserCodeText = if (extendedData.isUserCode) "user code" else "non user code"
+            fileName = extendedData.fileName
+            vAddress = "vAddress: ${extendedData.vAddress.toString(16)}"
+            isUserCodeRect = fontMetrics.getStringBounds(isUserCodeText, null)
+            fileNameRect = fontMetrics.getStringBounds(fileName, null)
+            vAddressRect = fontMetrics.getStringBounds(vAddress, null)
+            rectHeight += TEXT_INNER_SPACE * 3 + (isUserCodeRect.height + fileNameRect.height + vAddressRect.height).toInt()
+        } else {
+            isUserCodeText = null
+            fileName = null
+            vAddress = null
         }
 
-        setVisible(true);
-        repaint();
+
+        rectWidth = PADDING + Math.max(
+            durationRect.width, Math.max(classNameRect.width, rangeRect.width)
+        ).toInt() + PADDING
+        x = point.x + horizontalOffset + LEFT_PANEL_OFFSET
+        y = point.y + topOffset + TOP_PANEL_OFFSET
+        if (point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET) > 0 || x + rectWidth - horizontalOffset > parent.width && point.x + horizontalOffset > parent.width * 0.66) {
+            x = point.x - (rectWidth + horizontalOffset + LEFT_PANEL_OFFSET)
+        }
+        if (y + rectHeight - topOffset > parent.height) {
+            y = point.y + topOffset - rectHeight
+        }
+        isVisible = true
+
+
+        repaint()
+    }
+
+    companion object {
+
+        private const val PADDING = 10
+        private const val TEXT_INNER_SPACE = 4
+        private const val TOP_PANEL_OFFSET = PADDING
+        private const val LEFT_PANEL_OFFSET = PADDING
     }
 }
