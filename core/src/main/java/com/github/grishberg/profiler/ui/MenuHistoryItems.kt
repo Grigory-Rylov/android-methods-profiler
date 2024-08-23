@@ -9,7 +9,6 @@ import javax.swing.JMenuItem
 private const val MAX_HISTORY_SIZE = 10
 private const val FILE_MENU_ITEMS_COUNT_BEFORE_HISTORY = 11
 
-
 class MenuHistoryItems(
     private val menu: JMenu,
     private val settings: SettingsFacade,
@@ -29,6 +28,9 @@ class MenuHistoryItems(
     }
 
     fun addToFileHistory(file: File) {
+        if (recentFiles.contains(file.absolutePath)) {
+            recentFiles.remove(file.absolutePath)
+        }
         recentFiles.add(0, file.absolutePath)
         val size: Int = recentFiles.size
         if (size > MAX_HISTORY_SIZE) {
