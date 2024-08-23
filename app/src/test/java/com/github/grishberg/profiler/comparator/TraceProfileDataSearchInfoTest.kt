@@ -43,6 +43,8 @@ class TraceProfileDataSearchInfoTest {
         override val startTimeUs = 0L
         override val threadTimeBounds: Map<Int, ThreadTimeBounds> = emptyMap()
         override val threads = listOf(ThreadItemImpl("test", 0))
+        override val minThreadTime: Double = 0.0
+        override val minGlobalTime: Double = 0.0
     }
 
     private val underTest = TraceProfileDataFinder(trace)
