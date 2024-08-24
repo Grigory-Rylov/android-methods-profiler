@@ -134,6 +134,8 @@ class Finder(
             val shouldEndsWithText: Boolean = textToFind.endsWith("()")
             val targetString = prepareTextToFind(shouldEndsWithText, textToFind, ignoreCase)
 
+            var totalGlobalDuration = 0.0
+            var totalThreadDuration = 0.0
             val foundMethods = mutableSetOf<ProfileData>()
             for (i in profileList.indices) {
                 val currentMethod = profileList[i]
@@ -144,11 +146,13 @@ class Finder(
                     )
                 if (isEquals) {
                     foundMethods.add(currentMethod)
+                    totalGlobalDuration = currentMethod.globalEndTimeInMillisecond - currentMethod.globalStartTimeInMillisecond
+                    totalThreadDuration = currentMethod.threadEndTimeInMillisecond - currentMethod.threadStartTimeInMillisecond
                 }
             }
             if (foundMethods.isNotEmpty()) {
                 val threadItem = analyzerResult.threads.find { it.threadId == threadId }!!
-                result.add(ThreadFindResult(foundMethods, threadId, threadItem))
+                result.add(ThreadFindResult(foundMethods, threadId, threadItem, totalGlobalDuration, totalThreadDuration))
             }
         }
 
@@ -191,7 +195,9 @@ class Finder(
     data class ThreadFindResult(
         val foundResult: Set<ProfileData>,
         val threadId: Int,
-        val threadItem: ThreadItem
+        val threadItem: ThreadItem,
+        val totalGlobalDuration: Double,
+        val totalThreadDuration: Double
     ) {
         fun hasMethod(method: ProfileData) = foundResult.contains(method)
     }
