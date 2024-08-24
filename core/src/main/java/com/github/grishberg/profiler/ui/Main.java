@@ -162,6 +162,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         switchThreadsButton = new SwitchThreadButton();
         switchThreadsButton.addActionListener(e -> showThreadsDialog());
+        switchThreadsButton.setPreferredSize(new Dimension(200,0));
         topControls.add(switchThreadsButton, BorderLayout.LINE_START);
 
         findClassText = new JTextField("");
