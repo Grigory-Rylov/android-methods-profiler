@@ -115,6 +115,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     @Nullable
     private final ComparatorUIListener comparatorUIListener;
+    private int threadsDialogSelectedItem;
+    private int threadsDialogScrollOffset;
 
     public Main(StartMode startMode,
                 SettingsFacade settings,
@@ -695,7 +697,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ThreadsViewDialog dialog = new ThreadsViewDialog(title, frame, controller, previewImageRepository, log);
         dialog.showThreads(threads);
         dialog.setLocationRelativeTo(chart);
+        dialog.restoreSelection(threadsDialogSelectedItem, threadsDialogScrollOffset);
         dialog.setVisible(true);
+        threadsDialogSelectedItem = dialog.getSelectedRow();
+        threadsDialogScrollOffset = dialog.getScrollPosition();
         return dialog.getSelectedThreadItem();
     }
 
@@ -1061,6 +1066,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public void openTraceFile(File file, SystraceRecordResult systraceRecords) {
+        threadsDialogSelectedItem = 0;
+        threadsDialogScrollOffset = 0;
         currentOpenedFile = file;
         new ParseWorker(file, systraceRecords).execute();
         showProgressDialog();
