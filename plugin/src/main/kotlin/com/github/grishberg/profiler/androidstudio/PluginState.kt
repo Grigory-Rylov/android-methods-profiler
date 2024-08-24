@@ -34,7 +34,7 @@ class PluginState : SettingsFacade {
     override var systraceStagePrefix: String = ""
     override var fileNamePrefix: String = ""
     override var bufferSize: Int = 64
-    override var sampling: Int = 60
+    override var sampling: Int = 3000
     override var activityName: String = ""
     override var packageName: String = ""
     override var androidHome: String = "<not_used>"

@@ -28,6 +28,7 @@ class PluginProjectInfo(
         activityName = try {
             getDefaultActivityName(facets, devices)
         } catch (e: ActivityLocator.ActivityLocatorException) {
+            logger.e("PluginProjectInfo: Error while fetching getDefaultActivityName", e)
             null
         }
     }

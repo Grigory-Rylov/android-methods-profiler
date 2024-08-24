@@ -401,6 +401,7 @@ class PluginMethodsRecorderDialog(
             activityNameField.isEnabled = true
             statusLabel.foreground = defaultLabelColor
             statusLabel.text = " "
+            invalidate()
         }
     }
 

@@ -1,7 +1,14 @@
 package com.github.grishberg.profiler.ui;
 
 import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
-import com.github.grishberg.profiler.chart.*;
+import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
+import com.github.grishberg.profiler.chart.Bookmarks;
+import com.github.grishberg.profiler.chart.BookmarksRectangle;
+import com.github.grishberg.profiler.chart.CallTracePanel;
+import com.github.grishberg.profiler.chart.CallTracePreviewPanel;
+import com.github.grishberg.profiler.chart.Finder;
+import com.github.grishberg.profiler.chart.FoundNavigationListener;
+import com.github.grishberg.profiler.chart.MethodsPopupMenu;
 import com.github.grishberg.profiler.chart.flame.FlameChartController;
 import com.github.grishberg.profiler.chart.flame.FlameChartDialog;
 import com.github.grishberg.profiler.chart.highlighting.MethodsColorImpl;
@@ -13,7 +20,13 @@ import com.github.grishberg.profiler.chart.stages.methods.StagesFacade;
 import com.github.grishberg.profiler.chart.stages.systrace.SystraceStagesFacade;
 import com.github.grishberg.profiler.chart.threads.ThreadsSelectionController;
 import com.github.grishberg.profiler.chart.threads.ThreadsViewDialog;
-import com.github.grishberg.profiler.common.*;
+import com.github.grishberg.profiler.common.AppLogger;
+import com.github.grishberg.profiler.common.CoroutinesDispatchersImpl;
+import com.github.grishberg.profiler.common.FileSystem;
+import com.github.grishberg.profiler.common.MainScope;
+import com.github.grishberg.profiler.common.MenuAcceleratorHelperKt;
+import com.github.grishberg.profiler.common.TraceContainer;
+import com.github.grishberg.profiler.common.UrlOpener;
 import com.github.grishberg.profiler.common.settings.SettingsFacade;
 import com.github.grishberg.profiler.common.updates.ReleaseVersion;
 import com.github.grishberg.profiler.common.updates.UpdatesChecker;
@@ -25,7 +38,12 @@ import com.github.grishberg.profiler.core.AnalyzerResult;
 import com.github.grishberg.profiler.core.ProfileData;
 import com.github.grishberg.profiler.core.ThreadItem;
 import com.github.grishberg.profiler.plugins.PluginsFacade;
-import com.github.grishberg.profiler.ui.dialogs.*;
+import com.github.grishberg.profiler.ui.dialogs.KeymapDialog;
+import com.github.grishberg.profiler.ui.dialogs.LoadingDialog;
+import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog;
+import com.github.grishberg.profiler.ui.dialogs.ReportsGeneratorDialog;
+import com.github.grishberg.profiler.ui.dialogs.ScaleRangeDialog;
+import com.github.grishberg.profiler.ui.dialogs.SetAndroidHomeDialog;
 import com.github.grishberg.profiler.ui.dialogs.highlighting.HighlightDialog;
 import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
@@ -33,16 +51,6 @@ import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDial
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
 import com.github.grishberg.profiler.ui.theme.ThemeController;
 import com.github.grishberg.tracerecorder.SystraceRecordResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,9 +58,20 @@ import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Main implements ZoomAndPanDelegate.MouseEventsListener,
-        FoundNavigationListener<ProfileData>, ActionListener, ShowDialogDelegate, CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
+    FoundNavigationListener<ProfileData>, ActionListener, ShowDialogDelegate,
+    CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
+
     @Nullable
     private File currentOpenedFile;
 
@@ -115,20 +134,24 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     @Nullable
     private final ComparatorUIListener comparatorUIListener;
+    private int threadsDialogSelectedItem;
+    private int threadsDialogScrollOffset;
 
-    public Main(StartMode startMode,
-                SettingsFacade settings,
-                AppLogger log,
-                FramesManager framesManager,
-                ThemeController themeController,
-                UpdatesChecker updatesChecker,
-                ViewFactory viewFactory,
-                UrlOpener urlOpener,
-                AppIconDelegate appIconDelegate,
-                MethodsColorRepository methodsColorRepository,
-                String appFilesDir,
-                boolean allowModalDialogs,
-                @Nullable ComparatorUIListener comparatorUIListener) {
+    public Main(
+        StartMode startMode,
+        SettingsFacade settings,
+        AppLogger log,
+        FramesManager framesManager,
+        ThemeController themeController,
+        UpdatesChecker updatesChecker,
+        ViewFactory viewFactory,
+        UrlOpener urlOpener,
+        AppIconDelegate appIconDelegate,
+        MethodsColorRepository methodsColorRepository,
+        String appFilesDir,
+        boolean allowModalDialogs,
+        @Nullable ComparatorUIListener comparatorUIListener
+    ) {
         this.settings = settings;
         this.log = log;
         this.framesManager = framesManager;
@@ -162,6 +185,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         switchThreadsButton = new SwitchThreadButton();
         switchThreadsButton.addActionListener(e -> showThreadsDialog());
+        switchThreadsButton.setPreferredSize(new Dimension(200, 0));
         topControls.add(switchThreadsButton, BorderLayout.LINE_START);
 
         findClassText = new JTextField("");
@@ -180,7 +204,6 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         foundInfo = new JLabel(DEFAULT_FOUND_INFO_MESSAGE);
         topControls.add(foundInfo, BorderLayout.LINE_END);
-
 
         previewPanel = new CallTracePreviewPanel(log);
         int gridY = 0;
@@ -237,7 +260,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 chart.fitSelectedElement();
             }
         };
-        dependenciesDialog = new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
+        dependenciesDialog =
+            new DependenciesDialogLogic(frame, settings, focusElementDelegate, log);
 
         bookmarks = new Bookmarks(settings, log);
         MainScope coroutineScope = new MainScope();
@@ -247,26 +271,29 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         methodsColor = new MethodsColorImpl(methodsColorRepository);
 
         PreviewImageFactory imageFactory = new PreviewImageFactoryImpl(themeController.getPalette(),
-                methodsColor, bookmarks);
+            methodsColor, bookmarks
+        );
         previewImageRepository = new PreviewImageRepository(imageFactory, settings, log,
-                coroutineScope, coroutinesDispatchers);
+            coroutineScope, coroutinesDispatchers
+        );
 
         methodsFinder = new Finder(coroutineScope, coroutinesDispatchers);
         methodsFinder.setListener(new MethodsFinderListener());
 
         chart = new CallTracePanel(
-                timeFormatter,
-                methodsColor,
-                this,
-                settings,
-                log,
-                dependenciesDialog,
-                stagesFacade,
-                systraceStagesFacade,
-                bookmarks,
-                previewImageRepository,
-                previewPanel,
-                themeController.getPalette());
+            timeFormatter,
+            methodsColor,
+            this,
+            settings,
+            log,
+            dependenciesDialog,
+            stagesFacade,
+            systraceStagesFacade,
+            bookmarks,
+            previewImageRepository,
+            previewPanel,
+            themeController.getPalette()
+        );
         chart.setLayout(new BorderLayout());
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
@@ -298,31 +325,35 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         searchingDialog.pack();
 
         methodTraceRecordDialog = viewFactory.createJavaMethodsRecorderDialog(
-                coroutineScope, coroutinesDispatchers, frame, settings, log);
+            coroutineScope, coroutinesDispatchers, frame, settings, log);
 
         scaleRangeDialog = new ScaleRangeDialog(frame);
 
         flameChartController = new FlameChartController(methodsColor, settings, log,
-                coroutineScope, coroutinesDispatchers);
+            coroutineScope, coroutinesDispatchers
+        );
         FlameChartDialog flameChartDialog = new FlameChartDialog(
-                flameChartController,
-                themeController.getPalette(),
-                Main.DEFAULT_FOUND_INFO_MESSAGE,
-                null);
+            flameChartController,
+            themeController.getPalette(),
+            Main.DEFAULT_FOUND_INFO_MESSAGE,
+            null
+        );
         flameChartController.setFoundInfoListener(flameChartDialog);
         flameChartController.setDialogView(flameChartDialog);
 
         pluginsFacade = new PluginsFacade(frame,
-                stagesFacade,
-                systraceStagesFacade,
-                focusElementDelegate, settings, log,
-                coroutineScope, coroutinesDispatchers);
+            stagesFacade,
+            systraceStagesFacade,
+            focusElementDelegate, settings, log,
+            coroutineScope, coroutinesDispatchers
+        );
         KeyBinder keyBinder = new KeyBinder(chart,
-                selectedClassNameLabel,
-                findClassText,
-                this,
-                newBookmarkDialog,
-                hoverInfoPanel, this);
+            selectedClassNameLabel,
+            findClassText,
+            this,
+            newBookmarkDialog,
+            hoverInfoPanel, this
+        );
         keyBinder.setUpKeyBindings();
 
         showBookmarks = new JCheckBoxMenuItem("Show bookmarks");
@@ -388,12 +419,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     @Override
     public void onUpdatesFound(@NotNull ReleaseVersion version) {
-        log.i("New version '" + version.getVersionName() + "' found, get on " + version.getRepositoryUrl());
+        log.i("New version '" + version.getVersionName() + "' found, get on " +
+            version.getRepositoryUrl());
         UpdatesInfoPanel updatesInfoPanel = dialogFactory.createUpdatesInfoPanel(
-                chart,
-                version,
-                () -> chart.getRootPane().setGlassPane(hoverInfoPanel),
-                () -> urlOpener.openUrl("https://github.com/Grigory-Rylov/android-methods-profiler/releases")
+            chart,
+            version,
+            () -> chart.getRootPane().setGlassPane(hoverInfoPanel),
+            () -> urlOpener.openUrl(
+                "https://github.com/Grigory-Rylov/android-methods-profiler/releases")
         );
         chart.getRootPane().setGlassPane(updatesInfoPanel);
         updatesInfoPanel.showUpdate();
@@ -423,29 +456,34 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
-    private void addToolbarButtons(JToolBar toolBar,
-                                   AppIconDelegate appIconDelegate) {
+    private void addToolbarButtons(
+        JToolBar toolBar,
+        AppIconDelegate appIconDelegate
+    ) {
         JButton button;
 
         button = makeToolbarButton("Open", "openFile",
-                Actions.OPEN_TRACE_FILE,
-                "Open .trace file",
-                appIconDelegate);
+            Actions.OPEN_TRACE_FILE,
+            "Open .trace file",
+            appIconDelegate
+        );
         toolBar.add(button);
 
         button = makeToolbarButton("New", "newFile",
-                Actions.RECORD_NEW_TRACE,
-                "Record new method trace from device",
-                appIconDelegate);
+            Actions.RECORD_NEW_TRACE,
+            "Record new method trace from device",
+            appIconDelegate
+        );
         toolBar.add(button);
     }
 
     private JButton makeToolbarButton(
-            String altText,
-            String iconName,
-            Actions actionCommand,
-            String toolTipText,
-            AppIconDelegate appIconDelegate) {
+        String altText,
+        String iconName,
+        Actions actionCommand,
+        String toolTipText,
+        AppIconDelegate appIconDelegate
+    ) {
 
         String imageLocation = "images/" + iconName.strip() + ".svg";
 
@@ -457,7 +495,11 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         return button;
     }
 
-    private void createMenu(JMenu fileMenu, ThemeController themeController, UpdatesChecker updatesChecker) {
+    private void createMenu(
+        JMenu fileMenu,
+        ThemeController themeController,
+        UpdatesChecker updatesChecker
+    ) {
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(fileMenu);
         menuBar.add(createViewMenu());
@@ -488,7 +530,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
         JMenuItem exportTraceWithBookmarks = new JMenuItem("Export trace with bookmarks");
         exportTraceWithBookmarks.setAccelerator(MenuAcceleratorHelperKt.createControlAccelerator('E'));
-        JMenuItem openTracesDirInExternalFileManager = new JMenuItem("Open traces dir in external FIle manager");
+        JMenuItem openTracesDirInExternalFileManager =
+            new JMenuItem("Open traces dir in external FIle manager");
 
         JMenuItem deleteCurrentFile = new JMenuItem("Delete current file");
 
@@ -528,9 +571,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (currentOpenedFile == null) {
             return;
         }
-        boolean shouldDelete = JOptionPane.showConfirmDialog(frame, "Are you wanted to delete: \n\"" + currentOpenedFile.getName() +
-                        "\" ?",
-                "Delete current file", JOptionPane.YES_NO_OPTION) == 0;
+        boolean shouldDelete = JOptionPane.showConfirmDialog(frame,
+            "Are you wanted to delete: \n\"" + currentOpenedFile.getName() +
+                "\" ?",
+            "Delete current file",
+            JOptionPane.YES_NO_OPTION
+        ) == 0;
 
         if (!shouldDelete) {
             return;
@@ -675,7 +721,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             return;
         }
 
-        ThreadItem selected = showThreadsDialog(resultContainer.getResult().getThreads(), "Select thread");
+        ThreadItem selected =
+            showThreadsDialog(resultContainer.getResult().getThreads(), "Select thread");
         if (selected == null) {
             return;
         }
@@ -691,10 +738,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     private ThreadItem showThreadsDialog(List<ThreadItem> threads, String title) {
         ThreadsSelectionController controller = new ThreadsSelectionController();
-        ThreadsViewDialog dialog = new ThreadsViewDialog(title, frame, controller, previewImageRepository, log);
+        ThreadsViewDialog dialog =
+            new ThreadsViewDialog(title, frame, controller, previewImageRepository, log);
         dialog.showThreads(threads);
         dialog.setLocationRelativeTo(chart);
+        dialog.restoreSelection(threadsDialogSelectedItem, threadsDialogScrollOffset);
         dialog.setVisible(true);
+        threadsDialogSelectedItem = dialog.getSelectedRow();
+        threadsDialogScrollOffset = dialog.getScrollPosition();
         return dialog.getSelectedThreadItem();
     }
 
@@ -815,14 +866,20 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private void showMethodInfoInTopPanel(@NotNull ProfileData selectedData) {
         boolean isThreadTime = settings.getThreadTimeMode();
 
-        double start = isThreadTime ? selectedData.getThreadStartTimeInMillisecond() : selectedData.getGlobalStartTimeInMillisecond();
-        double end = isThreadTime ? selectedData.getThreadEndTimeInMillisecond() : selectedData.getGlobalEndTimeInMillisecond();
+        double start = isThreadTime
+            ? selectedData.getThreadStartTimeInMillisecond()
+            : selectedData.getGlobalStartTimeInMillisecond();
+        double end = isThreadTime
+            ? selectedData.getThreadEndTimeInMillisecond()
+            : selectedData.getGlobalEndTimeInMillisecond();
 
         selectedClassNameLabel.setText(selectedData.getName());
-        selectedDurationLabel.setText(String.format("start: %s, end: %s, duration: %.3f ms",
-                formatMicroseconds(start),
-                formatMicroseconds(end),
-                end - start));
+        selectedDurationLabel.setText(String.format(
+            "start: %s, end: %s, duration: %.3f ms",
+            formatMicroseconds(start),
+            formatMicroseconds(end),
+            end - start
+        ));
     }
 
     @Override
@@ -858,11 +915,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             return;
         }
 
-        methodsFinder.findMethods(resultContainer.getResult(), textToFind, !caseInsensitiveToggle.isSelected());
+        methodsFinder.findMethods(
+            resultContainer.getResult(),
+            textToFind,
+            !caseInsensitiveToggle.isSelected()
+        );
         showSearchingProgressDialog();
     }
 
     private class MethodsFinderListener implements Finder.FindResultListener {
+
         @Override
         public void onFindDone(@NotNull Finder.FindResult findResult) {
             hideSerchingProgressDialog();
@@ -877,7 +939,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 return;
             }
 
-            Finder.ThreadFindResult threadFindResult = findResult.getResultForThread(currentThread.getThreadId());
+            Finder.ThreadFindResult threadFindResult =
+                findResult.getResultForThread(currentThread.getThreadId());
             if (threadFindResult == null) {
                 onResultsFoundInOtherThreads(findResult);
                 return;
@@ -893,7 +956,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private void onResultsFoundInOtherThreads(Finder.FindResult findResult) {
-        ThreadItem selectedThread = showThreadsDialog(findResult.getThreadList(), "Found results in another threads");
+        ThreadItem selectedThread =
+            showThreadsDialog(findResult.getThreadList(), "Found results in another threads");
 
         if (selectedThread != null) {
             switchThread(selectedThread);
@@ -901,9 +965,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
-    private void onResultsFoundInCurrentAndOtherThreads(Finder.ThreadFindResult threadFindResult, Finder.FindResult findResult) {
+    private void onResultsFoundInCurrentAndOtherThreads(
+        Finder.ThreadFindResult threadFindResult,
+        Finder.FindResult findResult
+    ) {
         JOptionPane.showMessageDialog(frame, "Found results in multiple threads: \n" +
-                findResult.generateFoundThreadNames());
+            findResult.generateFoundThreadNames());
 
         chart.renderFoundItems(threadFindResult);
     }
@@ -913,8 +980,21 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     @Override
-    public void onSelected(int count, int selectedIndex, ProfileData selectedElement) {
-        foundInfo.setText(String.format("found %d, current %d", count, selectedIndex));
+    public void onSelected(
+        int count,
+        int selectedIndex,
+        ProfileData selectedElement,
+        double totalGlobalDuration,
+        double totalThreadDuration
+    ) {
+        double totalDuration =
+            settings.getThreadTimeMode() ? totalThreadDuration : totalGlobalDuration;
+        foundInfo.setText(String.format(
+            "found %d, current %d, total duration: %.3f ms",
+            count,
+            selectedIndex,
+            totalDuration
+        ));
         showMethodInfoInTopPanel(selectedElement);
     }
 
@@ -928,10 +1008,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ThreadItem nextThread = methodsFinder.getNextThread();
 
         //if has any result in previous threads - ask and switch
-        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Switch to results in thread: \"" +
-                        nextThread.getName() +
-                        "\"",
-                "Switch to another thread", JOptionPane.YES_NO_OPTION) == 0;
+        boolean shouldSwitchThread =
+            JOptionPane.showConfirmDialog(frame, "Switch to results in thread: \"" +
+                    nextThread.getName() +
+                    "\"",
+                "Switch to another thread", JOptionPane.YES_NO_OPTION
+            ) == 0;
 
         if (shouldSwitchThread) {
             methodsFinder.switchNextThread();
@@ -954,10 +1036,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         ThreadItem previousThread = methodsFinder.getPreviousThread();
 
         //if has any result in previous threads - ask and switch
-        boolean shouldSwitchThread = JOptionPane.showConfirmDialog(frame, "Switch to results in thread: \"" +
-                        previousThread.getName() +
-                        "\"",
-                "Switch to another thread", JOptionPane.YES_NO_OPTION) == 0;
+        boolean shouldSwitchThread =
+            JOptionPane.showConfirmDialog(frame, "Switch to results in thread: \"" +
+                    previousThread.getName() +
+                    "\"",
+                "Switch to another thread", JOptionPane.YES_NO_OPTION
+            ) == 0;
 
         if (shouldSwitchThread) {
             methodsFinder.switchPreviousThread();
@@ -1038,10 +1122,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             setupAndroidHome();
             if (settings.getAndroidHome().length() == 0) {
                 JOptionPane.showMessageDialog(
-                        frame,
-                        "For recording need to set ANDROID_HOME env variable." +
-                                "\nIf value is already defined, start app from terminal 'java -jar android-methods-profiler.jar'" +
-                                "\nOr set 'androidHome' in " + appFilesDir + "/.android-methods-profiler-settings.json"
+                    frame,
+                    "For recording need to set ANDROID_HOME env variable." +
+                        "\nIf value is already defined, start app from terminal 'java -jar " +
+                        "android-methods-profiler.jar'" +
+                        "\nOr set 'androidHome' in " + appFilesDir +
+                        "/.android-methods-profiler-settings.json"
                 );
                 return;
             }
@@ -1060,6 +1146,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     public void openTraceFile(File file, SystraceRecordResult systraceRecords) {
+        threadsDialogSelectedItem = 0;
+        threadsDialogScrollOffset = 0;
         currentOpenedFile = file;
         new ParseWorker(file, systraceRecords).execute();
         showProgressDialog();
@@ -1134,10 +1222,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
 
     public void showErrorDialog(String title, String errorMessage) {
         JOptionPane.showMessageDialog(
-                frame,
-                errorMessage,
-                title,
-                JOptionPane.ERROR_MESSAGE
+            frame,
+            errorMessage,
+            title,
+            JOptionPane.ERROR_MESSAGE
         );
     }
 
@@ -1146,7 +1234,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         hoverInfoPanel.hidePanel();
 
         FlatMethodsReportGenerator generator = new FlatMethodsReportGenerator(chart.getData());
-        ReportsGeneratorDialog reportsGeneratorDialog = new ReportsGeneratorDialog(frame, settings, generator);
+        ReportsGeneratorDialog reportsGeneratorDialog =
+            new ReportsGeneratorDialog(frame, settings, generator);
         reportsGeneratorDialog.pack();
 
         reportsGeneratorDialog.setLocationRelativeTo(frame);
@@ -1213,6 +1302,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private class FindInMethodsAction implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             findMethods();
@@ -1220,12 +1310,14 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private class ParseWorker extends SwingWorker<WorkerResult, WorkerResult> {
+
         private final File traceFile;
         private SystraceRecordResult systraceRecords;
 
         private ParseWorker(
-                File traceFile,
-                SystraceRecordResult systraceRecords) {
+            File traceFile,
+            SystraceRecordResult systraceRecords
+        ) {
             this.traceFile = traceFile;
             this.systraceRecords = systraceRecords;
         }
@@ -1247,10 +1339,10 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 WorkerResult result = get();
                 if (result.traceContainer == null) {
                     JOptionPane.showMessageDialog(
-                            frame,
-                            result.throwable.getMessage(),
-                            "Open .trace file error",
-                            JOptionPane.ERROR_MESSAGE
+                        frame,
+                        result.throwable.getMessage(),
+                        "Open .trace file error",
+                        JOptionPane.ERROR_MESSAGE
                     );
                     return;
                 }
@@ -1260,8 +1352,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 AnalyzerResult traceContainerResult = result.traceContainer.getResult();
                 if (systraceRecords != null) {
                     systraceStagesFacade.setSystraceStages(
-                            traceContainerResult,
-                            systraceRecords);
+                        traceContainerResult,
+                        systraceRecords
+                    );
                 }
                 pluginsFacade.setCurrentTraceProfiler(traceContainerResult);
                 int mainThreadId = resultContainer.getResult().getMainThreadId();
@@ -1269,7 +1362,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
                 ThreadItem firstThread = threads.get(0);
 
                 for (int i = 0; i < threads.size(); i++) {
-                    if (mainThreadId == threads.get(i).getThreadId()){
+                    if (mainThreadId == threads.get(i).getThreadId()) {
                         firstThread = threads.get(i);
                         break;
                     }
@@ -1307,6 +1400,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private class FindTextChangedEvent implements DocumentListener {
+
         @Override
         public void insertUpdate(DocumentEvent e) {
             /* */
@@ -1326,10 +1420,9 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private static class WorkerResult {
-        @Nullable
-        final TraceContainer traceContainer;
-        @Nullable
-        final Throwable throwable;
+
+        @Nullable final TraceContainer traceContainer;
+        @Nullable final Throwable throwable;
 
         public WorkerResult(Throwable throwable) {
             this.traceContainer = null;
@@ -1343,6 +1436,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     }
 
     private class CaseChangeFlagListener implements ChangeListener {
+
         private boolean oldSelectedState = false;
 
         @Override

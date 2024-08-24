@@ -93,6 +93,8 @@ public class CallTracePanel extends JPanel
     private int currentFocusedFoundElement = -1;
     private int currentSelectedElement = -1;
     private final ArrayList<ProfileRectangle> foundItems = new ArrayList<>();
+    private double foundTotalGlobalDuration;
+    private double foundTotalThreadDuration;
     private final CalledStacktrace calledStacktrace;
     private Grid scale;
     private final SettingsFacade settings;
@@ -945,10 +947,15 @@ public class CallTracePanel extends JPanel
 
         currentFocusedFoundElement = 0;
         ProfileRectangle element = foundItems.get(currentFocusedFoundElement);
+
+        foundTotalGlobalDuration = threadFindResult.getTotalGlobalDuration();
+        foundTotalThreadDuration = threadFindResult.getTotalThreadDuration();
         foundNavigationListener.onSelected(
             foundItems.size(),
             currentFocusedFoundElement,
-            element.profileData
+            element.profileData,
+            foundTotalGlobalDuration,
+            foundTotalThreadDuration
         );
         zoomAndPanDelegate.fitZoom(element, FIT_PADDING, ZoomAndPanDelegate.VerticalAlign.ENABLED);
 
@@ -1070,7 +1077,9 @@ public class CallTracePanel extends JPanel
         foundNavigationListener.onSelected(
             foundItems.size(),
             currentFocusedFoundElement,
-            found.profileData
+            found.profileData,
+            foundTotalGlobalDuration,
+            foundTotalThreadDuration
         );
     }
 
