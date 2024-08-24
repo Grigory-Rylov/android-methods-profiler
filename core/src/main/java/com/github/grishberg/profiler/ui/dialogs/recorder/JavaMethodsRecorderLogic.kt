@@ -207,6 +207,7 @@ class JavaMethodsDialogLogic(
     }
 
     private fun idleState() {
+        view.initialState()
         state = Idle(coroutineScope, dispatchers, this, view, settings, logger, projectInfoProvider)
     }
 
