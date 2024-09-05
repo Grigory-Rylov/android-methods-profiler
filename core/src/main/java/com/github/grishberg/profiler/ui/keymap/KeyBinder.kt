@@ -1,12 +1,15 @@
-package com.github.grishberg.profiler.ui
+package com.github.grishberg.profiler.ui.keymap
 
 import com.github.grishberg.profiler.chart.CallTracePanel
+import com.github.grishberg.profiler.ui.InfoPanel
+import com.github.grishberg.profiler.ui.Main
+import com.github.grishberg.profiler.ui.ShowDialogDelegate
+import com.github.grishberg.profiler.ui.TextUtils
 import com.github.grishberg.profiler.ui.dialogs.NewBookmarkDialog
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
-import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
@@ -20,7 +23,8 @@ class KeyBinder(
     private val dialogDelegate: ShowDialogDelegate,
     private val newBookmarkDialog: NewBookmarkDialog,
     private val hoverInfoPanel: InfoPanel,
-    private val main: Main
+    private val main: Main,
+    private val keymapConfig: KeymapConfig,
 ) {
     val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
     val inputMap = profilerView.getInputMap(condition)
@@ -32,58 +36,51 @@ class KeyBinder(
         val panLeftAction = PanLeftAction()
         val panRightAction = PanRightAction()
 
-        addKeyMap(KeyEvent.VK_W, WAction())
-        addKeyMap(KeyEvent.VK_S, SAction())
-        addKeyMap(KeyEvent.VK_A, panLeftAction)
-        addKeyMap(KeyEvent.VK_LEFT, panLeftAction)
-        addKeyMap(KeyEvent.VK_D, panRightAction)
-        addKeyMap(KeyEvent.VK_RIGHT, panRightAction)
-        addKeyMap(KeyEvent.VK_UP, UpAction())
-        addKeyMap(KeyEvent.VK_DOWN, DownAction())
+        addKeyMap(keymapConfig.zoomOutKeyCode, ZoomOutAction())
+        addKeyMap(keymapConfig.zoomInActionKeyCode, ZoomInAction())
+        addKeyMap(keymapConfig.panLeftActionKeyCode, panLeftAction)
+        addKeyMap(keymapConfig.panLeftActionKeyCode, panLeftAction)
+        addKeyMap(keymapConfig.panRightActionKeyCode, panRightAction)
+        addKeyMap(keymapConfig.panRightActionKeyCode, panRightAction)
+        addKeyMap(keymapConfig.upActionKeyCode, UpAction())
+        addKeyMap(keymapConfig.downActionKeyCode, DownAction())
 
         val focusNextAction = FocusNextAction()
-        addKeyMap(KeyEvent.VK_E, focusNextAction)
         addKeyMap(KeyEvent.VK_ENTER, focusNextAction)
         addKeyMap(KeyEvent.VK_F3, focusNextAction)
-        addKeyMap(KeyEvent.VK_Q, QAction())
-        addKeyMap(KeyEvent.VK_ESCAPE, RemoveSelectionAction())
-
-        addKeyMap(KeyEvent.VK_T, TheadTimeModeAction())
-        addKeyMap(KeyEvent.VK_G, GlobalTimeModeAction())
-        addKeyMap(KeyEvent.VK_B, ToggleBookmarkModeAction())
-
-        addKeyMapWithCtrl(KeyEvent.VK_F, GoToFindAction())
-        addKeyMapWithCtrl(KeyEvent.VK_S, CopyStackTraceAction())
-        addKeyMapWithCtrl(KeyEvent.VK_O, OpenFileDialogAction())
-        addKeyMapWithCtrl(KeyEvent.VK_N, NewTraceAction())
-        addKeyMapWithCtrlShift(KeyEvent.VK_O, OpenFileDialogNewWindowAction())
-        addKeyMapWithCtrlShift(KeyEvent.VK_N, NewTraceNewWindowAction())
-
-        addKeyMapWithCtrl(KeyEvent.VK_M, FoundToMarker())
-        addKeyMapWithCtrl(KeyEvent.VK_T, ShowThreadSwitcher())
-        addKeyMapWithCtrl(KeyEvent.VK_0, SwitchToMainThread())
-        addKeyMapWithCtrl(KeyEvent.VK_I, FindAllChildren())
-        addKeyMap(KeyEvent.VK_M, AddBookmarkAction())
-        addKeyMapWithCtrl(KeyEvent.VK_C, CopySelectedFullClassNameAction())
-        addKeyMapWithCtrl(KeyEvent.VK_R, RemoveCurrentBookmarkAction())
-        addKeyMap(KeyEvent.VK_C, CenterSelectedElementAction())
-        addKeyMap(KeyEvent.VK_Z, ResetZoomAction())
-        addKeyMap(KeyEvent.VK_F, FitSelectedElementAction())
-
-        addKeyMap(KeyEvent.VK_E, InputEvent.SHIFT_MASK, NextBookmarkAction())
-        addKeyMap(KeyEvent.VK_Q, InputEvent.SHIFT_MASK, PrevBookmarkAction())
-        addKeyMapWithCtrl(KeyEvent.VK_BACK_SPACE, ClearAllBookmarksAction())
-
-        addKeyMapWithCtrl(KeyEvent.VK_P, GenerateReportsAction())
-        addKeyMapWithCtrl(KeyEvent.VK_PLUS, ChangeFontSizeAction(true))
-        addKeyMapWithCtrl(KeyEvent.VK_EQUALS, ChangeFontSizeAction(true))
-        addKeyMapWithCtrl(KeyEvent.VK_MINUS, ChangeFontSizeAction(false))
-
-        addKeyMapWithCtrlShift(KeyEvent.VK_C, CopySelectedShortClassNameAction())
-        addKeyMapWithCtrlShift(KeyEvent.VK_E, ExportTraceWithBookmarksAction())
-        addKeyMapWithCtrlAlt(KeyEvent.VK_C, CopySelectedShortClassNameWithoutMethodAction())
-
-        addKeyMapWithShift(KeyEvent.VK_R, OpenRangeDialog())
+        addKeyMap(keymapConfig.focusNextFoundItemActionKeyCode, focusNextAction)
+        addKeyMap(keymapConfig.focusPrevFoundItemActionKeyCode, FocusPrevFoundItemAction())
+        addKeyMap(keymapConfig.removeSelectionActionKeyCode, RemoveSelectionAction())
+        addKeyMap(keymapConfig.theadTimeModeActionKeyCode, TheadTimeModeAction())
+        addKeyMap(keymapConfig.globalTimeModeActionKeyCode, GlobalTimeModeAction())
+        addKeyMap(keymapConfig.toggleBookmarkModeActionKeyCode, ToggleBookmarkModeAction())
+        addKeyMapWithCtrl(keymapConfig.goToFindActionKeyCode, GoToFindAction())
+        addKeyMapWithCtrl(keymapConfig.copyStackTraceActionKeyCode, CopyStackTraceAction())
+        addKeyMapWithCtrl(keymapConfig.openFileDialogActionKeyCode, OpenFileDialogAction())
+        addKeyMapWithCtrl(keymapConfig.newTraceActionKeyCode, NewTraceAction())
+        addKeyMapWithCtrlShift(keymapConfig.openFileDialogNewWindowActionKeyCode, OpenFileDialogNewWindowAction())
+        addKeyMapWithCtrlShift(keymapConfig.newTraceNewWindowActionKeyCode, NewTraceNewWindowAction())
+        addKeyMapWithCtrl(keymapConfig.foundToMarkerKeyCode, FoundToMarker())
+        addKeyMapWithCtrl(keymapConfig.showThreadSwitcherKeyCode, ShowThreadSwitcher())
+        addKeyMapWithCtrl(keymapConfig.switchToMainThreadKeyCode, SwitchToMainThread())
+        addKeyMapWithCtrl(keymapConfig.findAllChildrenKeyCode, FindAllChildren())
+        addKeyMap(keymapConfig.addBookmarkActionKeyCode, AddBookmarkAction())
+        addKeyMapWithCtrl(keymapConfig.copySelectedFullClassNameActionKeyCode, CopySelectedFullClassNameAction())
+        addKeyMapWithCtrl(keymapConfig.removeCurrentBookmarkActionKeyCode, RemoveCurrentBookmarkAction())
+        addKeyMap(keymapConfig.centerSelectedElementActionKeyCode, CenterSelectedElementAction())
+        addKeyMap(keymapConfig.resetZoomActionKeyCode, ResetZoomAction())
+        addKeyMap(keymapConfig.fitSelectedElementActionKeyCode, FitSelectedElementAction())
+        addKeyMap(keymapConfig.nextBookmarkActionKeyCode, NextBookmarkAction())
+        addKeyMap(keymapConfig.prevBookmarkActionKeyCode, PrevBookmarkAction())
+        addKeyMapWithCtrl(keymapConfig.clearAllBookmarksActionKeyCode, ClearAllBookmarksAction())
+        addKeyMapWithCtrl(keymapConfig.generateReportsActionKeyCode, GenerateReportsAction())
+        addKeyMapWithCtrl(keymapConfig.changeFontSizeActionTrueKeyCode, ChangeFontSizeAction(true))
+        addKeyMapWithCtrl(keymapConfig.changeFontSizeActionTrueKeyCode, ChangeFontSizeAction(true))
+        addKeyMapWithCtrl(keymapConfig.changeFontSizeActionFalseKeyCode, ChangeFontSizeAction(false))
+        addKeyMapWithCtrlShift(keymapConfig.copySelectedShortClassNameActionKeyCode, CopySelectedShortClassNameAction())
+        addKeyMapWithCtrlShift(keymapConfig.exportTraceWithBookmarksActionKeyCode, ExportTraceWithBookmarksAction())
+        addKeyMapWithCtrlAlt(keymapConfig.copySelectedShortClassNameWithoutMethodActionKeyCode, CopySelectedShortClassNameWithoutMethodAction())
+        addKeyMapWithShift(keymapConfig.openRangeDialogKeyCode, OpenRangeDialog())
     }
 
     private fun addKeyMap(keyCode: Int, action: AbstractAction) {
@@ -115,14 +112,14 @@ class KeyBinder(
     }
 
 
-    private inner class WAction : SmartAction() {
+    private inner class ZoomOutAction : SmartAction() {
         override fun actionPerformed() {
             profilerView.zoomOut()
             hoverInfoPanel.hidePanel()
         }
     }
 
-    private inner class SAction : SmartAction() {
+    private inner class ZoomInAction : SmartAction() {
         override fun actionPerformed() {
             profilerView.zoomIn()
             hoverInfoPanel.hidePanel()
@@ -205,7 +202,7 @@ class KeyBinder(
         }
     }
 
-    private inner class QAction : SmartAction() {
+    private inner class FocusPrevFoundItemAction : SmartAction() {
         override fun actionPerformed() {
             profilerView.focusPrevFoundItem()
             hoverInfoPanel.hidePanel()

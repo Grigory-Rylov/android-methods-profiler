@@ -49,6 +49,10 @@ import com.github.grishberg.profiler.ui.dialogs.info.DependenciesDialogLogic;
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderDialogView;
 import com.github.grishberg.profiler.ui.dialogs.recorder.JavaMethodsRecorderLogicKt;
+import com.github.grishberg.profiler.ui.keymap.DefaultKeymapConfig;
+import com.github.grishberg.profiler.ui.keymap.ErgonomicKeymapConfig;
+import com.github.grishberg.profiler.ui.keymap.KeyBinder;
+import com.github.grishberg.profiler.ui.keymap.KeymapConfig;
 import com.github.grishberg.profiler.ui.theme.ThemeController;
 import com.github.grishberg.tracerecorder.SystraceRecordResult;
 import java.awt.*;
@@ -347,12 +351,16 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
             focusElementDelegate, settings, log,
             coroutineScope, coroutinesDispatchers
         );
+        KeymapConfig keymapConfig = settings.isErgonomicKeymapEnabled()
+            ? new ErgonomicKeymapConfig()
+            : new DefaultKeymapConfig();
         KeyBinder keyBinder = new KeyBinder(chart,
             selectedClassNameLabel,
             findClassText,
             this,
             newBookmarkDialog,
-            hoverInfoPanel, this
+            hoverInfoPanel, this,
+            keymapConfig
         );
         keyBinder.setUpKeyBindings();
 
@@ -571,7 +579,8 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         if (currentOpenedFile == null) {
             return;
         }
-        boolean shouldDelete = JOptionPane.showConfirmDialog(frame,
+        boolean shouldDelete = JOptionPane.showConfirmDialog(
+            frame,
             "Are you wanted to delete: \n\"" + currentOpenedFile.getName() +
                 "\" ?",
             "Delete current file",
@@ -700,6 +709,15 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JMenuItem showHighlightingList = new JMenuItem("Show highlighting settings");
         viewMenu.add(showHighlightingList);
         showHighlightingList.addActionListener(a -> showHighlightingDialog());
+
+
+        JCheckBoxMenuItem ergonomicKeymap = new JCheckBoxMenuItem("Ergonomic keymap");
+        viewMenu.add(ergonomicKeymap);
+        ergonomicKeymap.setState(settings.isErgonomicKeymapEnabled());
+        ergonomicKeymap.addActionListener(arg0 -> {
+            boolean newState = ergonomicKeymap.getState();
+            settings.setErgonomicKeymapEnabled(newState);
+        });
 
         return viewMenu;
     }
@@ -1424,12 +1442,12 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         @Nullable final TraceContainer traceContainer;
         @Nullable final Throwable throwable;
 
-        public WorkerResult(Throwable throwable) {
+        public WorkerResult(@Nullable Throwable throwable) {
             this.traceContainer = null;
             this.throwable = throwable;
         }
 
-        public WorkerResult(TraceContainer traceContainer) {
+        public WorkerResult(@Nullable TraceContainer traceContainer) {
             this.traceContainer = traceContainer;
             this.throwable = null;
         }

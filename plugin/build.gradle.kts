@@ -61,7 +61,7 @@ tasks {
 
         changeNotes.set(
             """
-            Support SimplePerf viewer.<br>
+            Alternative keymap for ergonomic keyboard: WASD -> ESDF.<br>
           """
         )
     }

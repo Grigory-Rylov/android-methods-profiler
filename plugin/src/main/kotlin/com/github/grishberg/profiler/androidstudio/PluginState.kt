@@ -7,6 +7,7 @@ import java.io.File
 private const val PLUGIN_DIR = "captures/YAMP"
 
 class PluginState : SettingsFacade {
+
     private var baseDir: File = File(PLUGIN_DIR)
 
     /**
@@ -51,5 +52,6 @@ class PluginState : SettingsFacade {
     override var hierarchicalStagesMode: Boolean = true
     override var shouldShowToolbar: Boolean = true
     override var caseSensitive: Boolean = false
+    override var isErgonomicKeymapEnabled: Boolean = false
     var lastVersion: String = ""
 }

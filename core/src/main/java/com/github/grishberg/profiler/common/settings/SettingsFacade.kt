@@ -32,4 +32,5 @@ interface SettingsFacade {
     var debugPort: Int
     var shouldShowToolbar: Boolean
     var caseSensitive: Boolean
+    var isErgonomicKeymapEnabled: Boolean
 }
