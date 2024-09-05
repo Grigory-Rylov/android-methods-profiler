@@ -13,11 +13,11 @@ import java.io.FileReader
 import java.io.IOException
 import java.io.OutputStreamWriter
 
-
 private const val TAG = "JsonSettings"
 
 const val SETTINGS_ANDROID_HOME = "androidHome"
 private const val SETTINGS_HISTORY = "Main.history"
+private const val SETTINGS_ERGONOMIC_KEYMAP = "Main.ergonomicKeymap"
 private const val SETTINGS_STAGES_FILE_DIALOG_DIR = "Plugins.stagesFileDialogDirectory"
 private const val SETTINGS_STAGES_HIDE_UNKNOWN = "Plugins.stagesHideUnknown"
 private const val SETTINGS_STAGES_HIERARCHICAL = "Plugins.stagesHierarchical"
@@ -54,14 +54,13 @@ private const val TIMEOUT_BEFORE_RECORDING = "$RECORDER_SETTINGS_ROOT.timeoutBef
 private const val DEFAULT_TIMEOUT_BEFORE_RECORDING = 10
 
 class JsonSettings(
-    private val filesDirName: String,
-    private val log: AppLogger
+    private val filesDirName: String, private val log: AppLogger
 ) : SettingsFacade {
+
     private val gson = GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create()
 
     private val settingsMap = mutableMapOf<String, Any>()
-    private val settingsFile =
-        File(filesDirName + File.separator + ".android-methods-profiler-settings.json")
+    private val settingsFile = File(filesDirName + File.separator + ".android-methods-profiler-settings.json")
 
     init {
         createHomeDirIfNeeded()
@@ -272,8 +271,7 @@ class JsonSettings(
 
     override var samplingRecordModeEnabled: Boolean
         get() = getBoolValueOrDefault(
-            RECORD_MODE_SAMPLE_SETTINGS,
-            true
+            RECORD_MODE_SAMPLE_SETTINGS, true
         )
         set(value) {
             setBoolValue(RECORD_MODE_SAMPLE_SETTINGS, value)
@@ -293,8 +291,7 @@ class JsonSettings(
 
     override var waitForResultTimeout: Int
         get() = getIntValueOrDefault(
-            WAIT_FOR_RESULT_TIMEOUT_SETTINGS,
-            DEFAULT_WAIT_FOR_RESULT_TIMEOUT
+            WAIT_FOR_RESULT_TIMEOUT_SETTINGS, DEFAULT_WAIT_FOR_RESULT_TIMEOUT
         )
         set(value) {
             setIntValue(WAIT_FOR_RESULT_TIMEOUT_SETTINGS, value)
@@ -326,8 +323,7 @@ class JsonSettings(
 
     override var debugPort: Int
         get() = getIntValueOrDefault(
-            DEBUG_PORT_SETTINGS,
-            DEFAULT_DEBUG_PORT
+            DEBUG_PORT_SETTINGS, DEFAULT_DEBUG_PORT
         )
         set(value) {
             setIntValue(DEBUG_PORT_SETTINGS, value)
@@ -337,6 +333,12 @@ class JsonSettings(
         get() = getIntValueOrDefault(TIMEOUT_BEFORE_RECORDING, DEFAULT_TIMEOUT_BEFORE_RECORDING).toLong()
         set(value) {
             setIntValue(TIMEOUT_BEFORE_RECORDING, value.toInt())
+        }
+
+    override var isErgonomicKeymapEnabled: Boolean
+        get() = getBoolValueOrDefault(SETTINGS_ERGONOMIC_KEYMAP, false)
+        set(value) {
+            setBoolValue(SETTINGS_ERGONOMIC_KEYMAP, value)
         }
 
     override fun filesDir() = filesDirName
