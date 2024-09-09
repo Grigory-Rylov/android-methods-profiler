@@ -165,6 +165,8 @@ class LegacyTraceAnalyzerTraceAnalyzer(
             if (level[threadId] == null) {
                 level[threadId] = 0
             }
+            val threadTimeMs = threadTime / 1000.0
+            val globalTimeMs = globalTime / 1000.0
             if (methodAction != TraceAction.METHOD_ENTER) {
                 val parentsStackForThread = parents.getOrDefault(threadId, Stack())
                 val stacksForThread = methodsStacksForThread.getOrDefault(threadId, HashMap())
@@ -179,14 +181,14 @@ class LegacyTraceAnalyzerTraceAnalyzer(
                     if (stack.isNotEmpty()) {
                         val data = stack.pop()
                         data.apply {
-                            threadEndTimeInMillisecond = threadTime / 1000.0
-                            globalEndTimeInMillisecond = globalTime / 1000.0
+                            threadEndTimeInMillisecond = threadTimeMs
+                            globalEndTimeInMillisecond = globalTimeMs
                         }
-                        if (threadTimeBoundsForThread.maxTime < threadTime / 1000.0) {
-                            threadTimeBoundsForThread.maxTime = threadTime / 1000.0
+                        if (threadTimeBoundsForThread.maxTime < threadTimeMs) {
+                            threadTimeBoundsForThread.maxTime = threadTimeMs
                         }
-                        if (globalTimeBoundsForThread.maxTime < globalTime / 1000.0) {
-                            globalTimeBoundsForThread.maxTime = globalTime / 1000.0
+                        if (globalTimeBoundsForThread.maxTime < globalTimeMs) {
+                            globalTimeBoundsForThread.maxTime = globalTimeMs
                         }
                         level[threadId] = level[threadId]!! - 1
                     } else {
@@ -222,8 +224,8 @@ class LegacyTraceAnalyzerTraceAnalyzer(
                 val duration = ProfileDataImpl(
                     "${convertedClassName}.${convertedMethodName}",
                     level.getOrDefault(threadId, -1),
-                    threadStartTimeInMillisecond = threadTime / 1000.0,
-                    globalStartTimeInMillisecond = globalTime / 1000.0,
+                    threadStartTimeInMillisecond = threadTimeMs,
+                    globalStartTimeInMillisecond = globalTimeMs,
                     parent = parent
                 )
                 parent?.addChild(duration)
@@ -236,11 +238,11 @@ class LegacyTraceAnalyzerTraceAnalyzer(
                 traceDataForThread.add(duration)
                 stack.push(duration)
                 parentsStackForThread.push(duration)
-                if (threadTimeBoundsForThread.minTime > threadTime / 1000.0) {
-                    threadTimeBoundsForThread.minTime = threadTime / 1000.0
+                if (threadTimeBoundsForThread.minTime > threadTimeMs) {
+                    threadTimeBoundsForThread.minTime = threadTimeMs
                 }
-                if (globalTimeBoundsForThread.minTime > threadTime / 1000.0) {
-                    globalTimeBoundsForThread.minTime = threadTime / 1000.0
+                if (globalTimeBoundsForThread.minTime > globalTimeMs) {
+                    globalTimeBoundsForThread.minTime = globalTimeMs
                 }
 
                 if (maxLevel < level[threadId]!!) {
