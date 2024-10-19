@@ -12,6 +12,9 @@ class SystraceStagesState(
     var currentStage: StageFromSystrace? = null
         private set
 
+    val stages: List<Stage>
+        get() = ArrayList(stagesList)
+
     init {
         for (record in recordsList) {
             stagesList.add(StageFromSystrace(record))

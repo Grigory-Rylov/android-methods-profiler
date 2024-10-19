@@ -1,16 +1,14 @@
 package com.github.grishberg.profiler.plugins.stages.methods
 
-import com.github.grishberg.profiler.core.ProfileData
+import com.github.grishberg.profiler.chart.stages.methods.StagesFacade
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.plugins.stages.DialogListener
-import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
-import com.github.grishberg.profiler.plugins.stages.StageAnalyzerDialog
-import com.github.grishberg.profiler.plugins.stages.Stages
-import com.github.grishberg.profiler.plugins.stages.StagesAnalyzer
-import com.github.grishberg.profiler.plugins.stages.StagesFactory
-import com.github.grishberg.profiler.plugins.stages.WrongStage
+import com.github.grishberg.profiler.core.ProfileData
+import com.github.grishberg.profiler.plugins.stages.*
+import com.github.grishberg.profiler.plugins.stages.constructors.EarlyConstructorsLogicImpl
+import com.github.grishberg.profiler.plugins.stages.constructors.EarlyConstructorsResultDialog
+import com.github.grishberg.profiler.plugins.stages.constructors.EarlyConstructorsSearchDialog
 import com.github.grishberg.profiler.ui.dialogs.info.FocusElementDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -18,12 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.io.BufferedWriter
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
-import java.io.OutputStreamWriter
+import java.io.*
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
@@ -39,12 +32,16 @@ class StagesAnalyzerLogic(
     private val analyzer: StagesAnalyzer,
     private val ui: StageAnalyzerDialog,
     private val settings: SettingsFacade,
-    private val methods: List<ProfileData>,
+
+    private val allThreadMethods: Map<Int, List<ProfileData>>,
+    private val currentThreadId: Int,
+    private val currentThreadMethod: List<ProfileData>,
     private val focusElementDelegate: FocusElementDelegate,
     private val coroutineScope: CoroutineScope,
     private val dispatchers: CoroutinesDispatchers,
     private val stagesFactory: StagesFactory,
     private val methodsAvailability: MethodsAvailability,
+    private val stagesFacade: StagesFacade,
     private val logger: AppLogger
 ) : DialogListener {
     private var stageFile: File? = null
@@ -82,12 +79,11 @@ class StagesAnalyzerLogic(
         }
         ui.showProgress()
         val selectedStagesFile = stageFile
-        val stagesProvider: StagesProvider
         if (selectedStagesFile == null && !stagesFactory.hasLocalConfiguration()) {
             throw IllegalStateException("Started analyze without configuration or opened file")
         }
 
-        stagesProvider = if (selectedStagesFile != null) {
+        val stagesProvider: StagesProvider = if (selectedStagesFile != null) {
             { stagesFactory.loadFromFile(selectedStagesFile) }
         } else {
             { stagesFactory.createFromLocalConfiguration()!! }
@@ -97,7 +93,7 @@ class StagesAnalyzerLogic(
             val shouldHideChild = ui.hierarchical()
             val result = coroutineScope.async(dispatchers.worker) {
                 val stages = stagesProvider.invoke()
-                analyzer.analyze(stages, methodsAvailability, methods, shouldHideChild)
+                analyzer.analyze(stages, methodsAvailability, currentThreadMethod, shouldHideChild)
             }.await()
 
             cachedResult.clear()
@@ -160,7 +156,7 @@ class StagesAnalyzerLogic(
 
             coroutineScope.launch {
                 withContext(dispatchers.worker) {
-                    stagesFactory.createFromLocalConfiguration()?.saveToFile(fileToSave, methods)
+                    stagesFactory.createFromLocalConfiguration()?.saveToFile(fileToSave, currentThreadMethod)
                 }
                 ui.enableSaveStagesButton()
             }

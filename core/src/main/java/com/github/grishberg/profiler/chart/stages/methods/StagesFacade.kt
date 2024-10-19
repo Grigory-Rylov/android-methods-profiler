@@ -1,25 +1,21 @@
 package com.github.grishberg.profiler.chart.stages.methods
 
-import com.github.grishberg.profiler.core.AnalyzerResult
-import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
 import com.github.grishberg.profiler.analyzer.calculateMaxThreadTime
+import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.chart.ChartPaintDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle
-import com.github.grishberg.profiler.chart.CallTracePanel
 import com.github.grishberg.profiler.chart.RepaintDelegate
 import com.github.grishberg.profiler.chart.stages.MethodsListIterator
 import com.github.grishberg.profiler.common.AppLogger
 import com.github.grishberg.profiler.common.CoroutinesDispatchers
 import com.github.grishberg.profiler.common.toHex
+import com.github.grishberg.profiler.core.AnalyzerResult
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.plugins.stages.MethodsAvailability
+import com.github.grishberg.profiler.plugins.stages.Stage
 import com.github.grishberg.profiler.plugins.stages.StagesFactory
-import com.github.grishberg.profiler.plugins.stages.methods.MethodWithIndex
-import com.github.grishberg.profiler.plugins.stages.methods.StageRelatedToMethods
-import com.github.grishberg.profiler.plugins.stages.methods.StagesLoadedFromFileAction
-import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethods
-import com.github.grishberg.profiler.plugins.stages.methods.StagesRelatedToMethodsFactory
-import com.github.grishberg.profiler.plugins.stages.methods.StagesState
+import com.github.grishberg.profiler.plugins.stages.methods.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -296,4 +292,12 @@ class StagesFacade(
             })
     }
 
+    fun getStageBounds(stage: Stage): StageRectangle {
+        for (rectangle in stagesRectangles) {
+            if (rectangle.stage == stage) {
+                return rectangle
+            }
+        }
+        throw IllegalStateException("No rectangles found for $stage")
+    }
 }

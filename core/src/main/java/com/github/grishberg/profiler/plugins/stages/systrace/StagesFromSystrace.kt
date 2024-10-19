@@ -29,6 +29,9 @@ class StagesFromSystrace(
         stagesState.init()
     }
 
+    override val stagesAsList: List<Stage>
+        get() = stagesState.stages
+
     override fun updateCurrentStage(method: ProfileData) {
         stagesState.updateCurrentStage(method)
     }

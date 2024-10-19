@@ -71,10 +71,6 @@ class JavaMethodsRecorderDialog(
     private val recordModeComBox =
         JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
 
-    init {
-        pack()
-    }
-
     override var packageName: String
         get() = packageNameField.text.trim()
         set(value) {

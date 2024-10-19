@@ -8,6 +8,8 @@ const val EMPTY_STAGE_NAME = "unknown"
 interface Stages {
     val currentStage: Stage?
 
+    val stagesAsList: List<Stage>
+
     fun init()
 
     /**
