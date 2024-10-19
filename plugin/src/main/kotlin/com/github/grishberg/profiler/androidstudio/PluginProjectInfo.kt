@@ -27,7 +27,7 @@ class PluginProjectInfo(
         val devices = AndroidSdkUtils.getDebugBridge(project)?.devices ?: emptyArray()
         activityName = try {
             getDefaultActivityName(facets, devices)
-        } catch (e: ActivityLocator.ActivityLocatorException) {
+        } catch (e: Exception) {
             logger.e("PluginProjectInfo: Error while fetching getDefaultActivityName", e)
             null
         }

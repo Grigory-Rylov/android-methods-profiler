@@ -61,7 +61,7 @@ tasks {
 
         changeNotes.set(
             """
-            Alternative keymap for ergonomic keyboard: WASD -> ESDF.<br>
+            Added extended search.<br>
           """
         )
     }

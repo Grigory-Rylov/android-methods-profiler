@@ -7,6 +7,7 @@ import com.github.grishberg.profiler.core.ThreadItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 
 class Finder(
     private val coroutineScope: CoroutineScope,
@@ -100,12 +101,22 @@ class Finder(
         analyzerResult: AnalyzerResult,
         textToFind: String,
         ignoreCase: Boolean,
+        parentMask: String? = null,
+        isDirectParent: Boolean = true,
+        selectedThreadId: Int? = null,
     ) {
         isSearchingModeEnabled = true
         currentSelectedThreadIndex = -1
         coroutineScope.launch {
             val data = withContext(dispatchers.worker) {
-                findInThread(analyzerResult, textToFind, ignoreCase)
+                findInThread(
+                    analyzerResult = analyzerResult,
+                    textToFind = textToFind,
+                    ignoreCase = ignoreCase,
+                    parentMask = parentMask,
+                    isDirectParent = isDirectParent,
+                    selectedThreadId = selectedThreadId,
+                )
             }
             withContext(dispatchers.ui) {
                 currentFindResult = data
@@ -121,6 +132,9 @@ class Finder(
         analyzerResult: AnalyzerResult,
         textToFind: String,
         ignoreCase: Boolean,
+        parentMask: String? = null,
+        isDirectParent: Boolean = false,
+        selectedThreadId: Int? = null,
         exceptThreadId: Int = -1
     ): FindResult {
         val result = mutableListOf<ThreadFindResult>()
@@ -129,6 +143,10 @@ class Finder(
             if (exceptThreadId == threadId) {
                 continue
             }
+            if (selectedThreadId != null && selectedThreadId != threadId) {
+                continue
+            }
+
             val profileList = threadData.value
 
             val shouldEndsWithText: Boolean = textToFind.endsWith("()")
@@ -139,24 +157,98 @@ class Finder(
             val foundMethods = mutableSetOf<ProfileData>()
             for (i in profileList.indices) {
                 val currentMethod = profileList[i]
-                val lowerCasedName: String = if (ignoreCase) currentMethod.name.toLowerCase() else currentMethod.name
-                val isEquals: Boolean =
-                    if (shouldEndsWithText) lowerCasedName.endsWith(targetString) else lowerCasedName.contains(
-                        targetString
-                    )
+                val isEquals: Boolean = compareMethod(
+                    ignoreCase = ignoreCase,
+                    currentMethod = currentMethod,
+                    shouldEndsWithText = shouldEndsWithText,
+                    targetString = targetString
+                )
                 if (isEquals) {
+                    if (parentMask != null) {
+                        val shouldEndsWithTextParent = parentMask.endsWith("()")
+                        val parentMaskPrepared = prepareTextToFind(shouldEndsWithTextParent, parentMask, ignoreCase)
+                        if (shouldIgnoreByParentCondition(
+                                currentMethod = currentMethod,
+                                ignoreCase = ignoreCase,
+                                shouldEndsWithText = shouldEndsWithTextParent,
+                                parentMask = parentMaskPrepared,
+                                isDirectParent = isDirectParent,
+                            )
+                        ) {
+                            continue
+                        }
+                    }
+
                     foundMethods.add(currentMethod)
-                    totalGlobalDuration = currentMethod.globalEndTimeInMillisecond - currentMethod.globalStartTimeInMillisecond
-                    totalThreadDuration = currentMethod.threadEndTimeInMillisecond - currentMethod.threadStartTimeInMillisecond
+                    totalGlobalDuration =
+                        currentMethod.globalEndTimeInMillisecond - currentMethod.globalStartTimeInMillisecond
+                    totalThreadDuration =
+                        currentMethod.threadEndTimeInMillisecond - currentMethod.threadStartTimeInMillisecond
                 }
             }
             if (foundMethods.isNotEmpty()) {
                 val threadItem = analyzerResult.threads.find { it.threadId == threadId }!!
-                result.add(ThreadFindResult(foundMethods, threadId, threadItem, totalGlobalDuration, totalThreadDuration))
+                result.add(
+                    ThreadFindResult(
+                        foundMethods,
+                        threadId,
+                        threadItem,
+                        totalGlobalDuration,
+                        totalThreadDuration
+                    )
+                )
             }
         }
 
         return FindResult(result)
+    }
+
+    private fun compareMethod(
+        currentMethod: ProfileData,
+        ignoreCase: Boolean,
+        shouldEndsWithText: Boolean,
+        targetString: String
+    ): Boolean {
+        val lowerCasedName: String = if (ignoreCase) currentMethod.name.lowercase(Locale.US) else currentMethod.name
+        val isEquals: Boolean =
+            if (shouldEndsWithText) lowerCasedName.endsWith(targetString) else lowerCasedName.contains(
+                targetString
+            )
+        return isEquals
+    }
+
+    private fun shouldIgnoreByParentCondition(
+        currentMethod: ProfileData,
+        ignoreCase: Boolean,
+        shouldEndsWithText: Boolean,
+        parentMask: String,
+        isDirectParent: Boolean
+    ): Boolean {
+        return !currentMethodHasParent(
+            currentMethod = currentMethod,
+            ignoreCase = ignoreCase,
+            shouldEndsWithText = shouldEndsWithText,
+            parentMask = parentMask,
+            isDirectParent = isDirectParent,
+        )
+    }
+
+    private fun currentMethodHasParent(
+        currentMethod: ProfileData,
+        ignoreCase: Boolean,
+        shouldEndsWithText: Boolean,
+        parentMask: String,
+        isDirectParent: Boolean
+    ): Boolean {
+        val parent = currentMethod.parent ?: return false
+        if (isDirectParent) {
+            return compareMethod(parent, ignoreCase, shouldEndsWithText, parentMask)
+        } else {
+            if (compareMethod(parent, ignoreCase, shouldEndsWithText, parentMask)) {
+                return true
+            }
+            return currentMethodHasParent(parent, ignoreCase, shouldEndsWithText, parentMask, isDirectParent)
+        }
     }
 
     private fun prepareTextToFind(
@@ -169,7 +261,7 @@ class Finder(
         } else {
             textToFind
         }
-        val targetString = if (ignoreCase) text.toLowerCase() else text
+        val targetString = if (ignoreCase) text.lowercase(Locale.US) else text
         return targetString
     }
 

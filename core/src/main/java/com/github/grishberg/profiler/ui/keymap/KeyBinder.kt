@@ -55,6 +55,7 @@ class KeyBinder(
         addKeyMap(keymapConfig.globalTimeModeActionKeyCode, GlobalTimeModeAction())
         addKeyMap(keymapConfig.toggleBookmarkModeActionKeyCode, ToggleBookmarkModeAction())
         addKeyMapWithCtrl(keymapConfig.goToFindActionKeyCode, GoToFindAction())
+        addKeyMapWithCtrlShift(keymapConfig.goToFindActionKeyCode, GoToExtendedFindAction())
         addKeyMapWithCtrl(keymapConfig.copyStackTraceActionKeyCode, CopyStackTraceAction())
         addKeyMapWithCtrl(keymapConfig.openFileDialogActionKeyCode, OpenFileDialogAction())
         addKeyMapWithCtrl(keymapConfig.newTraceActionKeyCode, NewTraceAction())
@@ -158,6 +159,12 @@ class KeyBinder(
         override fun actionPerformed(e: ActionEvent) {
             searchField.requestFocus();
             searchField.selectAll()
+        }
+    }
+
+    private inner class GoToExtendedFindAction : AbstractAction() {
+        override fun actionPerformed(e: ActionEvent) {
+            main.startExtendedSearch()
         }
     }
 
