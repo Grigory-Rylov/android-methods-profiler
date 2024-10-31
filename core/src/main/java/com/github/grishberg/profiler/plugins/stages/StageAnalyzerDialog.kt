@@ -1,35 +1,23 @@
 package com.github.grishberg.profiler.plugins.stages
 
-import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.expandabletree.JTreeTable
 import com.github.grishberg.profiler.common.CyclicTableRowSorter
+import com.github.grishberg.profiler.core.ProfileData
 import com.github.grishberg.profiler.plugins.stages.methods.MethodsWithStageModel
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import javax.swing.Box
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JOptionPane
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.KeyStroke
+import java.awt.event.*
+import javax.swing.*
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 
 
-interface DialogListener {
-    fun onProfileDataSelected(method: ProfileData)
+interface DialogListener: MethodNavigationAction {
     fun copyToClipboard()
     fun onExportReportToFileClicked()
     fun openStagesFile()
@@ -37,6 +25,7 @@ interface DialogListener {
     fun onSaveStagesClicked()
     fun onShouldHideUnknownChanged()
     fun onHierarchicalModeChanged()
+
 }
 
 class StageAnalyzerDialog(
@@ -46,11 +35,13 @@ class StageAnalyzerDialog(
     private var model = MethodsWithStageModel(emptyList())
     private val table = JTreeTable(model)
     private val startButton = JButton("Analyze").apply { isEnabled = false }
+    private val startEarlyConstructorButton = JButton("Analyze early construcotrs").apply { isEnabled = false }
     private val exportToFileButton = JButton("Export report to file").apply { isEnabled = false }
     private val saveStagesButton = JButton("Save stages").apply { isEnabled = false }
     private val shouldHideUnknown = JCheckBox("Hide unknown")
     private val hierarchical = JCheckBox("Hierarchical")
     private val statusLabel = JLabel()
+    private val methodsFilter = JTextField(20)
     var dialogListener: DialogListener? = null
 
     init {
@@ -85,11 +76,21 @@ class StageAnalyzerDialog(
                             dialogListener?.onProfileDataSelected(path.method)
                         }
                     }
-                    val menu = ResultTablePopupMenu({ copyToClipboard() }, navigateAction)
+                    val menu = ResultTablePopupMenu(copyAction = { copyToClipboard() }, navigateAction =  navigateAction)
                     menu.show(table, e.x, e.y)
                 }
             }
         })
+
+        methodsFilter.addActionListener {
+            val text = methodsFilter.text.trim()
+            if (text.isNotEmpty()) {
+                sorter.rowFilter = RowFilter.regexFilter("(?i)$text", 0)
+            } else {
+                sorter.rowFilter = null
+            }
+            table.rowSorter = sorter
+        }
 
         exportToFileButton.addActionListener {
             dialogListener?.onExportReportToFileClicked()
@@ -117,8 +118,14 @@ class StageAnalyzerDialog(
             dialogListener?.onHierarchicalModeChanged()
         }
 
+        val filterPanel = JPanel().apply {
+            layout = FlowLayout()
+            add(methodsFilter)
+        }
+
         val actionButtons = JPanel().apply {
             add(startButton)
+            add(startEarlyConstructorButton)
             add(exportToFileButton)
             add(Box.createHorizontalStrut(5))
             add(openStagesFileButton)
@@ -136,6 +143,7 @@ class StageAnalyzerDialog(
 
         val bottomPanel = JPanel().apply {
             layout = BorderLayout()
+            //add(filterPanel, BorderLayout.NORTH)
             add(actionButtons, BorderLayout.CENTER)
             add(statusPanel, BorderLayout.SOUTH)
         }
@@ -170,6 +178,7 @@ class StageAnalyzerDialog(
 
     fun enableStartButton() {
         startButton.isEnabled = true
+        startEarlyConstructorButton.isEnabled = true
     }
 
     fun enableExportButtons() {
@@ -181,11 +190,13 @@ class StageAnalyzerDialog(
         model = MethodsWithStageModel(result)
         table.setModel(model)
         startButton.isEnabled = true
+        startEarlyConstructorButton.isEnabled = true
     }
 
     fun showProgress() {
         table.isEnabled = false
         startButton.isEnabled = false
+        startEarlyConstructorButton.isEnabled = false
     }
 
     fun shouldHideUnknown(): Boolean {

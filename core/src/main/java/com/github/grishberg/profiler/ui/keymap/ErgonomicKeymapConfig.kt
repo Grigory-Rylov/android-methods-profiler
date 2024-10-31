@@ -36,7 +36,7 @@ class ErgonomicKeymapConfig : KeymapConfig {
     override val prevBookmarkActionKeyCode: Int = KeyEvent.VK_W
     override val clearAllBookmarksActionKeyCode: Int = KeyEvent.VK_BACK_SPACE
     override val generateReportsActionKeyCode: Int = KeyEvent.VK_P
-    override val changeFontSizeActionTrueKeyCode: Int = KeyEvent.VK_PLUS
+    override val changeFontSizeActionTrueKeyCode: Int = KeyEvent.VK_EQUALS
     override val changeFontSizeActionFalseKeyCode: Int = KeyEvent.VK_MINUS
     override val copySelectedShortClassNameActionKeyCode: Int = KeyEvent.VK_C
     override val exportTraceWithBookmarksActionKeyCode: Int = KeyEvent.VK_E

@@ -34,6 +34,9 @@ class StagesRelatedToMethods(
     val stagesList: List<StageRelatedToMethods>
         get() = stagesState.stagesList
 
+    override val stagesAsList: List<Stage>
+        get() = ArrayList(stagesList)
+
     override fun init() {
         stagesState.initialState()
     }
@@ -43,7 +46,7 @@ class StagesRelatedToMethods(
     }
 
     override fun getMethodsStage(method: ProfileData): Stage? {
-        return methodStages[method.name]
+            return methodStages[method.name]
     }
 
     override fun shouldMethodStageBeLaterThenCurrent(methodStage: Stage?): Boolean =

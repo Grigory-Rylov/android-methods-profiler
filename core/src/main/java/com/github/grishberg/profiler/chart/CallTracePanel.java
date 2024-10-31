@@ -20,6 +20,10 @@ import com.github.grishberg.profiler.ui.SimpleComponentListener;
 import com.github.grishberg.profiler.ui.TimeFormatter;
 import com.github.grishberg.profiler.ui.ZoomAndPanDelegate;
 import com.github.grishberg.profiler.ui.theme.Palette;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -28,15 +32,8 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import javax.swing.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.*;
 
 public class CallTracePanel extends JPanel
     implements ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
@@ -564,6 +561,9 @@ public class CallTracePanel extends JPanel
             RenderingHints.KEY_TEXT_ANTIALIASING,
             RenderingHints.VALUE_TEXT_ANTIALIAS_GASP
         );
+        // Дополнительно можно включить другие улучшения рендеринга
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
         int fontSize = settings.getFontSize();
         fontName = "Arial";
