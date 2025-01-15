@@ -22,7 +22,12 @@ class PluginProjectInfo(
     override val activityName: String?
 
     init {
-        val facets = getAndroidFacets(project)
+        val facets = try{
+            getAndroidFacets(project)
+        } catch (e: Exception) {
+            logger.e("getAndroidFacets error", e)
+            emptyList()
+        }
         packageName = createPackageName(facets)
         val devices = AndroidSdkUtils.getDebugBridge(project)?.devices ?: emptyArray()
         activityName = try {
