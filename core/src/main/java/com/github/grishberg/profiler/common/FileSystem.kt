@@ -90,12 +90,12 @@ class FileSystem(
         zis.closeEntry()
         zis.close()
 
-        val traceFiles = extractedFiles.filter { it.extension.toLowerCase() == "trace" }
+        val traceFiles = extractedFiles.filter { it.extension.lowercase() == "trace" }
         if (traceFiles.isEmpty()) {
             throw IllegalStateException("There is no any .trace files")
         }
         val traceFile = traceFiles.first()
-        val bookmarksFiles = extractedFiles.filter { it.extension.toLowerCase() == BOOKMARK_EXTENSION }
+        val bookmarksFiles = extractedFiles.filter { it.extension.lowercase() == BOOKMARK_EXTENSION }
         val bookmarks =
             if (bookmarksFiles.isNotEmpty()) {
                 Bookmarks(bookmarksFiles.first(), settings, log)
@@ -135,7 +135,7 @@ class FileSystem(
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             var fileToSave = fileChooser.selectedFile
             settings.reportsFileDialogDir = fileToSave.parent
-            if (fileToSave.extension.toLowerCase() != "twb") {
+            if (fileToSave.extension.lowercase() != "twb") {
                 fileToSave = File(fileToSave.absolutePath + ".twb")
             }
             saveTraceWithBookmarks(fileToSave, container)

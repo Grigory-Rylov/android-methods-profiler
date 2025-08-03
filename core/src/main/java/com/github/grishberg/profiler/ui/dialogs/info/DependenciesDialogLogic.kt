@@ -52,7 +52,7 @@ class DependenciesDialogLogic(
         val userSelection = fileChooser.showSaveDialog(dialog)
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             var fileToSave = fileChooser.selectedFile
-            if (fileToSave.extension.toLowerCase() != "txt") {
+            if (fileToSave.extension.lowercase() != "txt") {
                 fileToSave = File(fileToSave.absolutePath + ".txt")
                 settings.reportsFileDialogDir =  fileToSave.parent
                 logger.d("$TAG: Saving methods info int file '$fileToSave'")

@@ -465,12 +465,12 @@ class FlameChartController(
             text.substring(0, text.length - 2)
         } else text
         isSearchingInProgress = true
-        val targetString = if (ignoreCase) textToFind.toLowerCase() else textToFind
+        val targetString = if (ignoreCase) textToFind.lowercase() else textToFind
 
         foundItems.clear()
 
         for (element in rectangles) {
-            val lowerCasedName = if (ignoreCase) element.name.toLowerCase() else element.name
+            val lowerCasedName = if (ignoreCase) element.name.lowercase() else element.name
             val isEquals = if (shouldEndsWithText)
                 lowerCasedName.endsWith(targetString)
             else
