@@ -12,7 +12,7 @@ class MethodsAvailabilityImpl : MethodsAvailability {
         if (isExcludedPackagePrefix(method)) return false
 
         if (method.name.contains("$")) {
-            if (isMethodWithLambdaInName(method.name.toLowerCase())) {
+            if (isMethodWithLambdaInName(method.name.lowercase())) {
                 return false
             }
         }

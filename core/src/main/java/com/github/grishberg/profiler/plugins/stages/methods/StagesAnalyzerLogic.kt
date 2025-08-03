@@ -148,7 +148,7 @@ class StagesAnalyzerLogic(
 
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             var fileToSave = fileChooser.selectedFile
-            if (fileToSave.extension.toLowerCase() != "json") {
+            if (fileToSave.extension.lowercase() != "json") {
                 fileToSave = File(fileToSave.absolutePath + ".json")
             }
             settings.stagesFileDialogDir = fileToSave.parent
@@ -171,7 +171,7 @@ class StagesAnalyzerLogic(
         val userSelection = fileChooser.showSaveDialog(ui)
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             var fileToSave = fileChooser.selectedFile
-            if (fileToSave.extension.toLowerCase() != "txt") {
+            if (fileToSave.extension.lowercase() != "txt") {
                 fileToSave = File(fileToSave.absolutePath + ".txt")
                 logger.d("$TAG: Saving analyze result info int file '$fileToSave'")
                 generate(fileToSave, cachedResult)

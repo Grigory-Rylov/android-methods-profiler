@@ -1,12 +1,14 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     // Java support
     id("java")
     // Kotlin support
-    id("org.jetbrains.kotlin.jvm")
-    // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.13.3"
-    // Gradle Changelog Plugin
-    id("org.jetbrains.changelog") version "1.3.1"
+    id("org.jetbrains.kotlin.jvm") version "2.1.0"
+    // https://github.com/JetBrains/intellij-platform-gradle-plugin
+    id("org.jetbrains.intellij.platform") version "2.6.0"
+    // https://github.com/JetBrains/gradle-changelog-plugin
+    id("org.jetbrains.changelog") version "2.2.1"
 }
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -14,21 +16,49 @@ fun properties(key: String) = project.findProperty(key).toString()
 group = properties("pluginGroup")
 version = properties("yampVersion")
 
-// Configure project's dependencies
-repositories {
-    mavenCentral()
+// Configure Java compatibility
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
-intellij {
-    pluginName.set("plugin_".plus(properties("pluginName")))
-    version.set(properties("platformVersion"))
-    type.set(properties("platformType"))
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
 
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
+repositories {
+    mavenCentral()
+    google()
+    intellijPlatform { defaultRepositories() }
+}
+
+
+intellijPlatform {
+    pluginConfiguration {
+        name = properties("pluginName")
+        group = properties("pluginGroup")
+        changeNotes.set("Updated android studio compatibility to 2024.3.1.7")
+        ideaVersion.sinceBuild.set(project.property("sinceBuild").toString())
+        ideaVersion.untilBuild.set(provider { null })
+    }
+    buildSearchableOptions.set(false)
+    instrumentCode = true
 }
 
 dependencies {
+    intellijPlatform {
+        bundledPlugin("org.jetbrains.android")
+        if (project.hasProperty("localASVersion")) {
+            local(property("localASVersion").toString())
+        } else {
+            androidStudio(property("platformVersion").toString())
+        }
+    }
     implementation(project(":core"))
     implementation("com.github.Grigory-Rylov:adb-facade-core:0.1.8")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -51,33 +81,18 @@ dependencies {
     testImplementation("junit:junit:4.12")
 }
 
-
 tasks {
-
-    patchPluginXml {
-        version.set(properties("yampVersion"))
-        sinceBuild.set(properties("pluginSinceBuild"))
-        untilBuild.set(properties("pluginUntilBuild"))
-
-        changeNotes.set(
-            """
-            Added extended search.<br>
-          """
+    runIde {
+        jvmArgs = listOf(
+            "-Dide.mac.message.dialogs.as.sheets=false",
+            "-Djb.privacy.policy.text=<!--999.999-->",
+            "-Djb.consents.confirmation.enabled=false"
         )
     }
 
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-    runIdeForUiTests {
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
-    }
-
-    runIde {
-        // Absolute path to installed target 3.5 Android Studio to use as
-        // IDE Development Instance (the "Contents" directory is macOS specific):
-        ideDir.set(file("/Applications/Android Studio.app/Contents"))
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
     }
 }

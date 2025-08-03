@@ -1,4 +1,12 @@
-rootProject.name = 'AndroidProfilerViewer'
+pluginManagement {
+    repositories {
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'YAMP'
 
 include ':core'
 include ':plugin'
