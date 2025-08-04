@@ -1,16 +1,14 @@
-name: Build Plugin
+name: Build and Release Plugin
 
 on:
-  push:
-    branches:
-      - '**'
   pull_request:
     types: [closed]
     branches:
-      - '**'
+      - master
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -29,8 +27,33 @@ jobs:
       - name: Build plugin
         run: ./gradlew buildPlugin
 
-      - name: Upload plugin artifact
-        uses: actions/upload-artifact@v4
+      - name: Get version from gradle.properties
+        id: get_version
+        run: |
+          version=$(grep '^yampVersion=' gradle.properties | cut -d'=' -f2)
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Rename plugin artifact
+        run: |
+          mv plugin/build/distributions/*.zip plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: plugin-artifact
-          path: plugin/build/distributions/ 
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload plugin artifact to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
+          asset_name: yamp_plugin_${{ steps.get_version.outputs.version }}.zip
+          asset_content_type: application/zip 
