@@ -31,7 +31,7 @@ jobs:
         id: get_version
         run: |
           version=$(grep '^yampVersion=' gradle.properties | cut -d'=' -f2)
-          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Rename plugin artifact
         run: |
