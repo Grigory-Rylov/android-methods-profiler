@@ -73,6 +73,7 @@ class KeyBinder(
         addKeyMap(keymapConfig.fitSelectedElementActionKeyCode, FitSelectedElementAction())
         addKeyMap(keymapConfig.nextBookmarkActionKeyCode, NextBookmarkAction())
         addKeyMap(keymapConfig.prevBookmarkActionKeyCode, PrevBookmarkAction())
+        addKeyMap(keymapConfig.deleteCurrentFile, DeleterCurrentFileAction())
         addKeyMapWithCtrl(keymapConfig.clearAllBookmarksActionKeyCode, ClearAllBookmarksAction())
         addKeyMapWithCtrl(keymapConfig.generateReportsActionKeyCode, GenerateReportsAction())
         addKeyMapWithCtrl(keymapConfig.changeFontSizeActionTrueKeyCode, ChangeFontSizeAction(true))
@@ -375,6 +376,11 @@ class KeyBinder(
     private inner class ToggleBookmarkModeAction : SmartAction() {
         override fun actionPerformed() {
             main.toggleBookmarkMode(true)
+        }
+    }
+    private inner class DeleterCurrentFileAction : SmartAction() {
+        override fun actionPerformed() {
+            main.deleteCurrentFile()
         }
     }
 
