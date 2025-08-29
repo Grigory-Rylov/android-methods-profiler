@@ -42,4 +42,5 @@ class ErgonomicKeymapConfig : KeymapConfig {
     override val exportTraceWithBookmarksActionKeyCode: Int = KeyEvent.VK_E
     override val copySelectedShortClassNameWithoutMethodActionKeyCode: Int = KeyEvent.VK_C
     override val openRangeDialogKeyCode: Int = KeyEvent.VK_R
+    override val deleteCurrentFile: Int = KeyEvent.VK_BACK_SPACE
 }

@@ -577,7 +577,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         }
     }
 
-    private void deleteCurrentFile() {
+    public void deleteCurrentFile() {
         if (currentOpenedFile == null) {
             return;
         }

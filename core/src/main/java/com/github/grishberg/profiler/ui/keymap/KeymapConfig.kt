@@ -40,4 +40,5 @@ interface KeymapConfig {
     val exportTraceWithBookmarksActionKeyCode: Int
     val copySelectedShortClassNameWithoutMethodActionKeyCode: Int
     val openRangeDialogKeyCode: Int
+    val deleteCurrentFile: Int
 }
