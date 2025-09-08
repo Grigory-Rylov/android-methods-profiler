@@ -2,40 +2,40 @@ name: Java CI
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
+        uses: gradle/wrapper-validation-action@v1
 
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: fatJar
 
-      - name : Retrieve Version
-        run: |
-          echo "::set-output name=VERSION_NAME::$(${{github.workspace}}/gradlew -q printVersionName)"
+      - name: Retrieve Version
         id: yamp_version
+        run: |
+          VERSION_NAME=$(./gradlew -q printVersionName)
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
 
       - name: Get version
-        run:
-          echo "version_name=${{steps.yamp_version.outputs.VERSION_NAME}}" >> $GITHUB_ENV
+        run: |
+          echo "version_name=${{ steps.yamp_version.outputs.VERSION_NAME }}" >> $GITHUB_ENV
 
-      - run: echo ${{env.version_name}}
+      - run: echo ${{ env.version_name }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: yamp-${{env.version_name}}
+          name: yamp-${{ env.version_name }}
           path: app/build/libs
