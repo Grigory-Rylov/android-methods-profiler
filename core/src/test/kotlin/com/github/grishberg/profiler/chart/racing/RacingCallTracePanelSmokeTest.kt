@@ -57,11 +57,11 @@ internal class RacingCallTracePanelSmokeTest {
         override var deviceAddress = ""
         override var samplingRecordModeEnabled = false
         override var systraceStagePrefix = "systrace"
-        override var fileNamePrefix = ""
+        override var fileNamePrefixes: List<String> = emptyList()
         override var bufferSize = 0
         override var sampling = 0
-        override var activityName = ""
-        override var packageName = ""
+        override var activityNames: List<String> = emptyList()
+        override var packageNames: List<String> = emptyList()
         override var androidHome = ""
         override var recentFiles: List<String> = emptyList()
         override var traceFileDialogDir: String? = null

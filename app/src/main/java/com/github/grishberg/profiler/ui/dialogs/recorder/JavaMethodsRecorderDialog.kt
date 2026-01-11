@@ -31,6 +31,7 @@ import javax.swing.WindowConstants
 import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 import javax.swing.border.EtchedBorder
+import com.github.grishberg.profiler.ui.views.HistoryComboBox
 
 private const val TAG = "JavaMethodsRecorderDialog"
 private const val TEXT_PADDING = 8
@@ -48,9 +49,9 @@ class JavaMethodsRecorderDialog(
     owner,
     TITLE, true
 ), JavaMethodsRecorderDialogView {
-    private val packageNameField: JTextField
-    private val activityNameField: JTextField
-    private val fileNamePrefixField: JTextField
+    private val packageNameField: HistoryComboBox
+    private val activityNameField: HistoryComboBox
+    private val fileNamePrefixField: HistoryComboBox
     private val remoteDeviceAddressField: JTextField = JTextField(20)
     private val stagesTracePrefixField: JTextField = JTextField(10)
     private val showRemotePanelCheckbox = JCheckBox("Connect to remote device")
@@ -71,23 +72,14 @@ class JavaMethodsRecorderDialog(
     private val recordModeComBox =
         JComboBox(arrayOf(RecordMode.METHOD_SAMPLE, RecordMode.METHOD_TRACES))
 
-    override var packageName: String
-        get() = packageNameField.text.trim()
-        set(value) {
-            packageNameField.text = value
-        }
+    override val packageName: String
+        get() = packageNameField.text
 
-    override var activityName: String
-        get() = activityNameField.text.trim()
-        set(value) {
-            activityNameField.text = value
-        }
+    override val activityName: String
+        get() = activityNameField.text
 
-    override var fileNamePrefix: String
-        get() = fileNamePrefixField.text.trim()
-        set(value) {
-            fileNamePrefixField.text = value
-        }
+    override val fileNamePrefix: String
+        get() = fileNamePrefixField.text
 
     override var sampling: Int
         get() = samplingField.value
@@ -150,13 +142,17 @@ class JavaMethodsRecorderDialog(
         val contentPanel = JPanel()
         contentPanel.layout = BorderLayout()
 
-        packageNameField = JTextField(FIELD_LENGTH)
+        packageNameField = HistoryComboBox.create()
+        packageNameField.columns = FIELD_LENGTH
         packageNameField.toolTipText = "Enter application package. Required"
 
-        activityNameField = JTextField(FIELD_LENGTH)
+        activityNameField = HistoryComboBox.create()
+        activityNameField.columns = FIELD_LENGTH
+
         activityNameField.toolTipText = "Enter entry point activity. Optional"
 
-        fileNamePrefixField = JTextField(FIELD_LENGTH)
+        fileNamePrefixField = HistoryComboBox.create()
+        fileNamePrefixField.columns = FIELD_LENGTH
         fileNamePrefixField.toolTipText = "Adds file name prefix. Optional."
 
         val content = panelBuilder.content
@@ -248,6 +244,19 @@ class JavaMethodsRecorderDialog(
         defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
         pack()
     }
+
+    override fun setInitialPackageNames(names: List<String>) {
+        packageNameField.setItems(names)
+    }
+
+    override fun setInitialActivityNames(names: List<String>) {
+        activityNameField.setItems(names)
+    }
+
+    override fun setInitialFileNamePrefixes(names: List<String>) {
+        fileNamePrefixField.setItems(names)
+    }
+
 
     private fun buildMoreOptionsPanel(): JPanel {
         val panel = JPanel()
