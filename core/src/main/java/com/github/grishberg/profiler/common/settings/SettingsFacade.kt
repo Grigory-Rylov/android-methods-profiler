@@ -13,11 +13,11 @@ interface SettingsFacade {
     var deviceAddress: String
     var samplingRecordModeEnabled: Boolean
     var systraceStagePrefix: String
-    var fileNamePrefix: String
+    var fileNamePrefixes: List<String>
     var bufferSize: Int
     var sampling: Int
-    var activityName: String
-    var packageName: String
+    var activityNames: List<String>
+    var packageNames: List<String>
     var androidHome: String
     var recentFiles: List<String>
     var traceFileDialogDir: String?

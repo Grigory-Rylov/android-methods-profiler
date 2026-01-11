@@ -201,8 +201,7 @@ class JsonSettings(
         var outputStream: FileOutputStream? = null
         try {
             outputStream = FileOutputStream(settingsFile)
-            val bufferedWriter: BufferedWriter
-            bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream, "UTF-8"))
+            val bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream, "UTF-8"))
             gson.toJson(settingsMap, bufferedWriter)
             bufferedWriter.close()
             log.d("$TAG settings are saved")
@@ -227,16 +226,16 @@ class JsonSettings(
             setStringList(SETTINGS_HISTORY, value)
         }
 
-    override var packageName: String
-        get() = getStringValueOrDefault(PKG_NAME_SETTINGS, "")
+    override var packageNames: List<String>
+        get() = getStringList(PKG_NAME_SETTINGS)
         set(value) {
-            setStringValue(PKG_NAME_SETTINGS, value)
+            setStringList(PKG_NAME_SETTINGS, value)
         }
 
-    override var activityName: String
-        get() = getStringValueOrDefault(ACTIVITY_NAME_SETTINGS, "")
+    override var activityNames: List<String>
+        get() = getStringList(ACTIVITY_NAME_SETTINGS)
         set(value) {
-            setStringValue(ACTIVITY_NAME_SETTINGS, value)
+            setStringList(ACTIVITY_NAME_SETTINGS, value)
         }
 
     override var sampling: Int
@@ -257,10 +256,10 @@ class JsonSettings(
             setIntValue(PROFILER_BUFFER_SIZE_SETTINGS, value)
         }
 
-    override var fileNamePrefix: String
-        get() = getStringValueOrDefault(FILE_NAME_PREFIX_SETTINGS, "")
+    override var fileNamePrefixes: List<String>
+        get() = getStringList(FILE_NAME_PREFIX_SETTINGS)
         set(value) {
-            setStringValue(FILE_NAME_PREFIX_SETTINGS, value)
+            setStringList(FILE_NAME_PREFIX_SETTINGS, value)
         }
 
     override var systraceStagePrefix: String
