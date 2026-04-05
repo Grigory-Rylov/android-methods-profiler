@@ -35,7 +35,7 @@ jobs:
 
       - run: echo ${{env.version_name}}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: yamp-${{env.version_name}}
           path: app/build/libs
