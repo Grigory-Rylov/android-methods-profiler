@@ -64,7 +64,6 @@ dependencies {
 compileJava {
     options.compilerArgs << "-XDignore.symbol.file=true"
     options.fork = true
-    options.forkOptions.executable = 'javac'
 }
 
 task fatJar(type: Jar) {
