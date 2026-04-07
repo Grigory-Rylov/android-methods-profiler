@@ -25,7 +25,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build plugin
-        run: ./gradlew buildPlugin
+        run: |
+          ./gradlew :plugin:buildPlugin \
+            -x :app:test \
+            -x :app:compileTestKotlin \
+            --no-daemon
 
       - name: Get version from gradle.properties
         id: get_version
