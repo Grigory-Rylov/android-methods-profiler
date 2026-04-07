@@ -41,6 +41,15 @@ jobs:
         run: |
           mv plugin/build/distributions/*.zip plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
 
+      - name: Create tag
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag v${{ steps.get_version.outputs.version }}
+          git push origin v${{ steps.get_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v2
