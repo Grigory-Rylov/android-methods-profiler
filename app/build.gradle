@@ -98,7 +98,10 @@ if (OperatingSystem.current().isLinux()) {
 task buildInstaller(type: Exec) {
     dependsOn fatJar
     workingDir '.'
-    println("Current WD: " + workingDir)
     commandLine "./${installerScript}"
     args version
+
+    doFirst {
+        println("Current WD: " + workingDir)
+    }
 }
