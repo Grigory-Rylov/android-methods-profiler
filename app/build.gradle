@@ -5,6 +5,12 @@ plugins {
     id 'org.jetbrains.kotlin.jvm'
 }
 
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 def properties(String key) {
     return project.findProperty(key).toString()
 }
@@ -12,7 +18,14 @@ def properties(String key) {
 group = properties("pluginGroup")
 version = properties("yampVersion")
 
-sourceCompatibility = 11
+sourceCompatibility = 17
+targetCompatibility = 17
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
 
 java.sourceSets.main.java {
     if (OperatingSystem.current().isMacOsX()) {
@@ -46,12 +59,12 @@ dependencies {
     testImplementation "junit:junit:4.12"
     testImplementation 'org.mockito:mockito-core:2.23.0'
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
-    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.2"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.9.22"
 }
 compileJava {
     options.compilerArgs << "-XDignore.symbol.file=true"
     options.fork = true
-    options.forkOptions.executable = 'javac'
 }
 
 task fatJar(type: Jar) {
@@ -86,7 +99,10 @@ if (OperatingSystem.current().isLinux()) {
 task buildInstaller(type: Exec) {
     dependsOn fatJar
     workingDir '.'
-    println("Current WD: " + workingDir)
     commandLine "./${installerScript}"
     args version
+
+    doFirst {
+        println("Current WD: " + workingDir)
+    }
 }

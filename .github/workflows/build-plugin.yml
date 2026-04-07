@@ -25,7 +25,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build plugin
-        run: ./gradlew buildPlugin
+        run: |
+          ./gradlew :plugin:buildPlugin \
+            -x :app:test \
+            -x :app:compileTestKotlin \
+            --no-daemon
 
       - name: Get version from gradle.properties
         id: get_version
@@ -39,7 +43,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -47,9 +51,10 @@ jobs:
           name: Release v${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
+          generate_release_notes: true
 
       - name: Upload plugin artifact to release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
         env:
