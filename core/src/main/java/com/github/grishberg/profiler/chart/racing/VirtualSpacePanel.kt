@@ -94,6 +94,14 @@ class VirtualSpacePanel : JPanel() {
     /** Оверлеи: под барами (полосы закладок) и над барами (стадии, шапки, стектрейсы).
      *  Входные данные — мировые координаты (мс, единицы ROW_H) и transform мир→экран. */
     var overlayUnderRows: ((Graphics2D, AffineTransform) -> Unit)? = null
+
+    /**
+     * tint-слой между барами и подписями методов — как порядок
+     * rectangles -> bookmarks -> titles в старом CallTracePanel:
+     * полупрозрачная заливка закладок подмешивается к цвету баров,
+     * но текст остаётся поверх.
+     */
+    var overlayRowsTint: ((Graphics2D, AffineTransform) -> Unit)? = null
     var overlayOverRows: ((Graphics2D, AffineTransform) -> Unit)? = null
 
     /** false — встроенные клавиши панели выключены (клавиатурой ведёт внешний KeyBinder). */
@@ -571,12 +579,29 @@ class VirtualSpacePanel : JPanel() {
                     g.fill(shape)
                     g.color = fill.borderColor
                     g.draw(shape)
-                    paintRowName(g, row, x, w, by, bh)
+                    // Подпись рисуем после tint-слоя закладок (см. overlayRowsTint):
+                    // в старом CallTracePanel закладки шли между барами и
+                    // титлами — текст не должен тонироваться.
+                    rowShapes[row] = shape
+                    rowGeom[row] = doubleArrayOf(x, w, by.toDouble(), bh.toDouble())
                 }
             }
             depth++
         }
+        // tint-слой (полосы закладок) поверх залитых баров, под подписями.
+        // Рисуем всегда (даже без баров в кадре) — полосы видны на фоне,
+        // как в старом CallTracePanel.
+        overlayRowsTint?.invoke(g, dataTransform())
+        for ((row, _) in rowShapes) {
+            val geom = rowGeom[row] ?: continue
+            paintRowName(g, row, geom[0], geom[1], geom[2].toFloat(), geom[3].toFloat())
+        }
+        rowShapes.clear()
+        rowGeom.clear()
     }
+
+    private val rowShapes = HashMap<CallRow, java.awt.Shape>(64)
+    private val rowGeom = HashMap<CallRow, DoubleArray>(64)
 
     /**
      * Цвет элемента — ровно calculateColorProfileData из CallTracePanel,

@@ -9,7 +9,8 @@ JAR_PATH=build/libs/${JAR_NAME}
 jpackage --name ${APP_NAME} \
   --input  build/libs \
   --main-class com.github.grishberg.profiler.Launcher \
-  --main-jar ${APP_NAME}-${VERSION}.jar \
+  --main-jar ${MAIN_JAR_NAME:-${APP_NAME}-${VERSION}.jar} \
+  --java-options "--add-exports java.desktop/com.apple.eawt.event=ALL-UNNAMED" \
   --icon macosx_icon/android-methods-profiler.icns \
   --app-version ${VERSION} \
   --dest build/release \

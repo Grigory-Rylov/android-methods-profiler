@@ -129,7 +129,7 @@ class RacingCallTracePanel(
         panel.colorOverrideProvider = { row ->
             compareColors?.let { map -> row.data?.let { map[it] } }
         }
-        panel.overlayUnderRows = { g, at -> drawBookmarkBands(g, at) }
+        panel.overlayRowsTint = { g, at -> drawBookmarkBands(g, at) }
         panel.overlayOverRows = { g, at -> drawOverlays(g, at) }
 
         stagesFacade.repaintDelegate = this
@@ -773,6 +773,7 @@ class RacingCallTracePanel(
 
     /** Полосы закладок поверх строк (как drawBookmarks в YAMP): цветная форма + рамка выбранной. */
     private fun drawBookmarkBands(g: Graphics2D, at: java.awt.geom.AffineTransform) {
+        if (!settings.showBookmarks) return
         val shift = shift
         val worldH = panel.state.worldHeight
         val iterator = bookmarks.iterator()

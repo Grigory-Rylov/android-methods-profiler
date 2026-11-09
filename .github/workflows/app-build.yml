@@ -64,11 +64,11 @@ jobs:
       - name: Package macOS DMG (jpackage)
         if: runner.os == 'macOS'
         working-directory: app
+        env:
+          # fatJar names the jar yamp-<ver>.jar; pass it straight to the
+          # script (APFS is case-insensitive — cp yamp XAMP is a no-op).
+          MAIN_JAR_NAME: yamp-${{ steps.ver.outputs.version }}.jar
         run: |
-          # macosx.sh expects YAMP-<ver>.jar next to the fat jar output.
-          # APFS is case-insensitive: copy through a temp name.
-          cp build/libs/yamp-${{ steps.ver.outputs.version }}.jar build/libs/yamp-tmp.jar
-          mv build/libs/yamp-tmp.jar build/libs/YAMP-${{ steps.ver.outputs.version }}.jar
           chmod +x build_scripts/macosx.sh
           ./build_scripts/macosx.sh ${{ steps.ver.outputs.version }}
 
@@ -84,6 +84,7 @@ jobs:
             --input build/libs \
             --main-jar yamp-${{ steps.ver.outputs.version }}.jar \
             --main-class com.github.grishberg.profiler.Launcher \
+            --java-options "--add-exports java.desktop/com.apple.eawt.event=ALL-UNNAMED" \
             --app-version ${{ steps.ver.outputs.version }} \
             --vendor "Grigory Rylov" \
             --type app-image \
