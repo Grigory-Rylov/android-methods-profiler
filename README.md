@@ -103,6 +103,16 @@ If you want to find methods that ends with *SomeClass.someMethod* then type *Som
 
 If there is no results in current thread, profiler will search it in another threads and ask you to switch to another thread if threre is any results - this can be very useful!
 
+## Racing-style main chart
+The main chart is a virtual canvas: calls of the selected thread are horizontal bars, so
+parallel/pipelined calls are readable at a glance. A LOD grid and a synchronized time ruler adapt
+to the zoom level; scrollbars appear only when the content does not fit.
+
+Controls: pinch (or **Ctrl + mouse wheel**) zooms anchored at the cursor, two-finger scroll pans
+(horizontal pan: **Shift + wheel**), **0** fits the whole range, drag with the left mouse button pans.
+Hovering a bar shows the full method name and duration in the status bar. Method names on bars are
+compacted the same way as before: packages collapse to single letters as the bar narrows.
+
 ## Compare traces
 You can compare your traces with YAMP. Check [README.md](core/src/main/java/com/github/grishberg/profiler/comparator/README.md)
 

@@ -4,7 +4,8 @@ import com.github.grishberg.profiler.analyzer.FlatMethodsReportGenerator;
 import com.github.grishberg.profiler.chart.BookmarkPopupMenu;
 import com.github.grishberg.profiler.chart.Bookmarks;
 import com.github.grishberg.profiler.chart.BookmarksRectangle;
-import com.github.grishberg.profiler.chart.CallTracePanel;
+import com.github.grishberg.profiler.chart.ProfilerPanel;
+import com.github.grishberg.profiler.chart.racing.RacingCallTracePanel;
 import com.github.grishberg.profiler.chart.CallTracePreviewPanel;
 import com.github.grishberg.profiler.chart.Finder;
 import com.github.grishberg.profiler.chart.FoundNavigationListener;
@@ -74,9 +75,9 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.List;
 
-public class Main implements ZoomAndPanDelegate.MouseEventsListener,
+public class Main implements ProfilerPanel.MouseEventsListener,
         FoundNavigationListener<ProfileData>, ActionListener, ShowDialogDelegate,
-        CallTracePanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
+        ProfilerPanel.OnRightClickListener, UpdatesChecker.UpdatesFoundAction {
 
     @Nullable
     private File currentOpenedFile;
@@ -100,7 +101,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
     private final JTextField selectedClassNameLabel = new JTextField(10);
     private final JTextField findClassText;
     private final JLabel selectedDurationLabel = new JLabel("Selected duration");
-    private final CallTracePanel chart;
+    private final ProfilerPanel chart;
     private final InfoPanel hoverInfoPanel;
     private final JLabel foundInfo;
     private final NewBookmarkDialog newBookmarkDialog;
@@ -286,8 +287,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         methodsFinder = new Finder(coroutineScope, coroutinesDispatchers);
         methodsFinder.setListener(new MethodsFinderListener());
 
-        chart = new CallTracePanel(
-                timeFormatter,
+        chart = new RacingCallTracePanel(
                 methodsColor,
                 this,
                 settings,
@@ -638,6 +638,7 @@ public class Main implements ZoomAndPanDelegate.MouseEventsListener,
         JMenuItem showFlameChart = new JMenuItem("Show Flame Chart");
         viewMenu.add(showFlameChart);
         showFlameChart.addActionListener(a -> showFlameChartDialog());
+
 
         JMenuItem showThreadsDialog = new JMenuItem("Show threads dialog");
         viewMenu.add(showThreadsDialog);
