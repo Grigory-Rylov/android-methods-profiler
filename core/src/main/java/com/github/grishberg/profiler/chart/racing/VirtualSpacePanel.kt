@@ -55,6 +55,7 @@ class VirtualSpacePanel : JPanel() {
 
     val state = ViewState()
     var onViewChanged: (() -> Unit)? = null
+    var onStateChanged: (() -> Unit)? = null
 
     /** Цветовая схема (общий мутируемый объект с [TimelineHeader]). */
     var colors: RacingColorScheme = RacingColorScheme.DARK
@@ -686,6 +687,7 @@ class VirtualSpacePanel : JPanel() {
 
     private fun changed() {
         onViewChanged?.invoke()
+        onStateChanged?.invoke()
         repaint()
     }
 
