@@ -467,20 +467,18 @@ class VirtualSpacePanel : JPanel() {
     private fun onWheel(e: MouseWheelEvent) {
         val mods = e.modifiersEx
         val ctrl = (mods and InputEvent.CTRL_DOWN_MASK) != 0
-        val shift = (mods and InputEvent.SHIFT_DOWN_MASK) != 0
-        if (ctrl && !shift) {
-            // Эхо жеста: Oracle JDK и macOS <15 дублируют pinch как ctrl+wheel —
-            // зум уже применил MacPinchBridge, второй раз зумить нельзя.
-            if (MacPinchBridge.isPinchEcho()) return
-            // Pinch: factor = exp(-rot * 0.18), якорь — точка под курсором.
-            val factor = Math.exp(-rotationOf(e) * PINCH_EXP)
-            state.zoomAt(e.x.toDouble(), e.y.toDouble(), factor, width.toDouble(), height.toDouble())
-        } else if (!ctrl) {
-            // Pan двумя пальцами. У AWT-колеса нет оси X — горизонтальный жест
-            // приезжает как Shift+wheel (канон Swing, так же делает BasicScrollBarUI).
-            val rot = rotationOf(e)
-            val rotX = if (shift) rot else 0.0
-            state.scrollBy(rotX * PAN_PX, rot * PAN_PX, width.toDouble(), height.toDouble())
+        if (ctrl && !WheelGesture.isZoom((mods and InputEvent.SHIFT_DOWN_MASK) != 0)
+            && MacPinchBridge.isPinchEcho()) return
+        when (val g = WheelGesture.classify(
+            isShiftDown = (mods and InputEvent.SHIFT_DOWN_MASK) != 0,
+            isCtrlDown = ctrl,
+            rotation = rotationOf(e),
+        )) {
+            is WheelGesture.Scroll ->
+                state.scrollBy(g.dxPx, 0.0, width.toDouble(), height.toDouble())
+            is WheelGesture.Zoom ->
+                state.zoomAt(e.x.toDouble(), e.y.toDouble(), g.factor, width.toDouble(), height.toDouble())
+            WheelGesture.Ignored -> Unit
         }
         changed()
     }

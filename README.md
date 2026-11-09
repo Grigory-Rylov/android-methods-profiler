@@ -108,8 +108,9 @@ The main chart is a virtual canvas: calls of the selected thread are horizontal 
 parallel/pipelined calls are readable at a glance. A LOD grid and a synchronized time ruler adapt
 to the zoom level; scrollbars appear only when the content does not fit.
 
-Controls: pinch (or **Ctrl + mouse wheel**) zooms anchored at the cursor, two-finger scroll pans
-(horizontal pan: **Shift + wheel**), **0** fits the whole range, drag with the left mouse button pans.
+Controls: **mouse wheel** scrolls the timeline horizontally, **Shift + mouse wheel** zooms
+anchored at the cursor (pinch / **Ctrl + wheel** zoom too), **0** fits the whole range, drag with
+the left mouse button pans.
 Hovering a bar shows the full method name and duration in the status bar. Method names on bars are
 compacted the same way as before: packages collapse to single letters as the bar narrows.
 
