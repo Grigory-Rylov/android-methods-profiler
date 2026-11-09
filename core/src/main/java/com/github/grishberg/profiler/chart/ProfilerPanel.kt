@@ -48,6 +48,9 @@ abstract class ProfilerPanel : JPanel() {
     // --- жизненный цикл трейса -------------------------------------------------
     abstract fun openTraceResult(trace: TraceContainer)
     abstract fun closeTrace()
+
+    /** Смена темы приложения: панель может пересобрать палитру-зависимые цвета. */
+    open fun onThemeChanged() {}
     abstract fun switchThread(threadId: Int)
     abstract fun switchTimeMode(isThreadTime: Boolean)
 

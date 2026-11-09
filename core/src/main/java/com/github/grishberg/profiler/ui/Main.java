@@ -300,7 +300,9 @@ public class Main implements ProfilerPanel.MouseEventsListener,
                 previewPanel,
                 themeController.getPalette()
         );
-        chart.setLayout(new BorderLayout());
+        // НЕ переставлять layout: RacingCallTracePanel сам держит BorderLayout
+        // с VirtualSpaceView в CENTER; setLayout() сбросил бы кэш ограничений
+        // BorderLayout и вью остался бы 0x0.
         chart.setDoubleBuffered(true);
         chart.setPreferredSize(new Dimension(1024, 800));
         chart.setMinimumSize(new Dimension(1024, 800));
@@ -397,6 +399,7 @@ public class Main implements ProfilerPanel.MouseEventsListener,
             @Override
             public void run() {
                 previewImageRepository.clear();
+                chart.onThemeChanged();
                 chart.updatePreviewImage();
                 chart.repaint();
                 flameChartDialog.refreshFlameChart();

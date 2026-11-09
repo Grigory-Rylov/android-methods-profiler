@@ -220,6 +220,12 @@ class RacingCallTracePanel(
 
     // --- жизненный цикл -------------------------------------------------------------
 
+    /** Палитра в YAMP мутируемая (PaletteProxy) — пересобираем схему на месте. */
+    override fun onThemeChanged() {
+        colorScheme.applyPalette(palette)
+        view.setColors(colorScheme)
+    }
+
     override fun openTraceResult(trace: TraceContainer) {
         disableSearching()
         nameDrawer.resetFontSize()

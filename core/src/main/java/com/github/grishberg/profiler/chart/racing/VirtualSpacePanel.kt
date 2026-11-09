@@ -23,6 +23,7 @@ import java.awt.event.MouseMotionAdapter
 import java.awt.event.MouseWheelEvent
 import java.awt.geom.Point2D
 import java.awt.geom.AffineTransform
+import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import java.util.Collections
 import java.util.IdentityHashMap
@@ -533,6 +534,10 @@ class VirtualSpacePanel : JPanel() {
         }
     }
 
+    /** Форма баров: false (как в прежнем CallTracePanel) — прямоугольники,
+     *  true — скруглённые (arc 0.6·h, 2..12px). Флажок компонента. */
+    var roundedBars: Boolean = false
+
     private fun paintRows(g: Graphics2D) {
         val px = state.scale
         val py = state.scaleY
@@ -547,7 +552,6 @@ class VirtualSpacePanel : JPanel() {
                 val y0 = depth * ROW_H
                 val by = ((y0 + BAR_PAD - state.viewY) * py).toFloat()
                 val bh = ((ROW_H - 2 * BAR_PAD) * py).toFloat()
-                val arc = (bh * 0.6f).coerceIn(2f, 12f)
                 for (row in bucket) {
                     val x = (row.startMs - state.viewX) * px
                     val w = row.durMs * px
@@ -556,7 +560,12 @@ class VirtualSpacePanel : JPanel() {
                     // пикселя не рисуем — на плотном трейсе это десятки тысяч
                     // заштрихованных форм на кадр, от них лагает.
                     if (w < MIN_BAR_PX) continue
-                    val shape = RoundRectangle2D.Float(x.toFloat(), by, w.toFloat(), bh, arc, arc)
+                    val shape = if (roundedBars) {
+                        val arc = (bh * 0.6f).coerceIn(2f, 12f)
+                        RoundRectangle2D.Float(x.toFloat(), by, w.toFloat(), bh, arc, arc)
+                    } else {
+                        Rectangle2D.Float(x.toFloat(), by, w.toFloat(), bh)
+                    }
                     val fill = elementColorFor(row)
                     g.color = fill.fillColor
                     g.fill(shape)
@@ -662,7 +671,7 @@ class VirtualSpacePanel : JPanel() {
         /** Высота строки в мировых единицах по Y; связь depth→Y видна внешнему коду. */
         const val ROW_H = 20.0
 
-        private const val BAR_PAD = 2.0
+        private const val BAR_PAD = 0.0
         private const val NAME_MIN_PX = 60.0
 
         /** Порог ширины бара для подписи через labelPainter — как в CallTracePanel (1px). */
