@@ -992,11 +992,22 @@ public class Main implements ProfilerPanel.MouseEventsListener,
                 : selectedData.getGlobalEndTimeInMillisecond();
 
         selectedClassNameLabel.setText(selectedData.getName());
+        ProfileData parent = selectedData.getParent();
+        double parentDuration = 0.0;
+        if (parent != null) {
+            double parentStart = isThreadTime
+                    ? parent.getThreadStartTimeInMillisecond()
+                    : parent.getGlobalStartTimeInMillisecond();
+            double parentEnd = isThreadTime
+                    ? parent.getThreadEndTimeInMillisecond()
+                    : parent.getGlobalEndTimeInMillisecond();
+            parentDuration = parentEnd - parentStart;
+        }
         selectedDurationLabel.setText(String.format(
-                "start: %s, end: %s, duration: %.3f ms",
+                "start: %s, end: %s, duration: %s",
                 formatMicroseconds(start),
                 formatMicroseconds(end),
-                end - start
+                DurationPercentFormatter.durationTextWithParentPercent(end - start, parentDuration)
         ));
     }
 

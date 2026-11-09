@@ -5,6 +5,7 @@ import com.github.grishberg.profiler.common.SimpleMouseListener
 import com.github.grishberg.profiler.comparator.aggregator.threads.AggregatedFlameThreadsViewDialog
 import com.github.grishberg.profiler.comparator.aggregator.threads.FlameThreadItem
 import com.github.grishberg.profiler.comparator.aggregator.threads.AggregatedFlameThreadSwitchController
+import com.github.grishberg.profiler.ui.DurationPercentFormatter
 import com.github.grishberg.profiler.ui.SwitchThreadButton
 import com.github.grishberg.profiler.ui.TextUtils
 import com.github.grishberg.profiler.ui.theme.Palette
@@ -148,7 +149,7 @@ class FlameChartDialog(
             statusNameLabel.text = "(${selectedData.count}) ${selectedData.name}"
             val start = selectedData.getX()
             val end = selectedData.maxX
-            statusTimeLabel.text = " duration: ${String.format("%.3f ms", end - start)}"
+            statusTimeLabel.text = " duration: ${DurationPercentFormatter.durationTextWithParentPercent(end - start, selectedData.parentDuration)}"
         } else {
             controller.onMouseClickedToEmptySpace()
         }

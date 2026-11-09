@@ -165,7 +165,11 @@ class FlameChartController(
         return Result(result, left, -topOffset, left + width)
     }
 
-    private fun toRectangle(node: AggregatedFlameProfileDataImpl, fillIn: MutableList<FlameRectangle>) {
+    private fun toRectangle(
+        node: AggregatedFlameProfileDataImpl,
+        fillIn: MutableList<FlameRectangle>,
+        parentDuration: Double = 0.0
+    ) {
         fillIn.add(
             FlameRectangle(
                 node.left,
@@ -175,10 +179,11 @@ class FlameChartController(
                 node.name,
                 node.mean.toInt(),  // TODO: allow to show double?
                 methodsColor.getColorForMethod(node),
+                parentDuration,
             )
         )
         for (child in node.children) {
-            toRectangle(child, fillIn)
+            toRectangle(child, fillIn, node.width)
         }
     }
 
@@ -271,6 +276,9 @@ class FlameChartController(
         }
 
         private fun processChildren(rootSources: List<ProfileData>, parentLeft: Double) {
+            val parentDuration = rootSources.sumOf {
+                calculateEndXForTime(it) - calculateStartXForTime(it)
+            }
             val children = mutableMapOf<String, ChildHolder>()
             var left = parentLeft
             for (root in rootSources) {
@@ -294,7 +302,8 @@ class FlameChartController(
                         top,
                         entry.value.totalDuration,
                         levelHeight, entry.key,
-                        entry.value.children.size
+                        entry.value.children.size,
+                        parentDuration = parentDuration,
                     )
                 )
                 processChildren(entry.value.children, left)
