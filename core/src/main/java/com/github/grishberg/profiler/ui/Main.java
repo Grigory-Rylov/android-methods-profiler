@@ -68,6 +68,11 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -407,7 +412,65 @@ public class Main implements ProfilerPanel.MouseEventsListener,
             }
         });
         updatesChecker.checkForUpdates(this);
+        installTraceFileDropTarget();
         frame.setLocationRelativeTo(null);
+    }
+
+    private void installTraceFileDropTarget() {
+        new DropTarget(frame, DnDConstants.ACTION_COPY, new DropTargetAdapter() {
+            @Override
+            public void drop(DropTargetDropEvent event) {
+                if (!event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+                        || loadingDialog.isVisible()) {
+                    event.rejectDrop();
+                    return;
+                }
+                event.acceptDrop(DnDConstants.ACTION_COPY);
+                File file = firstSupportedDroppedFile(event);
+                if (file != null) {
+                    openDroppedTraceFile(file);
+                }
+                event.dropComplete(file != null);
+            }
+        }, true);
+    }
+
+    @Nullable
+    private File firstSupportedDroppedFile(DropTargetDropEvent event) {
+        try {
+            Object transferred = event.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+            if (!(transferred instanceof List)) {
+                return null;
+            }
+            List<?> files = (List<?>) transferred;
+            if (files.isEmpty() || !(files.get(0) instanceof File)) {
+                return null;
+            }
+            File file = (File) files.get(0);
+            return isSupportedTraceFile(file) ? file : null;
+        } catch (Exception e) {
+            log.e("Can't read dropped file", e);
+            return null;
+        }
+    }
+
+    private boolean isSupportedTraceFile(File file) {
+        String fileName = file.getName().toLowerCase();
+        for (FileNameExtensionFilter filter : fileSystem.getFileFilters()) {
+            for (String extension : filter.getExtensions()) {
+                if (fileName.endsWith("." + extension)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void openDroppedTraceFile(File file) {
+        hoverInfoPanel.hidePanel();
+        settings.setTraceFileDialogDir(file.getParent());
+        menuHistoryItems.addToFileHistory(file);
+        openTraceFile(file);
     }
 
     /**
