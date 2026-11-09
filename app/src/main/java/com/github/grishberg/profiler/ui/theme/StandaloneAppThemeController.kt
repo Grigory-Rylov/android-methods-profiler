@@ -1,17 +1,22 @@
 package com.github.grishberg.profiler.ui.theme
 
+import com.formdev.flatlaf.FlatDarkLaf
+import com.formdev.flatlaf.FlatLightLaf
 import com.github.grishberg.profiler.chart.theme.DarkPalette
 import com.github.grishberg.profiler.chart.theme.LightPalette
 import com.github.grishberg.profiler.common.settings.SettingsFacade
+import java.awt.Frame
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JMenu
 import javax.swing.JMenuBar
 import javax.swing.JMenuItem
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
 
 enum class Theme(val palette: Palette) {
-    LIGHT(DarkPalette()),
-    DARK(LightPalette())
+    LIGHT(LightPalette()),
+    DARK(DarkPalette())
 }
 
 class StandaloneAppThemeController(
@@ -68,12 +73,8 @@ class StandaloneAppThemeController(
     private fun setDarkTheme(set: Boolean = false) {
         theme = Theme.DARK
         palette.currentPalette = DarkPalette()
-        if (set) {
-            //TODO: UIManager.setLookAndFeel(FlatDarculaLaf())
-            return
-        }
-        //TODO: UIManager.setLookAndFeel(FlatDarculaLaf())
-        //TODO: SwingUtilities.updateComponentTreeUI(owner)
+        applyLookAndFeel(dark = true)
+        if (set) return
         settings.theme = theme.name
         themeSwitchCallbacks.forEach { it.run() }
     }
@@ -81,13 +82,40 @@ class StandaloneAppThemeController(
     private fun setLiteTheme(set: Boolean = false) {
         theme = Theme.LIGHT
         palette.currentPalette = LightPalette()
-        if (set) {
-            //TODO: UIManager.setLookAndFeel(FlatLightLaf())
-            return
-        }
-        //TODO: UIManager.setLookAndFeel(FlatLightLaf())
-        //TODO: SwingUtilities.updateComponentTreeUI(owner)
+        applyLookAndFeel(dark = false)
+        if (set) return
         settings.theme = theme.name
         themeSwitchCallbacks.forEach { it.run() }
+    }
+
+    /** Тёмный/светлый FlatLaf на всё приложение + перерисовка открытых окон. */
+    private fun applyLookAndFeel(dark: Boolean) {
+        // FlatLaf разрешает цвета из UIManager только ДО установки L&F
+        // (при установке таблица пересобирается). Дефолт disabled/inactive
+        // foreground — shade(@foreground,25%): в тёмной теме почти невидимый
+        // #4d4d4d на #3c3f41 (лейблы «global time», «Selected duration», поле
+        // имени метода — disabled; текст поля поиска без фокуса — inactive).
+        // Осветляем до читаемого серого в тёмной теме, в светлой — дефолты.
+        val light = if (dark) java.awt.Color(0xB8, 0xBF, 0xC6) else java.awt.Color(0x8C, 0x8C, 0x8C)
+        UIManager.put("Label.disabledForeground", light)
+        UIManager.put("TextField.inactiveForeground", light)
+        UIManager.put("TextField.placeholderForeground", light)
+        UIManager.put("FormattedTextField.inactiveForeground", light)
+        UIManager.put("TextArea.inactiveForeground", light)
+        UIManager.put("EditorPane.inactiveForeground", light)
+        if (dark) {
+            // Текст кнопок (в т.ч. кнопки выбора потока «main») — чуть ярче базового
+            UIManager.put("Button.foreground", java.awt.Color(0xE2, 0xE5, 0xE8))
+        } else {
+            UIManager.put("Button.foreground", java.awt.Color(0x00, 0x00, 0x00))
+        }
+        val laf = if (dark) FlatDarkLaf() else FlatLightLaf()
+        UIManager.setLookAndFeel(laf)
+        for (frame in Frame.getFrames()) {
+            SwingUtilities.updateComponentTreeUI(frame)
+            frame.invalidate()
+            frame.validate()
+            frame.repaint()
+        }
     }
 }

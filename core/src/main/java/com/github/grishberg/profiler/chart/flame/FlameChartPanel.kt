@@ -1,8 +1,7 @@
 package com.github.grishberg.profiler.chart.flame
 
 import com.github.grishberg.profiler.chart.MethodsNameDrawer
-import com.github.grishberg.profiler.chart.CallTracePanel.TOP_OFFSET
-import com.github.grishberg.profiler.ui.ZoomAndPanDelegate
+import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.ui.theme.Palette
 import java.awt.Color
 import java.awt.Component
@@ -35,7 +34,7 @@ class FlameChartPanel(
 
     private val leftSymbolOffset = 4
     private val fontTopOffset = 4
-    private val zoomAndPanDelegate = FlameChartZoomAndPanDelegate(this, TOP_OFFSET)
+    private val zoomAndPanDelegate = FlameChartZoomAndPanDelegate(this, ProfilerPanel.TOP_OFFSET)
     private var init = true
     private val methodsNameDrawer = MethodsNameDrawer(leftSymbolOffset)
 

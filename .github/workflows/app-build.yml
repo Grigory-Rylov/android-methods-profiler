@@ -1,0 +1,113 @@
+name: Build App (macOS + Linux)
+
+# Standalone desktop app build for PRs touching app/core and for master merges.
+# On PR: artifacts are uploaded to the workflow run.
+# On merge to master: artifacts are attached to the GitHub Release v<yampVersion>
+# (same tag the plugin release workflow creates).
+
+on:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'app/**'
+      - 'core/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - '.github/workflows/app-build.yml'
+  push:
+    branches: [ master ]
+    paths:
+      - 'app/**'
+      - 'core/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'gradle.properties'
+      - 'settings.gradle'
+
+permissions:
+  contents: write
+
+jobs:
+  build-app:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build fat jar
+        run: ./gradlew :app:fatJar -x :app:test --no-daemon
+
+      - name: Retrieve version
+        id: ver
+        run: |
+          VERSION=$(grep 'yampVersion' gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # ---- macOS: reuse the project script -> YAMP.dmg ----
+      - name: Package macOS DMG (jpackage)
+        if: runner.os == 'macOS'
+        working-directory: app
+        env:
+          # fatJar names the jar yamp-<ver>.jar; pass it straight to the
+          # script (APFS is case-insensitive — cp yamp XAMP is a no-op).
+          MAIN_JAR_NAME: yamp-${{ steps.ver.outputs.version }}.jar
+        run: |
+          chmod +x build_scripts/macosx.sh
+          ./build_scripts/macosx.sh ${{ steps.ver.outputs.version }}
+
+      # ---- Linux: jpackage app-image (runtime self-contained) ----
+      # NB: --file-associations is not supported for --type app-image.
+      - name: Package Linux app-image (jpackage)
+        if: runner.os == 'Linux'
+        working-directory: app
+        run: |
+          mkdir -p build/release
+          jpackage \
+            --name YAMP \
+            --input build/libs \
+            --main-jar yamp-${{ steps.ver.outputs.version }}.jar \
+            --main-class com.github.grishberg.profiler.Launcher \
+            --java-options "--add-exports java.desktop/com.apple.eawt.event=ALL-UNNAMED" \
+            --app-version ${{ steps.ver.outputs.version }} \
+            --vendor "Grigory Rylov" \
+            --type app-image \
+            --dest build/release
+          cd build/release && zip -qry YAMP-${{ steps.ver.outputs.version }}-linux.zip YAMP
+
+      - name: Upload artifacts to workflow run (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: yamp-app-${{ runner.os }}-${{ steps.ver.outputs.version }}
+          path: |
+            app/build/release/*.dmg
+            app/build/release/*.zip
+          if-no-files-found: error
+
+      - name: Upload artifacts to GitHub Release (merge to master)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          files: |
+            app/build/release/*.dmg
+            app/build/release/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

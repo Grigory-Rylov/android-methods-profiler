@@ -1,6 +1,6 @@
 package com.github.grishberg.profiler.ui.keymap
 
-import com.github.grishberg.profiler.chart.CallTracePanel
+import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.ui.InfoPanel
 import com.github.grishberg.profiler.ui.Main
 import com.github.grishberg.profiler.ui.ShowDialogDelegate
@@ -17,7 +17,7 @@ import javax.swing.JTextField
 import javax.swing.KeyStroke
 
 class KeyBinder(
-    private val profilerView: CallTracePanel,
+    private val profilerView: ProfilerPanel,
     private val copySource: JTextField,
     private val searchField: JTextField,
     private val dialogDelegate: ShowDialogDelegate,
@@ -252,7 +252,7 @@ class KeyBinder(
 
     private inner class FoundToMarker : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
-            if (!profilerView.isSearchingInProgress) {
+            if (!profilerView.isSearchingInProgress()) {
                 return
             }
             newBookmarkDialog.clearAndHide()

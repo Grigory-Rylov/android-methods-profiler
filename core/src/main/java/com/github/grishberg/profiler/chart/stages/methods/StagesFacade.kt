@@ -2,7 +2,7 @@ package com.github.grishberg.profiler.chart.stages.methods
 
 import com.github.grishberg.profiler.analyzer.calculateMaxGlobalTime
 import com.github.grishberg.profiler.analyzer.calculateMaxThreadTime
-import com.github.grishberg.profiler.chart.CallTracePanel
+import com.github.grishberg.profiler.chart.ProfilerPanel
 import com.github.grishberg.profiler.chart.ChartPaintDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.RepaintDelegate
@@ -257,11 +257,11 @@ class StagesFacade(
             val name = stageRectangle.stage.name
 
             val cx = rect.x + rect.width / 2
-            val labelTextWidth = max(fm.stringWidth(name), CallTracePanel.MARKER_LABEL_TEXT_MIN_WIDTH)
+            val labelTextWidth = max(fm.stringWidth(name), ProfilerPanel.MARKER_LABEL_TEXT_MIN_WIDTH)
 
             // header background
             g.color = stageRectangle.headerColor
-            g.fillRect(rect.x, 0, rect.width, CallTracePanel.TOP_OFFSET)
+            g.fillRect(rect.x, 0, rect.width, ProfilerPanel.TOP_OFFSET)
 
             g.color = stageRectangle.headerTitleColor
             if (name.isNotEmpty()) {
