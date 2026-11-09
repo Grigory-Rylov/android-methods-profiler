@@ -192,8 +192,11 @@ public class FlameChartZoomAndPanDelegate implements MouseListener, MouseMotionL
 
     private void zoomIn(Point p, double zoomMultiplicationFactor) throws NoninvertibleTransformException {
         Point2D p1 = transformPoint(p);
-        double factor = 1 / zoomMultiplicationFactor;
-        coordTransform.scale(factor, 1 /*/ zoomMultiplicationFactor*/);
+        double factor = clampZoomOutFactor(zoomMultiplicationFactor);
+        if (factor <= 0) {
+            return;
+        }
+        coordTransform.scale(factor, 1);
         Point2D p2 = transformPoint(p);
 
         double dx = p2.getX() - p1.getX();
@@ -201,6 +204,23 @@ public class FlameChartZoomAndPanDelegate implements MouseListener, MouseMotionL
         translateCamera(dx, dy);
         targetComponent.repaint();
 
+    }
+
+    private double clampZoomOutFactor(double zoomMultiplicationFactor) {
+        double factor = 1 / zoomMultiplicationFactor;
+        double dataWidth = dataRightBottomCorner.getX();
+        if (dataWidth <= 0) {
+            return factor;
+        }
+        double scaleX = coordTransform.getScaleX();
+        if (scaleX <= 0) {
+            return factor;
+        }
+        double visibleWorldWidth = targetComponent.getWidth() / scaleX;
+        double maxVisibleWorldWidth = Math.max(visibleWorldWidth, dataWidth);
+        double minScaleX = targetComponent.getWidth() / maxVisibleWorldWidth;
+        double minFactor = minScaleX / scaleX;
+        return Math.max(factor, minFactor);
     }
 
     public Point2D.Float transformPoint(Point p1) throws NoninvertibleTransformException {
@@ -373,14 +393,28 @@ public class FlameChartZoomAndPanDelegate implements MouseListener, MouseMotionL
         @Override
         public Point2D correctOffset(double dx, double dy, Rectangle2D transformedScreenBounds, Point2D dataRightBottom) {
             double dataBottomDy = (transformedScreenBounds.getY() + transformedScreenBounds.getHeight()) - dataRightBottom.getY();
-            if (dx > 0) { // pane right
-                dx = Math.min(dx, transformedScreenBounds.getMinX());
-            }
+            dx = clampHorizontalOffset(dx, transformedScreenBounds, dataRightBottom);
             if (dy < 0) { // pane up
                 dy = Math.max(dy, dataBottomDy);
             }
             point2D.setLocation(dx, dy);
             return point2D;
+        }
+
+        private double clampHorizontalOffset(double dx, Rectangle2D transformedScreenBounds, Point2D dataRightBottom) {
+            double screenLeft = transformedScreenBounds.getMinX();
+            double worldScreenWidth = transformedScreenBounds.getWidth();
+            double dataWidth = dataRightBottom.getX();
+            if (dataWidth <= 0 || worldScreenWidth <= 0) {
+                return dx;
+            }
+            double newLeft = screenLeft - dx;
+            if (dataWidth >= worldScreenWidth) {
+                newLeft = Math.min(Math.max(newLeft, 0), dataWidth - worldScreenWidth);
+            } else {
+                newLeft = Math.max(Math.min(newLeft, 0), dataWidth - worldScreenWidth);
+            }
+            return screenLeft - newLeft;
         }
 
         @Override
