@@ -401,6 +401,7 @@ public class Main implements ProfilerPanel.MouseEventsListener,
                 previewImageRepository.clear();
                 chart.onThemeChanged();
                 chart.updatePreviewImage();
+                updateControlLabelColors();
                 chart.repaint();
                 flameChartDialog.refreshFlameChart();
             }
@@ -409,10 +410,28 @@ public class Main implements ProfilerPanel.MouseEventsListener,
         frame.setLocationRelativeTo(null);
     }
 
+    /**
+     * Поля-лейблы создаются инициализаторами до themeController.applyTheme(),
+     * поэтому их foreground — тёмный дефолт старого L&F (PrintColorUIResource
+     * 51,51,51), который FlatLaf при обновлении UI не перезаписывает.
+     * Сбрасываем на актуальный Label.foreground. Вызывать после установки L&F
+     * и при каждой смене темы.
+     */
+    private void updateControlLabelColors() {
+        Color fg = UIManager.getColor("Label.foreground");
+        if (fg == null) return;
+        coordinatesLabel.setForeground(fg);
+        selectedDurationLabel.setForeground(fg);
+        selectedClassNameLabel.setForeground(fg);
+        foundInfo.setForeground(fg);
+        frame.repaint();
+    }
+
     private JPanel createSelectionsPanel(JLabel timeModeLabel) {
         selectedClassNameLabel.setEnabled(false);
         selectedClassNameLabel.setBorder(new EmptyBorder(0, 4, 0, 4));
-        selectedClassNameLabel.setForeground(UIManager.getColor("Label.foreground"));
+
+        updateControlLabelColors();
 
         JPanel selectionControls = new JPanel(new BorderLayout(10, 4));
         selectionControls.setBorder(new EmptyBorder(0, 4, 2, 4));
