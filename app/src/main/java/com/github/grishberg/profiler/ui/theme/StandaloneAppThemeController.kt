@@ -90,6 +90,25 @@ class StandaloneAppThemeController(
 
     /** Тёмный/светлый FlatLaf на всё приложение + перерисовка открытых окон. */
     private fun applyLookAndFeel(dark: Boolean) {
+        // FlatLaf разрешает цвета из UIManager только ДО установки L&F
+        // (при установке таблица пересобирается). Дефолт disabled/inactive
+        // foreground — shade(@foreground,25%): в тёмной теме почти невидимый
+        // #4d4d4d на #3c3f41 (лейблы «global time», «Selected duration», поле
+        // имени метода — disabled; текст поля поиска без фокуса — inactive).
+        // Осветляем до читаемого серого в тёмной теме, в светлой — дефолты.
+        val light = if (dark) java.awt.Color(0xB8, 0xBF, 0xC6) else java.awt.Color(0x8C, 0x8C, 0x8C)
+        UIManager.put("Label.disabledForeground", light)
+        UIManager.put("TextField.inactiveForeground", light)
+        UIManager.put("TextField.placeholderForeground", light)
+        UIManager.put("FormattedTextField.inactiveForeground", light)
+        UIManager.put("TextArea.inactiveForeground", light)
+        UIManager.put("EditorPane.inactiveForeground", light)
+        if (dark) {
+            // Текст кнопок (в т.ч. кнопки выбора потока «main») — чуть ярче базового
+            UIManager.put("Button.foreground", java.awt.Color(0xE2, 0xE5, 0xE8))
+        } else {
+            UIManager.put("Button.foreground", java.awt.Color(0x00, 0x00, 0x00))
+        }
         val laf = if (dark) FlatDarkLaf() else FlatLightLaf()
         UIManager.setLookAndFeel(laf)
         for (frame in Frame.getFrames()) {
