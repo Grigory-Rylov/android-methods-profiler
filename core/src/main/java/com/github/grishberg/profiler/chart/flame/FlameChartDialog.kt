@@ -1,7 +1,6 @@
 package com.github.grishberg.profiler.chart.flame
 
 import com.github.grishberg.profiler.chart.FoundInfoListener
-import com.github.grishberg.profiler.common.SimpleMouseListener
 import com.github.grishberg.profiler.comparator.aggregator.threads.AggregatedFlameThreadsViewDialog
 import com.github.grishberg.profiler.comparator.aggregator.threads.FlameThreadItem
 import com.github.grishberg.profiler.comparator.aggregator.threads.AggregatedFlameThreadSwitchController
@@ -16,8 +15,6 @@ import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.AbstractAction
@@ -31,9 +28,10 @@ import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.border.BevelBorder
-import javax.swing.border.EmptyBorder
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
+
+private const val PAN_STEP_PX = 50.0
 
 class FlameChartDialog(
     private val controller: FlameChartController,
@@ -42,9 +40,9 @@ class FlameChartDialog(
     private val threadSwitchController: AggregatedFlameThreadSwitchController? = null
 ) : JFrame("Flame chart"), FoundInfoListener<FlameRectangle>, DialogView {
     private val condition = JComponent.WHEN_IN_FOCUSED_WINDOW
-    private val flameChart = FlameChartPanel(this, controller, palette)
-    private val inputMap = flameChart.getInputMap(condition)
-    private val actionMap = flameChart.actionMap
+    private val flameRacing = FlameRacingView(this, controller, palette)
+    private val inputMap = flameRacing.panel.getInputMap(condition)
+    private val actionMap = flameRacing.panel.actionMap
     private val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     private val textUtils = TextUtils()
     private val hoverInfoPanel: FlameInfoPanel
@@ -61,38 +59,25 @@ class FlameChartDialog(
     private val foundInfo = JLabel(defaultFoundInfoMessage)
 
     init {
-        hoverInfoPanel = FlameInfoPanel(flameChart)
-        flameChart.apply {
-            preferredSize = Dimension(640, 500)
-            border = EmptyBorder(8, 8, 8, 8)
-
-        }
+        hoverInfoPanel = FlameInfoPanel(flameRacing.panel)
         rootPane.glassPane = hoverInfoPanel
 
-        flameChart.addMouseMotionListener(object : MouseMotionListener {
-            override fun mouseMoved(e: MouseEvent) {
-                val selectedData = flameChart.findDataByPosition(e.point)
-                if (selectedData != null) {
-                    hoverInfoPanel.setText(e.point, selectedData)
-                } else {
-                    hoverInfoPanel.hidePanel()
-                }
+        flameRacing.onElementSelected = { element ->
+            statusNameLabel.text = "(${element.count}) ${element.name}"
+            val start = element.getX()
+            val end = element.maxX
+            statusTimeLabel.text = " duration: ${DurationPercentFormatter.durationTextWithParentPercent(end - start, element.parentDuration)}"
+        }
+        flameRacing.onElementHovered = { element, point ->
+            if (element != null) {
+                hoverInfoPanel.setText(point, element)
+            } else {
+                hoverInfoPanel.hidePanel()
             }
-
-            override fun mouseDragged(e: MouseEvent) = Unit
-        })
-        flameChart.addMouseListener(object : SimpleMouseListener() {
-            override fun mouseLeftClicked(e: MouseEvent) {
-                selectElement(e)
-            }
-
-            override fun mouseRightClicked(e: MouseEvent) {
-                selectElement(e)
-            }
-        })
-        controller.view = flameChart
+        }
+        controller.view = flameRacing
         createFindPanel()
-        mainPanel.add(flameChart, BorderLayout.CENTER)
+        mainPanel.add(flameRacing.view, BorderLayout.CENTER)
         createStatusBar()
         contentPane = mainPanel
         pack()
@@ -103,11 +88,7 @@ class FlameChartDialog(
         addKeyMap(KeyEvent.VK_W, WAction())
         addKeyMap(KeyEvent.VK_S, SAction())
         addKeyMap(KeyEvent.VK_A, panLeftAction)
-        addKeyMap(KeyEvent.VK_LEFT, panLeftAction)
         addKeyMap(KeyEvent.VK_D, panRightAction)
-        addKeyMap(KeyEvent.VK_RIGHT, panRightAction)
-        addKeyMap(KeyEvent.VK_UP, UpAction())
-        addKeyMap(KeyEvent.VK_DOWN, DownAction())
 
         val focusNextAction = FocusNextAction()
         addKeyMap(KeyEvent.VK_E, focusNextAction)
@@ -139,20 +120,7 @@ class FlameChartDialog(
                 controller.onDialogClosed()
             }
         })
-        flameChart.requestFocus()
-    }
-
-    private fun selectElement(e: MouseEvent) {
-        val selectedData = flameChart.findDataByPosition(e.point)
-        if (selectedData != null) {
-            controller.selectElement(selectedData)
-            statusNameLabel.text = "(${selectedData.count}) ${selectedData.name}"
-            val start = selectedData.getX()
-            val end = selectedData.maxX
-            statusTimeLabel.text = " duration: ${DurationPercentFormatter.durationTextWithParentPercent(end - start, selectedData.parentDuration)}"
-        } else {
-            controller.onMouseClickedToEmptySpace()
-        }
+        flameRacing.requestPanelFocus()
     }
 
     private fun createFindPanel() {
@@ -171,7 +139,7 @@ class FlameChartDialog(
 
     private fun showSwitchThreadDialog() {
         val dialog = AggregatedFlameThreadsViewDialog(this, threadSwitchController!!)
-        dialog.setLocationRelativeTo(flameChart)
+        dialog.setLocationRelativeTo(flameRacing.view)
         dialog.isVisible = true
         val selected = dialog.selectedThreadItem
         if (selected != null) {
@@ -210,10 +178,6 @@ class FlameChartDialog(
         addKeyMap(keyCode, Toolkit.getDefaultToolkit().menuShortcutKeyMask + ActionEvent.ALT_MASK, action)
     }
 
-    private fun addKeyMapWithShift(keyCode: Int, action: AbstractAction) {
-        addKeyMap(keyCode, ActionEvent.SHIFT_MASK, action)
-    }
-
     private fun addKeyMap(keyCode: Int, modifiers: Int, action: AbstractAction) {
         val keyStroke: KeyStroke = KeyStroke.getKeyStroke(keyCode, modifiers)
         inputMap.put(keyStroke, keyStroke.toString())
@@ -230,7 +194,7 @@ class FlameChartDialog(
 
     override fun onNotFound(text: String, ignoreCase: Boolean) {
         foundInfo.text = ""
-        JOptionPane.showMessageDialog(flameChart, "Not found `$text`")
+        JOptionPane.showMessageDialog(flameRacing.view, "Not found `$text`")
     }
 
     override fun hideInfoPanel() {
@@ -238,49 +202,33 @@ class FlameChartDialog(
     }
 
     fun refreshFlameChart() {
-        flameChart.background = palette.traceBackgroundColor
-        flameChart.repaint()
+        flameRacing.refreshPalette()
     }
 
     private inner class WAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.zoomOut()
+            flameRacing.zoomOut()
             hoverInfoPanel.hidePanel()
         }
     }
 
     private inner class SAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.zoomIn()
+            flameRacing.zoomIn()
             hoverInfoPanel.hidePanel()
         }
     }
 
     private inner class PanLeftAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.scrollRight()
+            flameRacing.panBy(-PAN_STEP_PX, 0.0)
             hoverInfoPanel.hidePanel()
         }
     }
 
     private inner class PanRightAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.scrollLeft()
-            hoverInfoPanel.hidePanel()
-        }
-    }
-
-
-    private inner class UpAction : SmartAction() {
-        override fun actionPerformed() {
-            flameChart.scrollUp()
-            hoverInfoPanel.hidePanel()
-        }
-    }
-
-    private inner class DownAction : SmartAction() {
-        override fun actionPerformed() {
-            flameChart.scrollDown()
+            flameRacing.panBy(PAN_STEP_PX, 0.0)
             hoverInfoPanel.hidePanel()
         }
     }
@@ -329,19 +277,19 @@ class FlameChartDialog(
 
     private inner class CenterSelectedElementAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.centerSelectedElement()
+            flameRacing.centerSelectedElement()
         }
     }
 
     private inner class ResetZoomAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.resetZoom()
+            flameRacing.resetZoom()
         }
     }
 
     private inner class FitSelectedElementAction : SmartAction() {
         override fun actionPerformed() {
-            flameChart.fitSelectedElement()
+            flameRacing.fitSelectedElement()
         }
     }
 
@@ -356,9 +304,9 @@ class FlameChartDialog(
     ) : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
             if (increase) {
-                flameChart.increaseFontSize()
+                flameRacing.increaseFontSize()
             } else {
-                flameChart.decreaseFontSize()
+                flameRacing.decreaseFontSize()
             }
         }
     }

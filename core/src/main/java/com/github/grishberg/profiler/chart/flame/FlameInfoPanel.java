@@ -63,9 +63,9 @@ public class FlameInfoPanel extends JComponent {
     }
 
     public void setText(Point point, FlameRectangle selectedData) {
-        Point parentLocation = parent.getLocation();
-        int topOffset = parentLocation.y;
-        int horizontalOffset = parentLocation.x;
+        Point rootPoint = SwingUtilities.convertPoint(parent, point, SwingUtilities.getRootPane(parent));
+        int topOffset = rootPoint.y - point.y;
+        int horizontalOffset = rootPoint.x - point.x;
 
         double start = selectedData.getX();
         double end = selectedData.getMaxX();
