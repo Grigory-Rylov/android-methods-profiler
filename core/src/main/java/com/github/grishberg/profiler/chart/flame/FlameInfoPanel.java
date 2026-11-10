@@ -1,5 +1,7 @@
 package com.github.grishberg.profiler.chart.flame;
 
+import com.github.grishberg.profiler.ui.DurationPercentFormatter;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -69,7 +71,7 @@ public class FlameInfoPanel extends JComponent {
         double end = selectedData.getMaxX();
 
         rangeText = String.format("%.3f ms - %.3f ms", start, end);
-        durationText = String.format("%.3f ms", end - start);
+        durationText = DurationPercentFormatter.durationTextWithParentPercent(end - start, selectedData.getParentDuration());
 
         classNameText = "(" + selectedData.getCount() + ") " + selectedData.getName();
 

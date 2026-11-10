@@ -11,7 +11,8 @@ class FlameRectangle(
     h: kotlin.Double,
     val name: String,
     val count: Int,
-    var color: Color? = null
+    var color: Color? = null,
+    val parentDuration: kotlin.Double = 0.0
 ) : Rectangle2D.Double(startThreadTime, y, duration, h) {
     var isFoundElement = false
     fun isInside(cx: kotlin.Double, cy: kotlin.Double): Boolean {

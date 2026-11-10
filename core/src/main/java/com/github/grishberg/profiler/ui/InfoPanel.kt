@@ -99,7 +99,15 @@ class InfoPanel(private val parent: JPanel) : JComponent() {
             end = selectedData.globalEndTimeInMillisecond
         }
         rangeText = String.format("%.3f ms - %.3f ms", start, end)
-        durationText = String.format("%.3f ms", end - start)
+        val parentMethod = selectedData.parent
+        durationText = DurationPercentFormatter.durationTextWithParentPercent(
+            end - start,
+            if (isThreadTime) {
+                parentMethod?.let { it.threadEndTimeInMillisecond - it.threadStartTimeInMillisecond }
+            } else {
+                parentMethod?.let { it.globalEndTimeInMillisecond - it.globalStartTimeInMillisecond }
+            } ?: 0.0
+        )
         classNameText = selectedData.name
         classNameRect = fontMetrics.getStringBounds(classNameText, null)
         rangeRect = fontMetrics.getStringBounds(rangeText, null)
