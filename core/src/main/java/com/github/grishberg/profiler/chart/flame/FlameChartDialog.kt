@@ -331,6 +331,7 @@ class FlameChartDialog(
 
     private abstract inner class SmartAction : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
+            if (keyboardFocusManager.focusOwner is JTextField) return
             actionPerformed()
         }
 

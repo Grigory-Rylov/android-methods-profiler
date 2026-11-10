@@ -61,6 +61,7 @@ class FlameRacingView(
         }
         panel.addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
+                panel.requestFocusInWindow()
                 if (!SwingUtilities.isRightMouseButton(e)) return
                 selectElement(elementAt(e.point))
             }
