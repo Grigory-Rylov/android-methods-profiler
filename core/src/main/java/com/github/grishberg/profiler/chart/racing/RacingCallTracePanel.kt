@@ -580,7 +580,7 @@ class RacingCallTracePanel(
     }
 
     override fun addBookmarkAtSelectedElement(bookMarkInfo: BookMarkInfo) {
-        val row = panel.selectedRow ?: return
+        val row = panel.selectedRow ?: panel.focusedFoundRow?.takeIf { panel.isSearchCalled } ?: return
         addBookmark(row, bookMarkInfo)
         repaint()
     }
