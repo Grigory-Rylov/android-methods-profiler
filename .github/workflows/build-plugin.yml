@@ -41,7 +41,17 @@ jobs:
         run: |
           mv plugin/build/distributions/*.zip plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
 
+      - name: Check release tag
+        id: tag_check
+        run: |
+          if git ls-remote --tags origin "refs/tags/v${{ steps.get_version.outputs.version }}" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create tag
+        if: steps.tag_check.outputs.exists == 'false'
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
@@ -50,8 +60,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Skip release when tag already exists
+        if: steps.tag_check.outputs.exists == 'true'
+        run: |
+          echo "::warning::Tag v${{ steps.get_version.outputs.version }} already exists; skipping plugin release. Bump yampVersion in gradle.properties to publish a new version."
+
       - name: Create GitHub Release
         id: create_release
+        if: steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +79,7 @@ jobs:
           generate_release_notes: true
 
       - name: Upload plugin artifact to release
+        if: steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           files: plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
