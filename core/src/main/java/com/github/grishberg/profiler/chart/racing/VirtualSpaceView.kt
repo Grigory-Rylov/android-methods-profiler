@@ -173,6 +173,7 @@ class VirtualSpaceView : JPanel() {
             // После клампа пересинхронизируем этот бар: desync бара↔view ≤ 1px уходит.
             syncBar(bar, worldSize, if (vertical) state.viewY else state.viewX, vp, px)
             panel.repaint()
+            panel.onStateChanged?.invoke()
             header.repaint()
         } finally {
             syncing = false

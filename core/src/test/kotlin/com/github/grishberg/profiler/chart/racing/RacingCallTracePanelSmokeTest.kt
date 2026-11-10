@@ -120,7 +120,7 @@ internal class RacingCallTracePanelSmokeTest {
         return TraceContainer(File(path), result, Bookmarks(FakeSettings(), logger))
     }
 
-    private fun createPanel(nav: NavRecord): RacingCallTracePanel {
+    private fun createPanel(nav: NavRecord, previewPanel: CallTracePreviewPanel): RacingCallTracePanel {
         val settings = FakeSettings()
         val methodsColor = MethodsColorImpl(object : MethodsColorRepository {
             override fun getColors(): List<ColorInfo> = emptyList()
@@ -146,7 +146,7 @@ internal class RacingCallTracePanelSmokeTest {
             SystraceStagesFacade(logger),
             Bookmarks(settings, logger),
             repository,
-            CallTracePreviewPanel(logger),
+            previewPanel,
             DarkPalette(),
         )
         // Размер не задан: открываем, как в проде, до раскладки окна.
@@ -174,7 +174,8 @@ internal class RacingCallTracePanelSmokeTest {
     fun smokeMainChart() {
         onEdt {
             val nav = NavRecord()
-            val chart = createPanel(nav)
+            val previewPanel = CallTracePreviewPanel(logger)
+            val chart = createPanel(nav, previewPanel)
             val trace = parseTrace()
 
             chart.openTraceResult(trace)
@@ -278,6 +279,17 @@ internal class RacingCallTracePanelSmokeTest {
             chart.scrollDown()
             chart.scrollLeft()
             chart.scrollRight()
+
+            // --- диапазон окна на превью ----------------------------------------------------
+            val globalBounds = trace.result.globalTimeBounds[trace.result.mainThreadId]!!
+            chart.scaleScreenToRange(globalBounds.minTime + 10.0, globalBounds.minTime + 500.0)
+            val windowRange = previewPanel.windowRange
+            TestCase.assertNotNull("window range must be set after zoom", windowRange)
+            TestCase.assertTrue(
+                "window must span a part of the preview",
+                windowRange!!.startFraction < windowRange.endFraction,
+            )
+            TestCase.assertTrue(windowRange.label.isNotEmpty())
 
             // --- режимы времени -------------------------------------------------------------
             chart.switchTimeMode(true)

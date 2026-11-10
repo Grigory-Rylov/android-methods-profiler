@@ -10,6 +10,7 @@ import com.github.grishberg.profiler.chart.BookmarksRectangle
 import com.github.grishberg.profiler.chart.CallTracePreviewPanel
 import com.github.grishberg.profiler.chart.MethodsNameDrawer
 import com.github.grishberg.profiler.chart.OnPreviewClickedAction
+import com.github.grishberg.profiler.chart.PreviewWindowRange
 import com.github.grishberg.profiler.chart.ProfileDataDimensionDelegate
 import com.github.grishberg.profiler.chart.ProfileRectangle
 import com.github.grishberg.profiler.chart.ProfilerPanel
@@ -37,6 +38,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import java.util.Locale
 import javax.swing.SwingUtilities
 import kotlin.math.abs
 import kotlin.math.floor
@@ -65,7 +67,7 @@ class RacingCallTracePanel(
     private val systraceStagesFacade: SystraceStagesFacade,
     private val bookmarks: Bookmarks,
     private val previewImageRepository: PreviewImageRepository,
-    private val previewPanel: CallTracePreviewPanel,
+    internal val previewPanel: CallTracePreviewPanel,
     private val palette: com.github.grishberg.profiler.ui.theme.Palette,
 ) : ProfilerPanel(), ProfileDataDimensionDelegate, ChartPaintDelegate, RepaintDelegate {
 
@@ -196,6 +198,7 @@ class RacingCallTracePanel(
             }
         })
 
+        panel.onStateChanged = { updatePreviewWindowRange() }
         previewPanel.previewClickedAction = object : OnPreviewClickedAction {
             override fun onPreviewClicked(offsetInPercent: Double) {
                 val result = result ?: return
@@ -216,6 +219,7 @@ class RacingCallTracePanel(
     override fun doLayout() {
         super.doLayout()
         if (constructed) view.doLayout()
+        updatePreviewWindowRange()
     }
 
     // --- жизненный цикл -------------------------------------------------------------
@@ -250,6 +254,7 @@ class RacingCallTracePanel(
 
     override fun closeTrace() {
         result = null
+        previewPanel.windowRange = null
         threadCache.clear()
         compareColors = null
         currentData = null
@@ -320,6 +325,43 @@ class RacingCallTracePanel(
             (if (isThreadTime) result.threadTimeBounds else result.globalTimeBounds)[threadId]
         minLeftOffset = bounds?.minTime ?: 0.0
         maxRightOffset = bounds?.maxTime ?: 0.0
+        updatePreviewWindowRange()
+    }
+
+    private fun updatePreviewWindowRange() {
+        val viewportWidth = panel.width
+        if (viewportWidth <= 0) {
+            previewPanel.windowRange = null
+            return
+        }
+        val span = maxRightOffset - minLeftOffset
+        if (span <= 0.0 || !span.isFinite()) {
+            previewPanel.windowRange = null
+            return
+        }
+        val state = panel.state
+        val visibleStartMs = toRaw(state.viewX)
+        val visibleEndMs = toRaw(state.viewX + viewportWidth / state.scale)
+        val startFraction = ((visibleStartMs - minLeftOffset) / span).coerceIn(0.0, 1.0)
+        val endFraction = ((visibleEndMs - minLeftOffset) / span).coerceIn(startFraction, 1.0)
+        previewPanel.windowRange = PreviewWindowRange(
+            startFraction = startFraction,
+            endFraction = endFraction,
+            label = formatVisibleRange(visibleStartMs, visibleEndMs),
+        )
+    }
+
+    private fun formatVisibleRange(startMs: Double, endMs: Double): String {
+        val durationMs = endMs - startMs
+        if (durationMs >= 1000.0) {
+            return String.format(
+                Locale.US, "%.3f s – %.3f s", startMs / 1000.0, endMs / 1000.0,
+            )
+        }
+        if (durationMs >= 1.0) {
+            return String.format(Locale.US, "%.1f ms – %.1f ms", startMs, endMs)
+        }
+        return String.format(Locale.US, "%.0f µs – %.0f µs", startMs * 1000.0, endMs * 1000.0)
     }
 
     private fun updateMarkersState() {
