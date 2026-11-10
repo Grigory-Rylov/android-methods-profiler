@@ -81,7 +81,7 @@ class FlameChartDialog(
         createFindPanel()
         val chartWithPreview = JPanel(BorderLayout())
         chartWithPreview.add(flameRacing.view, BorderLayout.CENTER)
-        chartWithPreview.add(flameRacing.previewPanel, BorderLayout.SOUTH)
+        chartWithPreview.add(flameRacing.previewPanel, BorderLayout.NORTH)
         mainPanel.add(chartWithPreview, BorderLayout.CENTER)
         flameRacing.previewPanel.addComponentListener(object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent) {
