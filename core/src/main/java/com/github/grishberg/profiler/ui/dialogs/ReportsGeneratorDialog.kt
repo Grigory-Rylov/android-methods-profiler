@@ -3,7 +3,6 @@ package com.github.grishberg.profiler.ui.dialogs
 import com.github.grishberg.profiler.analyzer.ReportGenerator
 import com.github.grishberg.profiler.common.JNumberField
 import com.github.grishberg.profiler.common.settings.SettingsFacade
-import com.github.grishberg.profiler.ui.Main
 import java.awt.Frame
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -16,6 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JFileChooser
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.border.EmptyBorder
 import javax.swing.filechooser.FileNameExtensionFilter
 
@@ -28,6 +28,7 @@ class ReportsGeneratorDialog(
 
     private val constructorsCheckbox: JCheckBox
     private val durationLimit: JNumberField
+    private val packageFilter: JTextField
 
     init {
         val content = JPanel()
@@ -56,9 +57,14 @@ class ReportsGeneratorDialog(
         durationLimit.value = 0
         addLabelAndField(
             content, labelConstraints, fieldConstraints,
-            "minimum duration", durationLimit, "If checked - will be exported only constructors"
+            "minimum duration", durationLimit, "Minimum global time duration in ms"
         )
 
+        packageFilter = JTextField(20)
+        addLabelAndField(
+            content, labelConstraints, fieldConstraints,
+            "package filter", packageFilter, "If not empty - show methods with given package prefix"
+        )
         fieldConstraints.gridy++
         fieldConstraints.gridwidth = 2
 
@@ -106,7 +112,12 @@ class ReportsGeneratorDialog(
                 fileToSave = File(fileToSave.absolutePath + ".txt")
             }
             settings.reportsFileDialogDir = fileToSave.parent
-            reportsGeneratorDelegate.generate(fileToSave, constructorsCheckbox.isSelected, durationLimit.value as Int)
+            reportsGeneratorDelegate.generate(
+                fileToSave,
+                constructorsCheckbox.isSelected,
+                durationLimit.value as Int,
+                packageFilter.text.trim()
+            )
             isVisible = false
         }
     }
