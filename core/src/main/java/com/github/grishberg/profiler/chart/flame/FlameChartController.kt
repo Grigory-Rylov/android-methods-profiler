@@ -40,6 +40,7 @@ interface View {
     fun showDialog()
     fun hideDialog()
     fun requestFocus()
+    fun onFoundRowsChanged(found: List<FlameRectangle>, focusedIndex: Int) = Unit
 }
 
 interface DialogView {
@@ -67,6 +68,7 @@ class FlameChartController(
     var dialogView: DialogView? = null
     var currentSelectedElement: FlameRectangle? = null
         private set
+    val currentRectangles: List<FlameRectangle> get() = rectangles
 
     private val textUtils = TextUtils()
 
@@ -441,6 +443,7 @@ class FlameChartController(
             foundElement.isFoundElement = false
         }
         foundItems.clear()
+        view?.onFoundRowsChanged(foundItems, -1)
     }
 
     fun copySelectedToClipboard() {
@@ -494,11 +497,13 @@ class FlameChartController(
         if (foundItems.isEmpty()) {
             foundInfoListener?.onNotFound(text, ignoreCase)
             isSearchingInProgress = false
+            view?.onFoundRowsChanged(foundItems, -1)
             view?.redraw()
             return
         }
         currentFocusedFoundElement = 0
         val element: FlameRectangle = foundItems[currentFocusedFoundElement]
+        view?.onFoundRowsChanged(foundItems, currentFocusedFoundElement)
         foundInfoListener?.onFound(foundItems.size, currentFocusedFoundElement, element)
         view?.fitZoom(element)
     }
@@ -512,6 +517,7 @@ class FlameChartController(
                 currentFocusedFoundElement = 0
             }
             val found = foundItems[currentFocusedFoundElement]
+            view?.onFoundRowsChanged(foundItems, currentFocusedFoundElement)
             view?.fitZoom(found)
             foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement, found)
         }
@@ -526,6 +532,7 @@ class FlameChartController(
                 currentFocusedFoundElement = foundItems.size - 1
             }
             val found = foundItems[currentFocusedFoundElement]
+            view?.onFoundRowsChanged(foundItems, currentFocusedFoundElement)
             view?.fitZoom(found)
             foundInfoListener!!.onFound(foundItems.size, currentFocusedFoundElement, found)
         }
