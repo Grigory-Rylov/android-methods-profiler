@@ -7,6 +7,7 @@ import com.github.grishberg.profiler.common.JNumberField
 import com.github.grishberg.profiler.common.settings.SettingsFacade
 import com.github.grishberg.profiler.ui.LabeledGridBuilder
 import com.github.grishberg.profiler.ui.dialogs.CloseByEscapeDialog
+import com.github.grishberg.profiler.ui.views.HistoryComboBox
 import com.github.grishberg.tracerecorder.RecordMode
 import com.intellij.openapi.ui.ComboBox
 import kotlinx.coroutines.CoroutineScope
@@ -51,9 +52,9 @@ class PluginMethodsRecorderDialog(
     owner,
     TITLE, allowModalDialog
 ), JavaMethodsRecorderDialogView {
-    private val packageNameField: JTextField
-    private val activityNameField: JTextField
-    private val fileNamePrefixField: JTextField
+    private val packageNameField: HistoryComboBox
+    private val activityNameField: HistoryComboBox
+    private val fileNamePrefixField: HistoryComboBox
     private val stagesTracePrefixField: JTextField = JTextField(10)
     private val showDevicePanelCheckbox = JCheckBox("Connect to device by serial number")
     private val moreOptionsPanelCheckbox = JCheckBox("Additional options")
@@ -76,23 +77,14 @@ class PluginMethodsRecorderDialog(
         pack()
     }
 
-    override var packageName: String
-        get() = packageNameField.text.trim()
-        set(value) {
-            packageNameField.text = value
-        }
+    override val packageName: String
+        get() = packageNameField.text
 
-    override var activityName: String
-        get() = activityNameField.text.trim()
-        set(value) {
-            activityNameField.text = value
-        }
+    override val activityName: String
+        get() = activityNameField.text
 
-    override var fileNamePrefix: String
-        get() = fileNamePrefixField.text.trim()
-        set(value) {
-            fileNamePrefixField.text = value
-        }
+    override val fileNamePrefix: String
+        get() = fileNamePrefixField.text
 
     override var sampling: Int
         get() = samplingField.value
@@ -150,13 +142,16 @@ class PluginMethodsRecorderDialog(
         val contentPanel = JPanel()
         contentPanel.layout = BorderLayout()
 
-        packageNameField = JTextField(FIELD_LENGTH)
+        packageNameField = HistoryComboBox.create()
+        packageNameField.columns = FIELD_LENGTH
         packageNameField.toolTipText = "Enter application package. Required"
 
-        activityNameField = JTextField(FIELD_LENGTH)
+        activityNameField = HistoryComboBox.create()
+        activityNameField.columns = FIELD_LENGTH
         activityNameField.toolTipText = "Enter entry point activity. Optional"
 
-        fileNamePrefixField = JTextField(FIELD_LENGTH)
+        fileNamePrefixField = HistoryComboBox.create()
+        fileNamePrefixField.columns = FIELD_LENGTH
         fileNamePrefixField.toolTipText = "Adds file name prefix. Optional."
 
         val content = panelBuilder.content
@@ -243,6 +238,18 @@ class PluginMethodsRecorderDialog(
         contentPane = contentPanel
         defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
         pack()
+    }
+
+    override fun setInitialPackageNames(names: List<String>) {
+        packageNameField.setItems(names)
+    }
+
+    override fun setInitialActivityNames(names: List<String>) {
+       activityNameField.setItems(names)
+    }
+
+    override fun setInitialFileNamePrefixes(names: List<String>) {
+       fileNamePrefixField.setItems(names)
     }
 
     private fun buildMoreOptionsPanel(): JPanel {

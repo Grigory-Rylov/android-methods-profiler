@@ -33,11 +33,11 @@ class PluginState : SettingsFacade {
     override var deviceAddress: String = ""
     override var samplingRecordModeEnabled: Boolean = true
     override var systraceStagePrefix: String = ""
-    override var fileNamePrefix: String = ""
+    override var fileNamePrefixes: List<String> = emptyList()
     override var bufferSize: Int = 64
     override var sampling: Int = 3000
-    override var activityName: String = ""
-    override var packageName: String = ""
+    override var activityNames: List<String> = emptyList()
+    override var packageNames: List<String> = emptyList()
     override var androidHome: String = "<not_used>"
     override var recentFiles: List<String> = mutableListOf()
     override var traceFileDialogDir: String? = null
