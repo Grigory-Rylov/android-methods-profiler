@@ -15,17 +15,18 @@ static JavaVM *g_vm = NULL;
 static jclass g_callbackClass = NULL;   // глобальный ref на com.github.grishberg.profiler.chart.racing.MacPinchBridge
 static jmethodID g_onMagnify = NULL;
 
-static void reportToJvm(double magnification) {
-    if (!g_vm || !g_callbackClass || !g_onMagnify || magnification == 0.0) return;
+static BOOL reportToJvm(double magnification) {
+    if (!g_vm || !g_callbackClass || !g_onMagnify || magnification == 0.0) return NO;
     JNIEnv *env = NULL;
     jint st = (*g_vm)->GetEnv(g_vm, (void **)&env, JNI_VERSION_1_6);
     if (st == JNI_EDETACHED) {
-        if ((*g_vm)->AttachCurrentThread(g_vm, (void **)&env, NULL) != JNI_OK) return;
+        if ((*g_vm)->AttachCurrentThread(g_vm, (void **)&env, NULL) != JNI_OK) return NO;
     } else if (st != JNI_OK) {
-        return;
+        return NO;
     }
-    (*env)->CallStaticVoidMethod(env, g_callbackClass, g_onMagnify, magnification);
-    if ((*env)->ExceptionCheck(env)) (*env)->ExceptionDescribe(env);
+    jboolean consumed = (*env)->CallStaticBooleanMethod(env, g_callbackClass, g_onMagnify, magnification);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return NO; }
+    return consumed ? YES : NO;
 }
 
 static id g_monitor = nil;
@@ -34,10 +35,17 @@ static BOOL g_registered = NO;
 static void doRegister(void) {
     if (g_registered) return;
     NSEventMask mask = (NSEventMask)(1ULL << NSEventTypeMagnify);
-    g_monitor = [NSEvent addLocalMonitorForEventsMatchingMask:mask handler:^NSEvent *(NSEvent *event) {
-        reportToJvm([event magnification]);
-        return nil; // поглощаем: жест не должен утекать в дефолтное поведение
+    id monitor = [NSEvent addLocalMonitorForEventsMatchingMask:mask handler:^NSEvent *(NSEvent *event) {
+        // Если JVM не потребила жест (мост ещё не готов, слушателей нет, доставка
+        // не заявлена) — отдаём событие дальше: его заберёт JBR/OS-эмуляция
+        // (ctrl+wheel). Поглощение непотреблённого жеста = мёртвый пинч в AS.
+        if (reportToJvm([event magnification])) return nil;
+        return event;
     }];
+    // MRC: addLocalMonitor возвращает autoreleased-объект; без retain он гибнет
+    // при сливе autorelease-пула (в IntelliJ EDT пул сливается на каждой пачке
+    // событий — монитор отваливался, standalone это не ловил).
+    g_monitor = [monitor retain];
     g_registered = (g_monitor != nil);
 }
 
@@ -46,7 +54,7 @@ JNIEXPORT jboolean JNICALL Java_com_github_grishberg_profiler_chart_racing_MacPi
     if (g_registered) return JNI_TRUE;
     (*env)->GetJavaVM(env, &g_vm);
     g_callbackClass = (jclass)(*env)->NewGlobalRef(env, cls);
-    g_onMagnify = (*env)->GetStaticMethodID(env, cls, "onMagnify", "(D)V");
+    g_onMagnify = (*env)->GetStaticMethodID(env, cls, "onMagnify", "(D)Z");
     if (!g_vm || !g_callbackClass || !g_onMagnify) return JNI_FALSE;
 
     // addLocalMonitorForEventsMatchingMask — API главного треда AppKit: с фонового

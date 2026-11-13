@@ -142,25 +142,35 @@ object MacPinchBridge {
 
     // --- JNI-канал ----------------------------------------------------------------
 
-    /** Колбэк нативного монитора, тред AppKit. */
+    /** Колбэк нативного монитора, тред AppKit. Возвращает true, если жест
+     *  потреблён (есть слушатели, доставка заявлена) — монитор его поглощает;
+     *  false — событие уходит в обычный диспатч (JBR/OS-эмуляция ctrl+wheel). */
     @JvmStatic
-    fun onMagnify(magnification: Double) {
-        lastMagnifyMs = System.currentTimeMillis()
+    fun onMagnify(magnification: Double): Boolean {
         val factor = (1.0 + magnification).coerceIn(FACTOR_MIN, FACTOR_MAX)
-        if (factor == 1.0 || listeners.isEmpty()) return
-        if (!claim(SRC_JNI, lastMagnifyMs)) return
+        if (factor == 1.0 || listeners.isEmpty()) return false
+        val now = System.currentTimeMillis()
+        if (!claim(SRC_JNI, now)) return false
+        // Echo-глушилка двигается только при фактической доставке: непотреблённый
+        // жест не должен глушить ctrl+wheel-эмудляцию (иначе пинч мёртв до конца окна).
+        lastMagnifyMs = now
         SwingUtilities.invokeLater { fire(factor) }
+        return true
     }
 
     // --- eawt-канал ----------------------------------------------------------------
 
     private fun handleEawtMagnify(event: Any) {
-        lastMagnifyMs = System.currentTimeMillis()
         val mag = getMagnification!!.invoke(event) as Double
-        runCatching { consumeEvent!!.invoke(event) }
         val factor = (1.0 + mag).coerceIn(FACTOR_MIN, FACTOR_MAX)
         if (factor == 1.0) return
-        if (!claim(SRC_EAWT, lastMagnifyMs)) return
+        val now = System.currentTimeMillis()
+        if (!claim(SRC_EAWT, now)) {
+            runCatching { consumeEvent!!.invoke(event) } // серию ведёт другой канал — гасим эхо
+            return
+        }
+        runCatching { consumeEvent!!.invoke(event) }
+        lastMagnifyMs = now
         fire(factor) // handleGestureFromNative уже диспатчит на EDT
     }
 
