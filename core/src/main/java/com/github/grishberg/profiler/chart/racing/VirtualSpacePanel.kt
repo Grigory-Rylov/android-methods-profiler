@@ -477,10 +477,12 @@ class VirtualSpacePanel : JPanel() {
             state.zoomAt(e.x.toDouble(), e.y.toDouble(), factor, width.toDouble(), height.toDouble())
         } else if (!ctrl) {
             // Pan двумя пальцами. У AWT-колеса нет оси X — горизонтальный жест
-            // приезжает как Shift+wheel (канон Swing, так же делает BasicScrollBarUI).
+            // приезжает как Shift+wheel (канон Swing, так же делает BasicScrollBarUI);
+            // в том же потоке событий с вертикальным панорамированием — двигаем
+            // строго по оси жеста, иначе жест уезжает по диагонали.
             val rot = rotationOf(e)
-            val rotX = if (shift) rot else 0.0
-            state.scrollBy(rotX * PAN_PX, rot * PAN_PX, width.toDouble(), height.toDouble())
+            if (shift) state.scrollBy(rot * PAN_PX, 0.0, width.toDouble(), height.toDouble())
+            else state.scrollBy(0.0, rot * PAN_PX, width.toDouble(), height.toDouble())
         }
         changed()
     }
