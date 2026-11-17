@@ -2,13 +2,13 @@ name: Build and Release Plugin
 
 on:
   pull_request:
-    types: [closed]
+    types: [opened, synchronize, reopened, closed]
     branches:
       - master
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -41,12 +41,21 @@ jobs:
         run: |
           mv plugin/build/distributions/*.zip plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
 
+      - name: Upload plugin zip to workflow run
+        if: github.event.action != 'closed'
+        uses: actions/upload-artifact@v4
+        with:
+          name: yamp_plugin_${{ steps.get_version.outputs.version }}
+          path: plugin/build/distributions/yamp_plugin_${{ steps.get_version.outputs.version }}.zip
+          if-no-files-found: error
+
       # Attaches the plugin zip to the release for this version.
       # softprops/action-gh-release creates the release+tag when missing and
       # appends the asset to the existing release when the tag was already
       # published (e.g. by app-build.yml). Never skip: multiple merges share a
       # date-based version, and the plugin must land on the release regardless.
       - name: Upload plugin artifact to GitHub Release
+        if: github.event.pull_request.merged == true
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
