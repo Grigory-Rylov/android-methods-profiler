@@ -99,6 +99,7 @@ jobs:
           path: |
             app/build/release/*.dmg
             app/build/release/*.zip
+            app/build/libs/yamp-*.jar
           if-no-files-found: error
 
       - name: Upload artifacts to GitHub Release (merge to master)
@@ -109,5 +110,6 @@ jobs:
           files: |
             app/build/release/*.dmg
             app/build/release/*.zip
+            app/build/libs/yamp-*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
