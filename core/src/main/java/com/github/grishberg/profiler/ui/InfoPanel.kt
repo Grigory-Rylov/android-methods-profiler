@@ -43,6 +43,16 @@ class InfoPanel(private val parent: JPanel) : JComponent() {
         fontMetrics = getFontMetrics(font)
     }
 
+    /**
+     * Чисто визуальная glass-pane: слушателей мыши нет, и события должны
+     * доходить до графика. AWT target выбирается по слушателям и InfoPanel
+     * скипает сам, но eawt-жесты (pinch) резолвят цель через
+     * SwingUtilities.getDeepestComponentAt, который видимый стеклянный слой
+     * перехватил бы — а рекурсия обработчиков идёт только вверх по parent,
+     * мимо chart-панели. contains=false исключает панель из hit-test'а.
+     */
+    override fun contains(x: Int, y: Int): Boolean = false
+
     fun changeTimeMode(isThreadTime: Boolean) {
         this.isThreadTime = isThreadTime
     }
